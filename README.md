@@ -1,10 +1,10 @@
 # Welcome to SurveyForm  - A web application built with React JS and Laravel framework.
 
-[Watch demo video](https://youtu.be/oYmv_GoD2Sw)
+<!-- [Watch demo video](https://youtu.be/oYmv_GoD2Sw)
 
 <div style="display: flex; align-items: center;">
     <img src="react/src/assets/survey-dashboard-ss.png" height="440">
-</div> 
+</div>  -->
 
 
 ## Features
