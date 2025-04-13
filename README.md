@@ -27,4 +27,4 @@
 This project is all rights reserved by Mark Daniel Edillor.
 
 ## Contact
-For any questions or feedback, feel free to contact me at edillormark2@gmail.com or my Facebook account, Mark Daniel Edillor.
+For any questions or feedback, feel free to contact me at siuagan.jayvee@gmail.com or my Facebook account, Jayvee.
