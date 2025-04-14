@@ -24,7 +24,7 @@
 - **Version Control** GitHub for efficient version control.
 
 ## License
-This project is all rights reserved by Mark Daniel Edillor.
+This project is all rights reserved by JohnJayvee.
 
 ## Contact
 For any questions or feedback, feel free to contact me at siuagan.jayvee@gmail.com or my Facebook account, Jayvee.
