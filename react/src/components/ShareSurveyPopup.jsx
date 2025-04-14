@@ -41,20 +41,37 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         const img = new Image();
+        const logo = new Image();
+
+        // Set higher resolution
+        const scale = 4; // Increase this for even higher quality
+        canvas.width = 200 * scale; // Match QRCode size (200) * scale
+        canvas.height = 200 * scale;
+
+        // Scale the context to maintain proper rendering
+        ctx.scale(scale, scale);
 
         img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            const pngFile = canvas.toDataURL("image/png");
+            ctx.drawImage(img, 0, 0, 200, 200); // Set explicit dimensions
 
-            const downloadLink = document.createElement("a");
-            downloadLink.download = "survey-qr-code.png";
-            downloadLink.href = pngFile;
-            downloadLink.click();
+            logo.onload = () => {
+                const logoSize = 40;
+                const centerX = (200 - logoSize) / 2;
+                const centerY = (200 - logoSize) / 2;
+
+                ctx.drawImage(logo, centerX, centerY, logoSize, logoSize);
+
+                // Get high quality PNG
+                const pngFile = canvas.toDataURL("image/png", 1.0);
+                const downloadLink = document.createElement("a");
+                downloadLink.download = "survey-qr-code.png";
+                downloadLink.href = pngFile;
+                downloadLink.click();
+            };
+            logo.src = "/AceLogo.png";
         };
 
-        img.src = "data:image/svg+xml;base64," + btoa(svgData);
+        img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
     };
 
     return (
@@ -98,6 +115,14 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                                     size={200}
                                     level="H"
                                     includeMargin={true}
+                                    imageSettings={{
+                                        src: "/AceLogo.png", // Replace with your logo path
+                                        x: undefined,
+                                        y: undefined,
+                                        height: 40,
+                                        width: 40,
+                                        excavate: true,
+                                    }}
                                 />
                             </div>
                             <button
