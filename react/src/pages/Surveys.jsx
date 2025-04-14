@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useStateContext } from "../contexts/ContextProvider";
 import SurveyListItem from "../components/SurveyListItem";
 import TButton from "../components/core/TButton";
@@ -10,12 +10,14 @@ import Breadcrumbs from "../components/Breadcrumbs";
 import { Link } from "react-router-dom";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { debounce } from 'lodash';
 
 export default function Surveys() {
     const { showToast } = useStateContext();
     const [surveys, setSurveys] = useState([]);
     const [meta, setMeta] = useState({});
     const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const onDeleteClick = (id) => {
         if (window.confirm("Are you sure you want to delete this survey?")) {
@@ -30,14 +32,45 @@ export default function Surveys() {
         getSurveys(link.url);
     };
 
+    const debouncedSearch = useCallback(
+        debounce((term) => {
+            if (!term.trim()) {
+                getSurveys("/survey");
+            } else {
+                getSurveys("/survey?search=" + encodeURIComponent(term.trim()));
+            }
+        }, 100), // Reduced to 100ms for faster response
+        []
+    );
+
     const getSurveys = (url) => {
         url = url || "/survey";
+        // Only append search if there's a term and it's not already in URL
+        if (searchTerm.trim() && !url.includes('search')) {
+            url = `${url}${url.includes('?') ? '&' : '?'}search=${encodeURIComponent(searchTerm.trim())}`;
+        }
         setLoading(true);
-        axiosClient.get(url).then(({ data }) => {
-            setSurveys(data.data);
-            setMeta(data.meta);
-            setLoading(false);
-        });
+        axiosClient.get(url)
+            .then(({ data }) => {
+                setSurveys(data.data);
+                setMeta(data.meta);
+            })
+            .catch((error) => {
+                console.error("Error fetching surveys:", error);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+        // Immediate search for short terms (3 chars or less)
+        if (value.length <= 3) {
+            getSurveys("/survey" + (value ? `?search=${encodeURIComponent(value.trim())}` : ""));
+        } else {
+            debouncedSearch(value);
+        }
     };
 
     useEffect(() => {
@@ -56,6 +89,17 @@ export default function Surveys() {
                     <p className=" font-semibold text-2xl">Survey List</p>
                     <Breadcrumbs links={breadcrumbLinks} />
                 </div>
+
+                <div className="py-4">
+                    <input
+                        type="text"
+                        placeholder="Search surveys..."
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
+                        value={searchTerm}
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
+                </div>
+
                 <div className="items-center py-4 ">
                     <Link
                         to="/surveys/create"
