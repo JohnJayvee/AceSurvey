@@ -5,6 +5,7 @@ import ModalClose from "@mui/joy/ModalClose";
 import Divider from "@mui/material/Divider";
 import { useMediaQuery } from "@mui/material";
 import { useStateContext } from "../contexts/ContextProvider";
+import { QRCodeSVG } from "qrcode.react";
 
 const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
     const handleClosePopup = () => {
@@ -49,7 +50,7 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                     </div>
                     <Divider />
                     <div className="mt-8">
-                        <div className="flex  gap-2">
+                        <div className="flex gap-2 mb-6">
                             <input
                                 type="text"
                                 value={shareLink}
@@ -62,6 +63,18 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                             >
                                 Copy
                             </button>
+                        </div>
+
+                        <div className="flex flex-col items-center mt-4">
+                            <div className="text-gray-600 mb-4">Scan QR Code</div>
+                            <div className="p-4 bg-white rounded-lg shadow-md">
+                                <QRCodeSVG
+                                    value={shareLink}
+                                    size={200}
+                                    level="H"
+                                    includeMargin={true}
+                                />
+                            </div>
                         </div>
                     </div>
                 </Box>

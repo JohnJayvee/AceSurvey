@@ -43,20 +43,19 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                 className=" w-full h-64 object-cover rounded-md"
             />
             <div
-                className={`absolute top-6 right-6 text-xs py-1 px-2 rounded-full 
-        ${
-            isSurveyExpired(survey.expire_date)
-                ? "bg-yellow-300 bg-opacity-50 text-yellow-600 border border-yellow-300"
-                : survey.status
-                ? "bg-green-300 bg-opacity-40 text-green-500 border border-green-300"
-                : "bg-red-300 bg-opacity-40 text-red-500 border border-red-300"
-        }`}
+                className={`absolute top-6 right-6 text-xs py-1 px-2 rounded-full
+        ${isSurveyExpired(survey.expire_date)
+                        ? "bg-yellow-300 bg-opacity-50 text-yellow-600 border border-yellow-300"
+                        : survey.status
+                            ? "bg-green-300 bg-opacity-40 text-green-500 border border-green-300"
+                            : "bg-red-300 bg-opacity-40 text-red-500 border border-red-300"
+                    }`}
             >
                 {isSurveyExpired(survey.expire_date)
                     ? "Expired"
                     : survey.status
-                    ? "Active"
-                    : "Closed"}
+                        ? "Active"
+                        : "Closed"}
             </div>
 
             <h4 className="mt-4 text-lg font-bold">{survey.title}</h4>
