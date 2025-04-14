@@ -44,20 +44,20 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
         const logo = new Image();
 
         // Set higher resolution
-        const scale = 4; // Increase this for even higher quality
-        canvas.width = 200 * scale; // Match QRCode size (200) * scale
-        canvas.height = 200 * scale;
+        const scale = 4;
+        canvas.width = 300 * scale; // Updated to match new QR size
+        canvas.height = 300 * scale; // Updated to match new QR size
 
         // Scale the context to maintain proper rendering
         ctx.scale(scale, scale);
 
         img.onload = () => {
-            ctx.drawImage(img, 0, 0, 200, 200); // Set explicit dimensions
+            ctx.drawImage(img, 0, 0, 300, 300); // Updated dimensions
 
             logo.onload = () => {
-                const logoSize = 40;
-                const centerX = (200 - logoSize) / 2;
-                const centerY = (200 - logoSize) / 2;
+                const logoSize = 60; // Updated logo size
+                const centerX = (300 - logoSize) / 2;
+                const centerY = (300 - logoSize) / 2;
 
                 ctx.drawImage(logo, centerX, centerY, logoSize, logoSize);
 
@@ -108,19 +108,19 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
 
                         <div className="flex flex-col items-center mt-4">
                             <div className="text-gray-600 mb-4">Scan QR Code</div>
-                            <div className="p-4 bg-white rounded-lg shadow-md">
+                            <div className="p-6 bg-white rounded-lg shadow-md">
                                 <QRCodeSVG
                                     ref={qrRef}
                                     value={shareLink}
-                                    size={200}
+                                    size={300}
                                     level="H"
                                     includeMargin={true}
                                     imageSettings={{
-                                        src: "/AceLogo.png", // Replace with your logo path
+                                        src: "/AceLogo.png",
                                         x: undefined,
                                         y: undefined,
-                                        height: 40,
-                                        width: 40,
+                                        height: 60,
+                                        width: 60,
                                         excavate: true,
                                     }}
                                 />
