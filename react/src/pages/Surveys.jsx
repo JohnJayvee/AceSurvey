@@ -8,6 +8,8 @@ import PaginationLinks from "../components/PaginationLinks";
 import Loader from "../components/Loader";
 import Breadcrumbs from "../components/Breadcrumbs";
 import { Link } from "react-router-dom";
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 export default function Surveys() {
     const { showToast } = useStateContext();
@@ -67,7 +69,25 @@ export default function Surveys() {
                 </div>
             </div>
 
-            {loading && <Loader />}
+            {loading && (
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {[...Array(8)].map((_, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-4">
+                            <Skeleton height={150} className="mb-4" /> {/* Image placeholder */}
+                            <Skeleton height={24} className="mb-2" /> {/* Title */}
+                            <Skeleton height={16} count={3} className="mb-4" /> {/* Description */}
+                            <div className="flex justify-between items-center">
+                                <Skeleton height={36} width={80} /> {/* Edit button */}
+                                <div className="flex gap-2">
+                                    <Skeleton height={36} width={36} /> {/* Icon button 1 */}
+                                    <Skeleton height={36} width={36} /> {/* Icon button 2 */}
+                                    <Skeleton height={36} width={36} /> {/* Icon button 3 */}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {!loading && (
                 <div>
