@@ -3,6 +3,8 @@
 <head>
     <title>API Documentation</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="{{ asset('./AceLogo.png') }}">
+
     <style>
         body { background-color: #f8f9fa; }
         .swagger-header { background-color: #1b1b1b; color: white; padding: 20px 0; }
