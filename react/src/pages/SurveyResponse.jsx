@@ -10,6 +10,8 @@ import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
 import { format } from "date-fns";
 import { MdOutlineInfo } from "react-icons/md";
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 export default function SurveyResponse() {
     const { id } = useParams();
@@ -45,7 +47,42 @@ export default function SurveyResponse() {
         }
     }, [id]);
 
-    if (loading) return <Loader />;
+    if (loading) {
+        return (
+            <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
+                <div className="w-full mb-4">
+                    <Skeleton height={32} width={300} />
+                </div>
+                <div className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full">
+                    <Skeleton circle width={48} height={48} />
+                </div>
+                <div className="w-full flex gap-4 flex-col">
+                    {/* Loading state for statistics card */}
+                    <div className="bg-white rounded-lg w-full p-6">
+                        <div className="w-full">
+                            <Skeleton height={60} width={120} />
+                            <Skeleton height={20} width={200} />
+                        </div>
+                    </div>
+
+                    {/* Loading state for data grid */}
+                    <div className="bg-white rounded-lg p-4 w-full">
+                        <div className="h-[400px]">
+                            {[...Array(5)].map((_, index) => (
+                                <div key={index} className="flex justify-between p-4 border-b">
+                                    <Skeleton width={200} />
+                                    <Skeleton width={150} />
+                                    <Skeleton width={150} />
+                                    <Skeleton width={80} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (error) return <div>Error: {error}</div>;
     if (!responses?.data?.length) {
         return (

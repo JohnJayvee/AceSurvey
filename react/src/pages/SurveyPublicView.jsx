@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "../axios";
 import PublicQuestionView from "../components/PublicQuestionView";
-import Loader from "../components/Loader";
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 export default function SurveyPublicView() {
@@ -47,7 +48,30 @@ export default function SurveyPublicView() {
     }
 
     if (loading) {
-        return <Loader />;
+        return (
+            <div className="bg-gray-50 min-h-screen w-full">
+                <div className="py-8 w-11/12 md:w-3/4 xl:w-1/2 mx-auto">
+                    <div className="bg-white p-4 flex flex-col md:flex-row rounded-lg border border-gray-200 mb-4">
+                        <div className="mr-4 w-full md:w-1/2">
+                            <Skeleton height={320} />
+                        </div>
+                        <div className="w-full lg:w-1/2">
+                            <Skeleton height={40} className="my-3" />
+                            <Skeleton count={3} className="mb-1" />
+                            <Skeleton height={100} className="mb-3" />
+                        </div>
+                    </div>
+                    <div>
+                        {[1, 2, 3].map((index) => (
+                            <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+                                <Skeleton height={24} width={200} className="mb-4" />
+                                <Skeleton count={4} className="mb-2" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (error) {

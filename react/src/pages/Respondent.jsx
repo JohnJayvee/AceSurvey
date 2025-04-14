@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosClient from "../axios.js";
 import RespondentAnswerView from "../components/RespondentAnswerView.jsx";
-import Loader from "../components/Loader.jsx";
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
@@ -34,12 +35,36 @@ export default function Respondent() {
         fetchResponseDetails();
     }, [surveyId, responseId]);
 
-    if (loading)
-        return (
-            <div>
-                <Loader />
+    if (loading) return (
+        <div className="min-h-screen w-full relative">
+            <div className="w-11/12 md:w-3/4 xl:w-1/2 mx-auto">
+                <div className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full">
+                    <div className="py-2">
+                        <Skeleton circle width={40} height={40} />
+                    </div>
+                </div>
+                <div className="bg-white p-4 flex flex-col md:flex-row rounded-lg border border-gray-200 mb-4">
+                    <div className="mr-4 w-full md:w-1/2">
+                        <Skeleton height={320} />
+                    </div>
+                    <div className="w-full lg:w-1/2">
+                        <Skeleton height={40} width="80%" className="my-3" />
+                        <Skeleton count={2} />
+                        <Skeleton height={100} className="mt-2" />
+                    </div>
+                </div>
+                <div className="w-full">
+                    {[1, 2, 3].map((_, index) => (
+                        <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+                            <Skeleton height={24} width="60%" className="mb-4" />
+                            <Skeleton height={40} />
+                        </div>
+                    ))}
+                </div>
             </div>
-        );
+        </div>
+    );
+
     if (error) return <div>Error: {error}</div>;
     if (!responseDetails || !responseDetails.questions)
         return <div>No data available</div>;
@@ -82,7 +107,7 @@ export default function Respondent() {
                 >
                     <div className="mr-4 w-full md:w-1/2">
                         <img
-                            src={responseDetails.image_url}
+                            src={responseDetails.image_url || '/AceLogo.png'}
                             className="w-full h-80 object-cover rounded-md"
                             alt={responseDetails.title}
                         />
