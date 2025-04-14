@@ -101,9 +101,8 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${
-                                loading ? "bg-blue-300" : "bg-blue-500"
-                            }`}
+                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"
+                                }`}
                         >
                             {loading ? <RsuiteLoader size="sm" /> : "Login"}
                         </button>
