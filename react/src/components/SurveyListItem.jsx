@@ -38,10 +38,14 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
     return (
         <div className="relative flex flex-col p-4 bg-white border border-gray-200 h-[485px] rounded-lg hover:border-blue-500 animate-fade-in-down ">
             <img
-                src={survey.image_url}
+                src={survey.image_url || '/AceLogo.png'} // Add default image path here
                 alt={survey.title}
                 className=" w-full h-64 object-cover rounded-md"
+            // onError={(e) => {
+            //     e.target.src = '/AceLogo.png'; // Fallback if image fails to load
+            // }}
             />
+            {/* Rest of the code remains the same */}
             <div
                 className={`absolute top-6 right-6 text-xs py-1 px-2 rounded-full
         ${isSurveyExpired(survey.expire_date)

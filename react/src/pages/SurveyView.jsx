@@ -241,9 +241,22 @@ export default function SurveyView() {
                                                     className="w-full h-full object-cover"
                                                 />
                                             )}
-                                            {!survey.image_url && (
+                                            {/* {!survey.image_url && (
                                                 <span className="flex justify-center items-center text-gray-400 w-full h-64 overflow-hidden  bg-gray-100">
                                                     <PhotoIcon className="w-8 h-8" />
+                                                </span>
+                                            )} */}
+                                            {!survey.image_url && (
+                                                <span className="flex justify-center items-center text-gray-400 w-full h-64 overflow-hidden bg-gray-100">
+                                                    <img
+                                                        src="/default-survey-image.jpg"
+                                                        alt="Default Survey"
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = "/AceLogo.png"; // Fallback if image fails to load
+                                                        }}
+                                                    />
                                                 </span>
                                             )}
                                         </div>
@@ -253,6 +266,7 @@ export default function SurveyView() {
                                         >
                                             <input
                                                 type="file"
+                                                accept="image/*"
                                                 className="cursor-pointer absolute left-0 top-0 right-0 bottom-0 opacity-0"
                                                 onChange={onImageChoose}
                                             />
@@ -334,12 +348,12 @@ export default function SurveyView() {
                                             {isSurveyExpired(
                                                 survey.expire_date
                                             ) && (
-                                                <p className="text-red-500 text-sm mt-2">
-                                                    This survey has already
-                                                    expired and is now closed to
-                                                    public access.
-                                                </p>
-                                            )}
+                                                    <p className="text-red-500 text-sm mt-2">
+                                                        This survey has already
+                                                        expired and is now closed to
+                                                        public access.
+                                                    </p>
+                                                )}
                                         </div>
                                         {/* Active */}
                                         <div className="w-full">
@@ -396,17 +410,17 @@ export default function SurveyView() {
                                                     <p
                                                         className={
                                                             survey.status &&
-                                                            !isSurveyExpired(
-                                                                survey.expire_date
-                                                            )
+                                                                !isSurveyExpired(
+                                                                    survey.expire_date
+                                                                )
                                                                 ? "text-gray-500 p-2"
                                                                 : "bg-red-50 text-red-500 p-2 rounded"
                                                         }
                                                     >
                                                         {survey.status &&
-                                                        !isSurveyExpired(
-                                                            survey.expire_date
-                                                        )
+                                                            !isSurveyExpired(
+                                                                survey.expire_date
+                                                            )
                                                             ? "Accepting responses"
                                                             : "Not accepting responses"}
                                                     </p>

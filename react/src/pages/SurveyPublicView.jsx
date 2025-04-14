@@ -73,7 +73,7 @@ export default function SurveyPublicView() {
                         <div className="bg-white p-4 flex flex-col md:flex-row rounded-lg border border-gray-200 mb-4">
                             <div className="mr-4 w-full md:w-1/2">
                                 <img
-                                    src={survey.image_url}
+                                    src={survey.image_url || '/AceLogo.png'}
                                     className="w-full h-80 object-cover rounded-md"
                                     alt={survey.title}
                                 />
