@@ -104,7 +104,7 @@ export default function Dashboard() {
                                 data.latestSurvey && (
                                     <div>
                                         <img
-                                            src={data.latestSurvey.image_url}
+                                            src={data.latestSurvey.image_url || '/AceLogo.png'} // Add default image path here
                                             className="w-full h-72 mx-auto object-cover rounded-lg"
                                         />
                                         <h3 className="font-bold text-xl mb-3 mt-4">
