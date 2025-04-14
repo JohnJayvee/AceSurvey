@@ -28,11 +28,19 @@ class SurveyController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $query = Survey::where("user_id", $user->id);
+
+        // Add search functionality
+        if ($search = $request->query('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
 
         return SurveyResource::collection(
-            Survey::where("user_id", $user->id)
-                ->orderBy("created_at", "desc")
-                ->paginate(4)
+            $query->orderBy("created_at", "desc")
+                  ->paginate(12)
         );
     }
 
