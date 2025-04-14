@@ -160,19 +160,20 @@ export default function SurveyResponse() {
         },
     ];
 
-    const rows = responses.data
-        .flatMap((response) =>
-            response.answers.map((answer) => {
-                const createdAt = new Date(answer.created_at);
-                return {
-                    id: answer.id,
-                    question: answer.question,
-                    answer: answer.answer,
-                    date: format(createdAt, "MMMM d, yyyy"),
-                    time: format(createdAt, "h:mm a"),
-                };
-            })
-        );
+    const rows = responses.data.map((response) => {
+        // Get the first answer's created_at as the response timestamp
+        const createdAt = new Date(response.answers[0]?.created_at);
+
+        // Combine all answers into a single string or show the first answer
+        const answerDisplay = response.answers[0]?.answer || 'No answer';
+
+        return {
+            id: response.id,
+            answer: answerDisplay,
+            date: format(createdAt, "MMMM d, yyyy"),
+            time: format(createdAt, "h:mm a"),
+        };
+    });
 
     function handleGoBack() {
         navigate(-1);
