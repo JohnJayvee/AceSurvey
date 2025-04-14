@@ -32,15 +32,15 @@ class SurveyController extends Controller
 
         // Add search functionality
         if ($search = $request->query('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
+                    ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
 
         return SurveyResource::collection(
             $query->orderBy("created_at", "desc")
-                  ->paginate(12)
+                ->paginate(12)
         );
     }
 
