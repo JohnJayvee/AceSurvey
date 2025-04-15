@@ -9,8 +9,8 @@ const StateContext = createContext({
         message: null,
         show: false,
     },
-    setCurrentUser: () => {},
-    setToken: () => {},
+    setCurrentUser: () => { },
+    setToken: () => { },
 });
 
 const tmpSurveys = [
@@ -198,7 +198,7 @@ const tmpSurveys = [
 export const ContextProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState({});
     const [userToken, _setUserToken] = useState(
-        localStorage.getItem("TOKEN") || ""
+        localStorage.getItem("TOKEN") || sessionStorage.getItem("TOKEN") || ""
     );
     const [surveys, setSurveys] = useState(tmpSurveys);
     const [questionTypes] = useState([
@@ -211,11 +211,18 @@ export const ContextProvider = ({ children }) => {
 
     const [toast, setToast] = useState({ message: "", show: false });
 
-    const setUserToken = (token) => {
+    const setUserToken = (token, keepSignedIn) => {
         if (token) {
-            localStorage.setItem("TOKEN", token);
+            if (keepSignedIn) {
+                localStorage.setItem("TOKEN", token);
+                sessionStorage.removeItem("TOKEN");
+            } else {
+                sessionStorage.setItem("TOKEN", token);
+                localStorage.removeItem("TOKEN");
+            }
         } else {
             localStorage.removeItem("TOKEN");
+            sessionStorage.removeItem("TOKEN");
         }
         _setUserToken(token);
     };

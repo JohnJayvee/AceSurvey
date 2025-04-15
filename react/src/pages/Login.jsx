@@ -7,12 +7,14 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Loader as RsuiteLoader } from "rsuite";
 import "rsuite/dist/rsuite.min.css";
 import Bulb from "../components/Bulb";
+import logo from "/AceLogo.png"; // Update path according to your logo location
 
 export default function Login() {
     const { setCurrentUser, setUserToken } = useStateContext();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [keepSignedIn, setKeepSignedIn] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -29,7 +31,7 @@ export default function Login() {
                 password,
             });
             setCurrentUser(data.user);
-            setUserToken(data.token);
+            setUserToken(data.token, keepSignedIn);
         } catch (error) {
             let errorMessage = "Email or password is incorrect";
             if (error.response) {
@@ -66,17 +68,23 @@ export default function Login() {
                     ></div>
                 )}
                 <div className="bg-white drop-shadow-xl p-6 m-4 rounded-lg w-full animated fadeInDown">
+                    <div className="flex justify-center mb-6">
+                        <img
+                            src={logo}
+                            alt="Logo"
+                            className="h-16 w-auto"
+                        />
+                    </div>
                     <form onSubmit={onSubmit} className="w-full">
                         <h1 className="text-2xl font-semibold text-center my-4">
                             Login into your account
                         </h1>
                         <input
-                            type="email"
+                            type="text"
                             placeholder="Email"
                             value={email}
                             onChange={(ev) => setEmail(ev.target.value)}
                             className="form-control p-3 my-3"
-                            required
                         />
                         <div className="relative">
                             <input
@@ -85,7 +93,6 @@ export default function Login() {
                                 value={password}
                                 onChange={(ev) => setPassword(ev.target.value)}
                                 className="form-control p-3 my-3 w-full pr-10"
-                                required
                             />
                             <span
                                 onClick={toggleShowPassword}
@@ -98,6 +105,17 @@ export default function Login() {
                                 )}
                             </span>
                         </div>
+                        <div className="flex items-center my-3">
+                            <input
+                                type="checkbox"
+                                checked={keepSignedIn}
+                                onChange={(ev) => setKeepSignedIn(ev.target.checked)}
+                                className="form-checkbox"
+                            />
+                            <label className="ml-2 text-sm text-gray-600">
+                                Keep me signed in
+                            </label>
+                        </div>
                         <button
                             type="submit"
                             disabled={loading}
@@ -106,17 +124,6 @@ export default function Login() {
                         >
                             {loading ? <RsuiteLoader size="sm" /> : "Login"}
                         </button>
-
-                        <p className="text-center mt-4 text-slate-500 text-sm md:text-base">
-                            Don't have an account?{" "}
-                            <Link
-                                to="/signup"
-                                className="text-blue-500 ml-1"
-                                style={{ textDecoration: "none" }}
-                            >
-                                Create an account
-                            </Link>
-                        </p>
                     </form>
                 </div>
             </div>
