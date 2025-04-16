@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Divider from "@mui/material/Divider";
 import { VscSignOut } from "react-icons/vsc";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUnlockAlt, FaUserCircle } from "react-icons/fa";
 import { useStateContext } from "../contexts/ContextProvider";
 import axiosClient from "../axios";
 
@@ -97,7 +97,7 @@ const UserProfilePopup = ({ onLogout }) => {
                 className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
             >
                 <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
-                    <FaUserCircle size={22} />
+                    <FaUnlockAlt size={22} />
                 </div>
                 <span className="ml-2">Change Password</span>
             </div>
