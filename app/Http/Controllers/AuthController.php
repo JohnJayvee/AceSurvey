@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\SignupRequest;
+use App\Http\Requests\ChangePasswordRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -18,15 +20,14 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password'=> bcrypt($data['password']),
+            'password' => bcrypt($data['password']),
         ]);
         $token = $user->createToken('main')->plainTextToken;
 
         return response([
             'user' => $user,
-            'token'=> $token
+            'token' => $token
         ]);
-
     }
 
     public function login(LoginRequest $request)
@@ -47,23 +48,44 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token
         ]);
-
     }
 
     public function logout(Request $request)
-        {
-            /** @var User $user */
-            $user = Auth::user();
-            // Revoke the token that was used to authenticate the current request...
-            $user->currentAccessToken()->delete();
-    
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        // Revoke the token that was used to authenticate the current request...
+        $user->currentAccessToken()->delete();
+
+        return response([
+            'success' => true
+        ]);
+    }
+
+    public function me(Request $request)
+    {
+        return $request->user();
+    }
+
+    public function changePassword(ChangePasswordRequest $request)
+    {
+        $user = Auth::user();
+        $data = $request->validated();
+
+        // Check if the current password matches
+        if (!Hash::check($data['current_password'], $user->password)) {
             return response([
-                'success' => true
-            ]);
+                'error' => 'Current password is incorrect'
+            ], 422);
         }
-    
-        public function me(Request $request)
-        {
-            return $request->user();
-        }
+
+        // Update the password
+        $user->password = Hash::make($data['new_password']);
+        $user->save();
+
+        return response([
+            'success' => true,
+            'message' => 'Password changed successfully'
+        ]);
+    }
 }

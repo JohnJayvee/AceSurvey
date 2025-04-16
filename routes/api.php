@@ -14,6 +14,7 @@ Route::post('/survey/{survey}/answer', [SurveyController::class, 'storeAnswer'])
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/me', [AuthController::class, 'me'])->name('me');
     Route::apiResource('survey', SurveyController::class);
 
