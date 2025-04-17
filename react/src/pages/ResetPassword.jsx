@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axiosClient from '../axios';
 import { useParams } from 'react-router-dom';
 import { Loader as RsuiteLoader } from 'rsuite';
@@ -11,6 +11,16 @@ const ResetPassword = () => {
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [countdown, setCountdown] = useState(null);
+
+    useEffect(() => {
+        if (countdown !== null && countdown > 0) {
+            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+            return () => clearTimeout(timer);
+        } else if (countdown === 0) {
+            window.location.href = '/login';  // Redirect to login page or any other page
+        }
+    }, [countdown]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,6 +35,8 @@ const ResetPassword = () => {
                 password_confirmation: passwordConfirmation,
             });
             setMessage(data.message);
+            // Start countdown after successful reset
+            setCountdown(5);
         } catch (error) {
             setMessage(error.response.data.message);
         } finally {
@@ -37,7 +49,7 @@ const ResetPassword = () => {
             <div className="flex flex-col items-center my-auto w-full max-w-lg mx-auto">
                 {message && (
                     <div className="w-full bg-green-100 text-center font-semibold text-sm rounded-md text-green-400 py-2 px-3 mb-2">
-                        {message}
+                        {message} {countdown !== null && countdown > 0 && `Redirecting in ${countdown} seconds...`}
                     </div>
                 )}
                 <div className="bg-white drop-shadow-xl p-6 m-4 rounded-lg w-full animated fadeInDown">
