@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -9,8 +8,9 @@ use App\Http\Requests\SignupRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailChanged;
 use App\Http\Requests\ChangePasswordRequest;
-
 
 class AuthController extends Controller
 {
@@ -43,6 +43,7 @@ class AuthController extends Controller
                 'error' => 'The Provided credentials are not correct'
             ], 422);
         }
+
         $user = Auth::user();
         $token = $user->createToken('main')->plainTextToken;
 
@@ -91,15 +92,11 @@ class AuthController extends Controller
         ]);
     }
 
-
-
     public function sendResetLinkEmail(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $data = $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $status = Password::sendResetLink($data);
 
         if ($status === Password::RESET_LINK_SENT) {
             return response()->json(['message' => __($status)], 200);
@@ -110,17 +107,15 @@ class AuthController extends Controller
         }
     }
 
-
-
     public function reset(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'token' => 'required',
             'email' => 'required|email',
             'password' => 'required|min:8|confirmed',
         ]);
         $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
+            $data,
             function ($user, $password) {
                 $user->forceFill([
                     'password' => Hash::make($password)
@@ -133,5 +128,19 @@ class AuthController extends Controller
             : response()->json(['message' => __($status)], 400);
     }
 
+    public function changeEmail(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email|unique:users,email',
+        ]);
 
+        $user = Auth::user();
+        $user->email = $data['email'];
+        $user->save();
+
+        // Send email notification
+        Mail::to($user->email)->send(new EmailChanged($user));
+
+        return response()->json(['message' => 'Email address updated successfully.'], 200);
+    }
 }

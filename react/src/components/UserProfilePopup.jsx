@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Divider from "@mui/material/Divider";
 import { VscSignOut } from "react-icons/vsc";
-import { FaUnlockAlt, FaUserCircle } from "react-icons/fa";
+import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
 import { useStateContext } from "../contexts/ContextProvider";
 import axiosClient from "../axios";
 
@@ -10,12 +10,17 @@ const UserProfilePopup = ({ onLogout }) => {
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [newPasswordConfirmation, setNewPasswordConfirmation] = useState("");
+    const [currentEmail, setCurrentEmail] = useState("");
+    const [newEmail, setNewEmail] = useState("");
+    const [newEmailConfirmation, setNewEmailConfirmation] = useState("");
     const [message, setMessage] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
     useEffect(() => {
         axiosClient.get("/me").then(({ data }) => {
             setCurrentUser(data);
+            setCurrentEmail(data.email);
         });
     }, []);
 
@@ -30,49 +35,88 @@ const UserProfilePopup = ({ onLogout }) => {
 
             setMessage(response.data.message);
             showToast("Password changed successfully");
-            closeModal();
+            closePasswordModal();
         } catch (error) {
-            const { response } = error;
-            if (response?.data) {
-                const { message, errors } = response.data;
-
-                if (errors) {
-                    // Combine and show all error messages, separated by newlines
-                    const allErrors = Object.values(errors).flat();
-                    const formattedMessage = allErrors.join("\n"); // Join with newline for toast
-                    showToast(
-                        <div>
-                            {allErrors.map((err, i) => (
-                                <div key={i}>{err}</div>  // Render each error in a separate line
-                            ))}
-                        </div>
-                    );
-                    // setMessage(formattedMessage); // Set the message for modal
-                } else if (message) {
-                    showToast(message);
-                    // setMessage(message);
-                } else {
-                    showToast(response.data.error || "An unexpected error occurred");
-                    //setMessage("An unexpected error occurred");
-                }
-            } else {
-                showToast("Network error or server not responding");
-                // setMessage("Network error or server not responding");
-            }
+            handleErrorResponse(error);
         }
     };
 
+    const handleChangeEmail = async (e) => {
+        e.preventDefault();
 
-    const openModal = () => {
-        setIsModalOpen(true);
+        if (!newEmail || !newEmailConfirmation) {
+            return showToast("New email and confirmation are required.");
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(newEmail)) {
+            return showToast("Please enter a valid email address.");
+        }
+
+        if (newEmail !== newEmailConfirmation) {
+            return showToast("New email and confirmation do not match.");
+        }
+
+        try {
+            const response = await axiosClient.post("/change-email", {
+                current_email: currentEmail,
+                email: newEmail,
+                new_email_confirmation: newEmailConfirmation,
+            });
+
+            setMessage(response.data.message);
+            showToast("Email changed successfully");
+            closeEmailModal();
+        } catch (error) {
+            handleErrorResponse(error);
+        }
     };
 
-    const closeModal = () => {
-        setIsModalOpen(false);
+    const handleErrorResponse = (error) => {
+        const { response } = error;
+        if (response?.data) {
+            const { message, errors } = response.data;
+
+            if (errors) {
+                const allErrors = Object.values(errors).flat();
+                showToast(
+                    <div>
+                        {allErrors.map((err, i) => (
+                            <div key={i}>{err}</div>
+                        ))}
+                    </div>
+                );
+            } else if (message) {
+                showToast(message);
+            } else {
+                showToast(response.data.error || "An unexpected error occurred");
+            }
+        } else {
+            showToast("Network error or server not responding");
+        }
+    };
+
+    const openPasswordModal = () => {
+        setIsPasswordModalOpen(true);
+    };
+
+    const closePasswordModal = () => {
+        setIsPasswordModalOpen(false);
         setMessage("");
         setCurrentPassword("");
         setNewPassword("");
         setNewPasswordConfirmation("");
+    };
+
+    const openEmailModal = () => {
+        setIsEmailModalOpen(true);
+    };
+
+    const closeEmailModal = () => {
+        setIsEmailModalOpen(false);
+        setMessage("");
+        setNewEmail("");
+        setNewEmailConfirmation("");
     };
 
     return (
@@ -93,7 +137,7 @@ const UserProfilePopup = ({ onLogout }) => {
             <Divider />
 
             <div
-                onClick={openModal}
+                onClick={openPasswordModal}
                 className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
             >
                 <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
@@ -102,8 +146,18 @@ const UserProfilePopup = ({ onLogout }) => {
                 <span className="ml-2">Change Password</span>
             </div>
 
-            {isModalOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div
+                onClick={openEmailModal}
+                className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
+            >
+                <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
+                    <FaEnvelope size={22} />
+                </div>
+                <span className="ml-2">Change Email</span>
+            </div>
+
+            {isPasswordModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="bg-white p-6 rounded-md w-80">
                         <h2 className="text-lg font-semibold mb-4">Change Password</h2>
                         <form onSubmit={handleChangePassword}>
@@ -140,8 +194,6 @@ const UserProfilePopup = ({ onLogout }) => {
                             >
                                 Change Password
                             </button>
-
-                            {/* Show message */}
                             {message && (
                                 <div className="mt-2 text-center text-red-500 whitespace-pre-line">
                                     {message}
@@ -149,7 +201,61 @@ const UserProfilePopup = ({ onLogout }) => {
                             )}
                         </form>
                         <button
-                            onClick={closeModal}
+                            onClick={closePasswordModal}
+                            className="w-full p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 mt-4"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {isEmailModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white p-6 rounded-md w-80">
+                        <h2 className="text-lg font-semibold mb-4">Change Email</h2>
+                        <form onSubmit={handleChangeEmail}>
+                            <div className="mb-2">
+                                <label className="block text-sm font-medium text-gray-700">Current Email</label>
+                                <input
+                                    type="email"
+                                    value={currentEmail}
+                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                    disabled
+                                />
+                            </div>
+                            <div className="mb-2">
+                                <label className="block text-sm font-medium text-gray-700">New Email</label>
+                                <input
+                                    type="email"
+                                    value={newEmail}
+                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                />
+                            </div>
+                            <div className="mb-2">
+                                <label className="block text-sm font-medium text-gray-700">Confirm New Email</label>
+                                <input
+                                    type="email"
+                                    value={newEmailConfirmation}
+                                    onChange={(e) => setNewEmailConfirmation(e.target.value)}
+                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                            >
+                                Change Email
+                            </button>
+                            {message && (
+                                <div className="mt-2 text-center text-red-500 whitespace-pre-line">
+                                    {message}
+                                </div>
+                            )}
+                        </form>
+                        <button
+                            onClick={closeEmailModal}
                             className="w-full p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 mt-4"
                         >
                             Cancel
