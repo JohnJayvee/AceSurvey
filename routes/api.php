@@ -12,6 +12,12 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/survey/get-by-slug/{survey:slug}', [SurveyController::class, 'getBySlug'])->name('survey.getBySlug');
 Route::post('/survey/{survey}/answer', [SurveyController::class, 'storeAnswer'])->name('survey.storeAnswer');
 
+
+Route::post('forgot-password', [AuthController::class, 'sendResetLinkEmail']);
+Route::post('reset', [AuthController::class, 'reset'])->name('password.reset');
+
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/change-password', [AuthController::class, 'changePassword']);

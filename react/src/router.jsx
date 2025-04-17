@@ -12,6 +12,8 @@ const SurveyView = React.lazy(() => import("./pages/SurveyView"));
 const SurveyPublicView = React.lazy(() => import("./pages/SurveyPublicView"));
 const SurveyResponse = React.lazy(() => import("./pages/SurveyResponse"));
 const Respondent = React.lazy(() => import("./pages/Respondent"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 
 // Import the custom loading spinner with animation
 import Loading from './components/Loading';
@@ -48,6 +50,10 @@ const DynamicTitle = ({ children }) => {
             } else {
                 title = "Survey View";
             }
+        } else if (path === "/forgot-password") {
+            title = "Forgot Password";
+        } else if (path.startsWith("/reset-password/")) {
+            title = "Reset Password";
         }
 
         document.title = title;
@@ -114,6 +120,14 @@ const router = createBrowserRouter([
             {
                 path: "/signup",
                 element: <Signup />,
+            },
+            {
+                path: "/forgot-password",
+                element: <ForgotPassword />,
+            },
+            {
+                path: "/reset-password/:token",
+                element: <ResetPassword />,
             },
         ],
     },

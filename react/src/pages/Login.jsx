@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom"; // Import Link from react-router-dom
 import axiosClient from "../axios";
 import { useStateContext } from "../contexts/ContextProvider";
 import Footer from "../components/Footer";
@@ -125,6 +125,14 @@ export default function Login() {
                             {loading ? <RsuiteLoader size="sm" /> : "Login"}
                         </button>
                     </form>
+                    <div className="mt-4 text-center">
+                        <Link
+                            to="http://localhost:3000/forgot-password" // Forgot Password link
+                            className="text-blue-500 text-sm hover:underline"
+                        >
+                            Forgot your password?
+                        </Link>
+                    </div>
                 </div>
             </div>
             <Footer />
