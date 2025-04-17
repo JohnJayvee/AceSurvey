@@ -1,0 +1,36 @@
+/* src/components/Loading.css */
+
+/* Fullscreen container for the loading animation */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    /* Full screen height */
+    background-color: #ffffff;
+    /* Light background for clean look */
+    opacity: 0;
+    /* Initially invisible */
+    animation: fadeIn 1.5s ease-out forwards;
+    /* Fade-in effect for logo */
+}
+
+/* Logo styles */
+.loading-logo {
+    width: 150px;
+    /* Adjust to fit your logo size */
+    /* You can adjust the logo size if needed */
+}
+
+/* Fade-in effect */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        /* Start invisible */
+    }
+
+    100% {
+        opacity: 1;
+        /* Fade to full opacity */
+    }
+}

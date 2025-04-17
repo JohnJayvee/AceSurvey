@@ -1,17 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
-import GuestLayout from "./components/GuestLayout";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import DefaultLayout from "./components/DefaultLayout";
-import Dashboard from "./pages/Dashboard";
-import Surveys from "./pages/Surveys";
-import SurveyView from "./pages/SurveyView";
-import SurveyPublicView from "./pages/SurveyPublicView";
-import SurveyResponse from "./pages/SurveyResponse";
-import Respondent from "./pages/Respondent";
+const GuestLayout = React.lazy(() => import("./components/GuestLayout"));
+const Login = React.lazy(() => import("./pages/Login"));
+const Signup = React.lazy(() => import("./pages/Signup"));
+const DefaultLayout = React.lazy(() => import("./components/DefaultLayout"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Surveys = React.lazy(() => import("./pages/Surveys"));
+const SurveyView = React.lazy(() => import("./pages/SurveyView"));
+const SurveyPublicView = React.lazy(() => import("./pages/SurveyPublicView"));
+const SurveyResponse = React.lazy(() => import("./pages/SurveyResponse"));
+const Respondent = React.lazy(() => import("./pages/Respondent"));
+
+// Import the custom loading spinner with animation
+import Loading from './components/Loading';
 
 const capitalizeFirstLetter = (string) => {
     return string.replace(/\b\w/g, char => char.toUpperCase());
@@ -57,9 +60,11 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: (
-            <DynamicTitle>
-                <DefaultLayout />
-            </DynamicTitle>
+            <Suspense fallback={<Loading />}>
+                <DynamicTitle>
+                    <DefaultLayout />
+                </DynamicTitle>
+            </Suspense>
         ),
         children: [
             {
@@ -95,9 +100,11 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: (
-            <DynamicTitle>
-                <GuestLayout />
-            </DynamicTitle>
+            <Suspense fallback={<Loading />}>
+                <DynamicTitle>
+                    <GuestLayout />
+                </DynamicTitle>
+            </Suspense>
         ),
         children: [
             {
@@ -113,9 +120,11 @@ const router = createBrowserRouter([
     {
         path: "/survey/public/:slug",
         element: (
-            <DynamicTitle>
-                <SurveyPublicView />
-            </DynamicTitle>
+            <Suspense fallback={<Loading />}>
+                <DynamicTitle>
+                    <SurveyPublicView />
+                </DynamicTitle>
+            </Suspense>
         ),
     },
 ]);
