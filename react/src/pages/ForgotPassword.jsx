@@ -6,18 +6,22 @@ import 'rsuite/dist/rsuite.min.css';
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
+    const [isError, setIsError] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage('');
+        setIsError(false);
         setLoading(true);
 
         try {
             const { data } = await axiosClient.post('/forgot-password', { email });
             setMessage(data.message);
+            setIsError(false);
         } catch (error) {
-            setMessage(error.response.data.message);
+            setMessage(error.response?.data?.message || 'Something went wrong.');
+            setIsError(true);
         } finally {
             setLoading(false);
         }
@@ -27,7 +31,11 @@ const ForgotPassword = () => {
         <div className="relative min-h-screen flex flex-col justify-between">
             <div className="flex flex-col items-center my-auto w-full max-w-lg mx-auto">
                 {message && (
-                    <div className="w-full bg-green-100 text-center font-semibold text-sm rounded-md text-green-400 py-2 px-3 mb-2">
+                    <div className={`w-full text-center font-semibold text-sm rounded-md py-2 px-3 mb-2
+                        ${isError
+                            ? 'bg-red-100 text-red-500'
+                            : 'bg-green-100 text-green-500'}
+                    `}>
                         {message}
                     </div>
                 )}
@@ -37,12 +45,11 @@ const ForgotPassword = () => {
                             Forgot Password
                         </h1>
                         <input
-                            type="email"
+                            type="text"
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="form-control p-3 my-3"
-                            required
                         />
                         <button
                             type="submit"
