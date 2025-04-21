@@ -10,25 +10,65 @@ import { format } from "date-fns";
 import Footer from "../components/Footer.jsx";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';  // Importing Recharts
 
 export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({});
+    const [analyticsData, setAnalyticsData] = useState({});
+    const [chartData, setChartData] = useState([]);
 
     useEffect(() => {
         setLoading(true);
+
+        // Fetch the dashboard data
         axiosClient
-            .get(`/dashboard`)
+            .get(`/dashboard`)  // Keep your original dashboard API
+            .then((res) => {
+                setData(res.data);
+            })
+            .catch((error) => {
+                setLoading(false);
+                return error;
+            });
+
+        // Fetch the analytics data
+        axiosClient
+            .get(`/survey-analytics`)  // New API for analytics
             .then((res) => {
                 setLoading(false);
-                setData(res.data);
-                return res;
+                setAnalyticsData(res.data.analytics); // Set the analytics data
+                setChartData(generateMonthlyData(res.data.analytics.surveyStats)); // Generate monthly data for chart
             })
             .catch((error) => {
                 setLoading(false);
                 return error;
             });
     }, []);
+
+    const generateMonthlyData = (surveyStats) => {
+        const months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        const chartData = months.map(month => ({
+            name: month,
+            total: 0,
+            responses: 0
+        }));
+
+        surveyStats.forEach((surveyStat) => {
+            const surveyDate = new Date(surveyStat.created_at); // Ensure the date is parsed properly
+            const surveyMonth = surveyDate.getMonth(); // Get the month index (0 - 11)
+
+            chartData[surveyMonth].total += surveyStat.questions;
+            chartData[surveyMonth].responses += surveyStat.answers;
+        });
+
+        return chartData;
+    };
+
 
     const navigate = useNavigate();
 
@@ -188,7 +228,50 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* Analytics Section */}
                 <div className="w-full lg:w-2/3">
+                    <DashboardCard
+                        className="order-4 lg:order-3 row-span-2 p-6 mt-5 lg:mt-0 mb-4"
+                        style={{ animationDelay: "0.3s" }}
+                    >
+                        <p className="font-semibold mb-4">
+                            {loading ? <Skeleton width={150} /> : "Survey Analytics"}
+                        </p>
+                        {loading ? (
+                            <div className="h-96">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                    <div key={i} className="px-4 py-2 mb-2">
+                                        <div className="flex justify-between">
+                                            <Skeleton width={200} />
+                                            <Skeleton width={100} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <LineChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="total"
+                                        stroke="#8884d8"
+                                        activeDot={{ r: 8 }}
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="responses"
+                                        stroke="#82ca9d"
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        )}
+                    </DashboardCard>
+
                     <DashboardCard
                         className="order-4 lg:order-3 row-span-2 p-6"
                         style={{ animationDelay: "0.3s" }}
@@ -208,18 +291,14 @@ export default function Dashboard() {
                                 ))}
                             </div>
                         ) : (
-                            data.latestAnswers &&
-                                data.latestAnswers.length > 0 ? (
+                            data.latestAnswers && data.latestAnswers.length > 0 ? (
                                 <div className="text-left h-96 overflow-y-auto">
                                     {data.latestAnswers.map((answer) => (
                                         <div
                                             key={answer.id}
                                             className="border-b-1 border-gray-200 py-2 cursor-pointer"
                                             onClick={() =>
-                                                handleViewDetail(
-                                                    answer.survey_id,
-                                                    answer.id
-                                                )
+                                                handleViewDetail(answer.survey_id, answer.id)
                                             }
                                         >
                                             <div className="px-4 py-2 hover:bg-gray-50 rounded-lg flex justify-between ">
@@ -228,9 +307,7 @@ export default function Dashboard() {
                                                 </div>
                                                 <div>
                                                     <p className="text-xs md:text-sm bg-gray-50 py-1 px-2 rounded-lg">
-                                                        {formatDate(
-                                                            answer.end_date
-                                                        )}
+                                                        {formatDate(answer.end_date)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -246,6 +323,8 @@ export default function Dashboard() {
                     </DashboardCard>
                 </div>
             </div>
+
+            <Footer />
         </div>
     );
 }

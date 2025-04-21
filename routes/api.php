@@ -14,6 +14,8 @@ Route::post('forgot-password', [AuthController::class, 'sendResetLinkEmail']);
 Route::post('reset', [AuthController::class, 'reset'])->name('password.reset');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/survey-analytics', [DashboardController::class, 'analytics']);
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/change-email', [AuthController::class, 'changeEmail'])->name('changeEmail'); // New route for changing email

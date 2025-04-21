@@ -41,4 +41,71 @@ class DashboardController extends Controller
             'latestAnswers' => SurveyAnswerResource::collection($latestAnswers)
         ];
     }
+
+    public function analytics(Request $request)
+    {
+        $user = $request->user(); // Authenticated user
+
+        // Get survey statistics (survey answers count)
+        $surveyStats = Survey::withCount('answers')
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(function ($survey) {
+                return [
+                    'title' => $survey->title,
+                    'answers' => $survey->answers_count,  // Answers count for each survey
+                    'created_at' => $survey->created_at->format('Y-m-d H:i:s'), // Added creation date
+                ];
+            });
+
+        // Fetch the number of questions for each survey
+        $surveyQuestionsCount = Survey::withCount('questions')
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(function ($survey) {
+                return [
+                    'title' => $survey->title,
+                    'questions' => $survey->questions_count,  // Questions count for each survey
+                ];
+            });
+
+        // Fetch additional analytics like active vs expired surveys
+        $surveyStatus = Survey::where('user_id', $user->id)
+            ->get()
+            ->map(function ($survey) {
+                $isExpired = $survey->expire_date <= now();
+                return [
+                    'title' => $survey->title,
+                    'status' => $isExpired ? 'Expired' : ($survey->status ? 'Active' : 'Closed'),
+                ];
+            });
+
+        // Combine the survey statistics, questions count, and survey status into one array
+        $combinedStats = $surveyStats->map(function ($stat) use ($surveyQuestionsCount, $surveyStatus) {
+            $questionsCount = $surveyQuestionsCount->firstWhere('title', $stat['title']);
+            $status = $surveyStatus->firstWhere('title', $stat['title']);
+
+            return [
+                'title' => $stat['title'],
+                'answers' => $stat['answers'],
+                'questions' => $questionsCount ? $questionsCount['questions'] : 0,
+                'status' => $status ? $status['status'] : 'Unknown', // Default status if not found
+                'created_at' => $stat['created_at'], // Include the creation date
+
+            ];
+        });
+
+        // Optionally, calculate some overall statistics, like total answers and total surveys
+        $totalSurveys = $surveyStats->count();
+        $totalAnswers = $surveyStats->sum('answers');
+
+        return response()->json([
+            'analytics' => [
+                'surveyStats' => $combinedStats,
+                'totalAnswers' => $totalAnswers,
+                'totalSurveys' => $totalSurveys,
+            ],
+        ]);
+    }
+
 }
