@@ -10,8 +10,8 @@ import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
 import { format } from "date-fns";
 import { MdOutlineInfo } from "react-icons/md";
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 export default function SurveyResponse() {
     const { id } = useParams();
@@ -21,6 +21,7 @@ export default function SurveyResponse() {
     const [responseCount, setResponseCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         const fetchSurveyData = async () => {
@@ -47,67 +48,51 @@ export default function SurveyResponse() {
         }
     }, [id]);
 
-    if (loading) {
-        return (
-            <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
-                <div className="w-full mb-4">
-                    <Skeleton height={32} width={300} />
-                </div>
-                <div className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full">
-                    <Skeleton circle width={48} height={48} />
-                </div>
-                <div className="w-full flex gap-4 flex-col">
-                    {/* Loading state for statistics card */}
-                    <div className="bg-white rounded-lg w-full p-6">
-                        <div className="w-full">
-                            <Skeleton height={60} width={120} />
-                            <Skeleton height={20} width={200} />
-                        </div>
-                    </div>
+    const handleGoBack = () => navigate(-1);
 
-                    {/* Loading state for data grid */}
-                    <div className="bg-white rounded-lg p-4 w-full">
-                        <div className="h-[400px]">
-                            {[...Array(5)].map((_, index) => (
-                                <div key={index} className="flex justify-between p-4 border-b">
-                                    <Skeleton width={200} />
-                                    <Skeleton width={150} />
-                                    <Skeleton width={150} />
-                                    <Skeleton width={80} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (error) return <div>Error: {error}</div>;
-    if (!responses?.data?.length) {
-        return (
-            <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
-                <div className="w-full mb-4 text-2xl font-semibold">
-                    {survey.title} survey responses
-                </div>
-                <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-gray-600 text-lg">
-                        No responses found for this survey
-                    </p>
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                        Go Back
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    function handleViewDetail(surveyId, responseId) {
+    const handleViewDetail = (surveyId, responseId) => {
         navigate(`/surveys/${surveyId}/responses/${responseId}`);
-    }
+    };
+
+    const downloadCSV = () => {
+        if (!responses.data.length) return;
+
+        // Get unique questions
+        const allQuestionsSet = new Set();
+        responses.data.forEach((response) => {
+            response.answers.forEach((ans) => allQuestionsSet.add(ans.question));
+        });
+        const allQuestions = Array.from(allQuestionsSet);
+
+        const headers = ["Response ID", "Date", "Time", ...allQuestions];
+        const csvRows = [headers.join(",")];
+
+        responses.data.forEach((response) => {
+            const createdAt = new Date(response.answers[0]?.created_at || "");
+            const answerMap = {};
+            response.answers.forEach((ans) => {
+                answerMap[ans.question] = ans.answer;
+            });
+
+            const row = [
+                response.id,
+                format(createdAt, "MMMM d, yyyy"),
+                format(createdAt, "h:mm a"),
+                ...allQuestions.map((q) =>
+                    `"${(answerMap[q] || "").replace(/"/g, '""')}"`
+                ),
+            ];
+            csvRows.push(row.join(","));
+        });
+
+        const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${survey.title}_responses.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
 
     const columns = [
         {
@@ -149,10 +134,7 @@ export default function SurveyResponse() {
                             onClick={() => handleViewDetail(id, params.row.id)}
                             className="p-2 my-2 rounded-lg text-black cursor-pointer border"
                         >
-                            <MdOutlineInfo
-                                size={18}
-                                className="text-gray-600"
-                            />
+                            <MdOutlineInfo size={18} className="text-gray-600" />
                         </div>
                     </Tooltip>
                 </div>
@@ -161,11 +143,8 @@ export default function SurveyResponse() {
     ];
 
     const rows = responses.data.map((response) => {
-        // Get the first answer's created_at as the response timestamp
         const createdAt = new Date(response.answers[0]?.created_at);
-
-        // Combine all answers into a single string or show the first answer
-        const answerDisplay = response.answers[0]?.answer || 'No answer';
+        const answerDisplay = response.answers[0]?.answer || "No answer";
 
         return {
             id: response.id,
@@ -175,8 +154,69 @@ export default function SurveyResponse() {
         };
     });
 
-    function handleGoBack() {
-        navigate(-1);
+    // Filter the rows based on the search query
+    const filteredRows = rows.filter(
+        (row) =>
+            row.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            row.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            row.time.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (loading) {
+        return (
+            <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
+                <div className="w-full mb-4">
+                    <Skeleton height={32} width={300} />
+                </div>
+                <div className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full">
+                    <Skeleton circle width={48} height={48} />
+                </div>
+                <div className="w-full flex gap-4 flex-col">
+                    <div className="bg-white rounded-lg w-full p-6">
+                        <div className="w-full">
+                            <Skeleton height={60} width={120} />
+                            <Skeleton height={20} width={200} />
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 w-full">
+                        <div className="h-[400px]">
+                            {[...Array(5)].map((_, index) => (
+                                <div key={index} className="flex justify-between p-4 border-b">
+                                    <Skeleton width={200} />
+                                    <Skeleton width={150} />
+                                    <Skeleton width={150} />
+                                    <Skeleton width={80} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error)
+        return <div className="text-red-500 text-center">Error: {error}</div>;
+
+    if (!responses?.data?.length) {
+        return (
+            <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
+                <div className="w-full mb-4 text-2xl font-semibold">
+                    {survey.title} survey responses
+                </div>
+                <div className="bg-white rounded-lg p-8 text-center">
+                    <p className="text-gray-600 text-lg">
+                        No responses found for this survey
+                    </p>
+                    <button
+                        onClick={handleGoBack}
+                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -185,24 +225,25 @@ export default function SurveyResponse() {
                 {survey.title} survey responses
             </div>
             <div
-                className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full animate-fade-in-down"
+                className="flex justify-between items-center mb-4 bg-white rounded-lg px-4 w-full animate-fade-in-down"
                 style={{ animationDelay: "0.1s" }}
             >
-                <div className="py-2">
-                    <Tooltip
-                        title="Go Back"
-                        placement="bottom"
-                        TransitionComponent={Fade}
+                <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
+                    <div
+                        className="rounded-full p-4 cursor-pointer hover:bg-gray-100"
+                        onClick={handleGoBack}
                     >
-                        <div
-                            className="rounded-full p-4 cursor-pointer hover:bg-gray-100"
-                            onClick={handleGoBack}
-                        >
-                            <FaArrowLeft className="text-gray-700" />
-                        </div>
-                    </Tooltip>
-                </div>
+                        <FaArrowLeft className="text-gray-700" />
+                    </div>
+                </Tooltip>
+                <button
+                    onClick={downloadCSV}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                    Download CSV
+                </button>
             </div>
+
             <div className="w-full flex gap-4 flex-col">
                 <div
                     className="bg-white rounded-lg w-full flex bg-gradient-to-r from-blue-400 to-blue-800 animate-fade-in-down"
@@ -232,17 +273,26 @@ export default function SurveyResponse() {
                     className="bg-white rounded-lg p-4 w-full h-full animate-fade-in-down"
                     style={{ animationDelay: "0.3s" }}
                 >
+                    <input
+                        type="text"
+                        placeholder="Search responses"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="mb-4 px-4 py-2 border rounded-lg w-full"
+                    />
                     <DataGrid
                         sx={{
-                            [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]:
-                                { outline: "none" },
-                            [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
-                                { outline: "none" },
+                            [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
+                                outline: "none",
+                            },
+                            [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]: {
+                                outline: "none",
+                            },
                         }}
                         initialState={{
                             pagination: { paginationModel: { pageSize: 10 } },
                         }}
-                        rows={rows}
+                        rows={filteredRows}
                         columns={columns}
                         pageSizeOptions={[10, 20, 50, 100]}
                         getRowId={(row) => row.id}
