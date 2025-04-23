@@ -60,10 +60,10 @@ export default function Dashboard() {
 
         surveyStats.forEach((surveyStat) => {
             const surveyDate = new Date(surveyStat.created_at);
-            if (isNaN(surveyDate.getTime())) {
-                console.warn(`Invalid date: ${surveyStat.created_at}`);
-                return;
-            }
+            // if (isNaN(surveyDate.getTime())) {
+            //     console.warn(`Invalid date: ${surveyStat.created_at}`);
+            //     return;
+            // }
 
             const surveyMonth = surveyDate.getMonth();
             chartData[surveyMonth].total += 1;
