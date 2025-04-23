@@ -53,38 +53,32 @@ export default function SurveyResponse() {
     const handleViewDetail = (surveyId, responseId) => {
         navigate(`/surveys/${surveyId}/responses/${responseId}`);
     };
-
     const downloadCSV = () => {
-        if (!responses.data.length) return;
+        if (!responses.data.length || !survey.questions) return;
 
-        // Get unique questions
-        const allQuestionsSet = new Set();
+        // Collect all questions from the survey
+        const allQuestions = survey.questions.map((q) => q.question); // Assuming this is the structure
+
+        const headers = [...allQuestions]; // Column headers are the questions
+        const csvRows = [headers.join(",")]; // Add headers to the CSV data
+
+        // Loop through each response and collect answers per question
         responses.data.forEach((response) => {
-            response.answers.forEach((ans) => allQuestionsSet.add(ans.question));
-        });
-        const allQuestions = Array.from(allQuestionsSet);
-
-        const headers = ["Response ID", "Date", "Time", ...allQuestions];
-        const csvRows = [headers.join(",")];
-
-        responses.data.forEach((response) => {
-            const createdAt = new Date(response.answers[0]?.created_at || "");
-            const answerMap = {};
-            response.answers.forEach((ans) => {
-                answerMap[ans.question] = ans.answer;
+            // Create a row for each response
+            const row = allQuestions.map((q) => {
+                // Find all answers for this question
+                const answers = response.answers.filter((ans) => ans.question === q);
+                // Combine all answers into one string with " | " separator
+                const combined = answers.map((ans) => ans.answer || '').join(" | ");
+                // Escape quotes
+                return `"${combined.replace(/"/g, '""')}"`;
             });
 
-            const row = [
-                response.id,
-                format(createdAt, "MMMM d, yyyy"),
-                format(createdAt, "h:mm a"),
-                ...allQuestions.map((q) =>
-                    `"${(answerMap[q] || "").replace(/"/g, '""')}"`
-                ),
-            ];
+            // Add the row to the CSV data
             csvRows.push(row.join(","));
         });
 
+        // Create a Blob for CSV and trigger the download
         const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -93,6 +87,10 @@ export default function SurveyResponse() {
         a.click();
         window.URL.revokeObjectURL(url);
     };
+
+
+
+
 
     const columns = [
         {
@@ -154,7 +152,6 @@ export default function SurveyResponse() {
         };
     });
 
-    // Filter the rows based on the search query
     const filteredRows = rows.filter(
         (row) =>
             row.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
