@@ -54,20 +54,26 @@ export default function Dashboard() {
 
         const chartData = months.map(month => ({
             name: month,
-            total: 0,
+            total: 0,       // Changed from totalSurveys to total
             responses: 0
         }));
 
         surveyStats.forEach((surveyStat) => {
-            const surveyDate = new Date(surveyStat.created_at); // Ensure the date is parsed properly
-            const surveyMonth = surveyDate.getMonth(); // Get the month index (0 - 11)
+            const surveyDate = new Date(surveyStat.created_at);
+            if (isNaN(surveyDate.getTime())) {
+                console.warn(`Invalid date: ${surveyStat.created_at}`);
+                return;
+            }
 
-            chartData[surveyMonth].total += surveyStat.questions;
+            const surveyMonth = surveyDate.getMonth();
+            chartData[surveyMonth].total += 1;
             chartData[surveyMonth].responses += surveyStat.answers;
         });
 
         return chartData;
     };
+
+
 
 
     const navigate = useNavigate();
