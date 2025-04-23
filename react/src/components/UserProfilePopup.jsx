@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Divider from "@mui/material/Divider";
 import { VscSignOut } from "react-icons/vsc";
 import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";  // Eye icons for show/hide
 import { useStateContext } from "../contexts/ContextProvider";
 import axiosClient from "../axios";
 
@@ -18,6 +19,9 @@ const UserProfilePopup = ({ onLogout }) => {
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [loadingPassword, setLoadingPassword] = useState(false);
     const [loadingEmail, setLoadingEmail] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);  // State to toggle password visibility
+    const [showNewPassword, setShowNewPassword] = useState(false);  // State to toggle new password visibility
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);  // State to toggle confirm password visibility
 
     useEffect(() => {
         axiosClient.get("/me").then(({ data }) => {
@@ -171,6 +175,16 @@ const UserProfilePopup = ({ onLogout }) => {
                 <span className="ml-2">Change Email</span>
             </div>
 
+            <div
+                onClick={onLogout}
+                className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
+            >
+                <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
+                    <VscSignOut size={22} />
+                </div>
+                <span className="ml-2">Logout</span>
+            </div>
+
             {isPasswordModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="bg-white p-6 rounded-md w-80">
@@ -178,30 +192,54 @@ const UserProfilePopup = ({ onLogout }) => {
                         <form onSubmit={handleChangePassword}>
                             <div className="mb-2">
                                 <label className="block text-sm font-medium text-gray-700">Current Password</label>
-                                <input
-                                    type="password"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                    />
+                                    <div
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-2 top-2 cursor-pointer"
+                                    >
+                                        {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                                    </div>
+                                </div>
                             </div>
                             <div className="mb-2">
                                 <label className="block text-sm font-medium text-gray-700">New Password</label>
-                                <input
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                    />
+                                    <div
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute right-2 top-2 cursor-pointer"
+                                    >
+                                        {showNewPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                                    </div>
+                                </div>
                             </div>
                             <div className="mb-2">
                                 <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    value={newPasswordConfirmation}
-                                    onChange={(e) => setNewPasswordConfirmation(e.target.value)}
-                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        value={newPasswordConfirmation}
+                                        onChange={(e) => setNewPasswordConfirmation(e.target.value)}
+                                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                    />
+                                    <div
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-2 top-2 cursor-pointer"
+                                    >
+                                        {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                                    </div>
+                                </div>
                             </div>
                             <button
                                 type="submit"
@@ -239,6 +277,7 @@ const UserProfilePopup = ({ onLogout }) => {
                                 <input
                                     type="email"
                                     value={currentEmail}
+                                    onChange={(e) => setCurrentEmail(e.target.value)}
                                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                                     disabled
                                 />
@@ -248,7 +287,7 @@ const UserProfilePopup = ({ onLogout }) => {
                                 <input
                                     type="email"
                                     value={newEmail}
-                                    onChange={(e) => setNewEmail(e.target.value.toLowerCase())}
+                                    onChange={(e) => setNewEmail(e.target.value)}
                                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                                 />
                             </div>
@@ -257,7 +296,7 @@ const UserProfilePopup = ({ onLogout }) => {
                                 <input
                                     type="email"
                                     value={newEmailConfirmation}
-                                    onChange={(e) => setNewEmailConfirmation(e.target.value.toLowerCase())}
+                                    onChange={(e) => setNewEmailConfirmation(e.target.value)}
                                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                                 />
                             </div>
@@ -286,18 +325,6 @@ const UserProfilePopup = ({ onLogout }) => {
                     </div>
                 </div>
             )}
-
-            <Divider />
-
-            <div
-                onClick={onLogout}
-                className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
-            >
-                <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
-                    <VscSignOut size={22} />
-                </div>
-                <span className="ml-2">Log out</span>
-            </div>
         </div>
     );
 };
