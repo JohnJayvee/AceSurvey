@@ -53,6 +53,7 @@ const UserProfilePopup = ({ onLogout }) => {
         if (!newEmail || !newEmailConfirmation) {
             showToast("New email and confirmation are required.");
             setLoadingEmail(false);
+
             return;
         }
 
@@ -247,7 +248,7 @@ const UserProfilePopup = ({ onLogout }) => {
                                 <input
                                     type="email"
                                     value={newEmail}
-                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    onChange={(e) => setNewEmail(e.target.value.toLowerCase())}
                                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                                 />
                             </div>
@@ -256,7 +257,7 @@ const UserProfilePopup = ({ onLogout }) => {
                                 <input
                                     type="email"
                                     value={newEmailConfirmation}
-                                    onChange={(e) => setNewEmailConfirmation(e.target.value)}
+                                    onChange={(e) => setNewEmailConfirmation(e.target.value.toLowerCase())}
                                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                                 />
                             </div>
