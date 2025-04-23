@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailChanged;
 use App\Http\Requests\ChangePasswordRequest;
+use App\Mail\PasswordChanged;
 
 class AuthController extends Controller
 {
@@ -72,24 +73,34 @@ class AuthController extends Controller
 
     public function changePassword(ChangePasswordRequest $request)
     {
-        $user = Auth::user();
-        $data = $request->validated();
+        try {
+            $user = Auth::user();
+            $data = $request->validated();
 
-        // Check if the current password matches
-        if (!Hash::check($data['current_password'], $user->password)) {
+            // Check if the current password is correct
+            if (!Hash::check($data['current_password'], $user->password)) {
+                return response([
+                    'error' => 'Current password is incorrect'
+                ], 422);
+            }
+
+            // Update the password
+            $user->password = Hash::make($data['new_password']);
+            $user->save();
+
+            // Send confirmation email
+            Mail::to($user->email)->send(new PasswordChanged($user));
+
             return response([
-                'error' => 'Current password is incorrect'
-            ], 422);
+                'success' => true,
+                'message' => 'Password changed successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response([
+                'error' => 'An error occurred while changing the password.',
+                'details' => $e->getMessage()
+            ], 500);
         }
-
-        // Update the password
-        $user->password = Hash::make($data['new_password']);
-        $user->save();
-
-        return response([
-            'success' => true,
-            'message' => 'Password changed successfully'
-        ]);
     }
 
     public function sendResetLinkEmail(Request $request)
