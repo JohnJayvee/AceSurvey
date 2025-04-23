@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axiosClient from '../axios';
 import { Loader as RsuiteLoader } from 'rsuite';
+import { useNavigate } from 'react-router-dom';
 import 'rsuite/dist/rsuite.min.css';
 
 const ForgotPassword = () => {
@@ -8,6 +9,8 @@ const ForgotPassword = () => {
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [countdown, setCountdown] = useState(5);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,39 +30,62 @@ const ForgotPassword = () => {
         }
     };
 
+    // Countdown & redirect effect
+    useEffect(() => {
+        if (message && !isError) {
+            const timer = setInterval(() => {
+                setCountdown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        navigate('/login');
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [message, isError, navigate]);
+
     return (
-        <div className="relative min-h-screen flex flex-col justify-between">
-            <div className="flex flex-col items-center my-auto w-full max-w-lg mx-auto">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-5">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
+                <h1 className="text-2xl font-bold text-center mb-6 text-gray-700">
+                    Forgot Password
+                </h1>
+
                 {message && (
-                    <div className={`w-full text-center font-semibold text-sm rounded-md py-2 px-3 mb-2
-                        ${isError
-                            ? 'bg-red-100 text-red-500'
-                            : 'bg-green-100 text-green-500'}
-                    `}>
+                    <div
+                        className={`text-sm font-medium text-center px-4 py-2 mb-4 rounded-md
+                        ${isError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}
+                    >
                         {message}
+                        {!isError && (
+                            <p className="text-xs text-gray-600 mt-1">
+                                Redirecting to login in {countdown} second{countdown !== 1 && 's'}...
+                            </p>
+                        )}
                     </div>
                 )}
-                <div className="bg-white drop-shadow-xl p-6 m-4 rounded-lg w-full animated fadeInDown">
-                    <form onSubmit={handleSubmit} className="w-full">
-                        <h1 className="text-2xl font-semibold text-center my-4">
-                            Forgot Password
-                        </h1>
-                        <input
-                            type="text"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="form-control p-3 my-3"
-                        />
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"}`}
-                        >
-                            {loading ? <RsuiteLoader size="sm" /> : "Send Reset Link"}
-                        </button>
-                    </form>
-                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full py-3 font-semibold rounded-md text-white transition
+                        ${loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+                    >
+                        {loading ? <RsuiteLoader size="sm" /> : 'Send Reset Link'}
+                    </button>
+                </form>
             </div>
         </div>
     );

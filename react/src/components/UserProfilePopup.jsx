@@ -16,6 +16,8 @@ const UserProfilePopup = ({ onLogout }) => {
     const [message, setMessage] = useState("");
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [loadingPassword, setLoadingPassword] = useState(false);
+    const [loadingEmail, setLoadingEmail] = useState(false);
 
     useEffect(() => {
         axiosClient.get("/me").then(({ data }) => {
@@ -26,6 +28,7 @@ const UserProfilePopup = ({ onLogout }) => {
 
     const handleChangePassword = async (e) => {
         e.preventDefault();
+        setLoadingPassword(true);
         try {
             const response = await axiosClient.post("/change-password", {
                 current_password: currentPassword,
@@ -38,23 +41,32 @@ const UserProfilePopup = ({ onLogout }) => {
             closePasswordModal();
         } catch (error) {
             handleErrorResponse(error);
+        } finally {
+            setLoadingPassword(false);
         }
     };
 
     const handleChangeEmail = async (e) => {
         e.preventDefault();
+        setLoadingEmail(true);
 
         if (!newEmail || !newEmailConfirmation) {
-            return showToast("New email and confirmation are required.");
+            showToast("New email and confirmation are required.");
+            setLoadingEmail(false);
+            return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(newEmail)) {
-            return showToast("Please enter a valid email address.");
+            showToast("Please enter a valid email address.");
+            setLoadingEmail(false);
+            return;
         }
 
         if (newEmail !== newEmailConfirmation) {
-            return showToast("New email and confirmation do not match.");
+            showToast("New email and confirmation do not match.");
+            setLoadingEmail(false);
+            return;
         }
 
         try {
@@ -69,6 +81,8 @@ const UserProfilePopup = ({ onLogout }) => {
             closeEmailModal();
         } catch (error) {
             handleErrorResponse(error);
+        } finally {
+            setLoadingEmail(false);
         }
     };
 
@@ -190,8 +204,12 @@ const UserProfilePopup = ({ onLogout }) => {
                             </div>
                             <button
                                 type="submit"
-                                className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                disabled={loadingPassword}
+                                className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex justify-center items-center gap-2"
                             >
+                                {loadingPassword && (
+                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                )}
                                 Change Password
                             </button>
                             {message && (
@@ -244,8 +262,12 @@ const UserProfilePopup = ({ onLogout }) => {
                             </div>
                             <button
                                 type="submit"
-                                className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                disabled={loadingEmail}
+                                className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex justify-center items-center gap-2"
                             >
+                                {loadingEmail && (
+                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                )}
                                 Change Email
                             </button>
                             {message && (
