@@ -54,7 +54,7 @@ export default function Dashboard() {
 
         const chartData = months.map(month => ({
             name: month,
-            total: 0,       // Changed from totalSurveys to total
+            surveys: 0,       // Changed from totalSurveys to total
             responses: 0
         }));
 
@@ -66,7 +66,7 @@ export default function Dashboard() {
             // }
 
             const surveyMonth = surveyDate.getMonth();
-            chartData[surveyMonth].total += 1;
+            chartData[surveyMonth].surveys += 1;
             chartData[surveyMonth].responses += surveyStat.answers;
         });
 
@@ -264,7 +264,7 @@ export default function Dashboard() {
                                     <Legend />
                                     <Line
                                         type="monotone"
-                                        dataKey="total"
+                                        dataKey="surveys"
                                         stroke="#8884d8"
                                         activeDot={{ r: 8 }}
                                     />
