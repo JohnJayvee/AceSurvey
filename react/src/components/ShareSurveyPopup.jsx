@@ -28,12 +28,32 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
 
     const qrRef = useRef(null);
 
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(shareLink).then(() => {
-            showToast("Link copied to clipboard!");
-            setOpenSharePopup(false);
-        });
+    const fallbackCopy = (text) => {
+        const input = document.createElement("input");
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
     };
+
+    const handleCopyLink = () => {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+            navigator.clipboard.writeText(shareLink).then(() => {
+                showToast("Link copied to clipboard!");
+                setOpenSharePopup(false);
+            }).catch(() => {
+                fallbackCopy(shareLink);
+                showToast("Copied using fallback!");
+                setOpenSharePopup(false);
+            });
+        } else {
+            fallbackCopy(shareLink);
+            showToast("Copied using fallback!");
+            setOpenSharePopup(false);
+        }
+    };
+
 
     const handleDownloadQR = () => {
         const svg = qrRef.current;
