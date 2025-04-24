@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailChanged;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Mail\PasswordChanged;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -33,24 +34,29 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(LoginRequest $request)
+    public function login(Request $request)
     {
-        $credentials = $request->validated();
-        $remember = $credentials['remember'] ?? false;
-        unset($credentials['remember']);
+        $request->validate([
+            'login' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-        if (!Auth::attempt($credentials, $remember)) {
-            return response([
-                'error' => 'The Provided credentials are not correct'
-            ], 422);
+        $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if (!Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
+            throw ValidationException::withMessages([
+                'login' => ['The provided credentials are incorrect.'],
+            ]);
         }
 
         $user = Auth::user();
-        $token = $user->createToken('main')->plainTextToken;
 
-        return response([
+        // Optional: generate token if using Sanctum
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
             'user' => $user,
-            'token' => $token
+            'token' => $token,
         ]);
     }
 

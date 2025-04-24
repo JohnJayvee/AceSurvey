@@ -11,7 +11,7 @@ import logo from "/AceLogo.png"; // Update path according to your logo location
 
 export default function Login() {
     const { setCurrentUser, setUserToken } = useStateContext();
-    const [email, setEmail] = useState("");
+    const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [keepSignedIn, setKeepSignedIn] = useState(false);
@@ -27,16 +27,16 @@ export default function Login() {
 
         try {
             const { data } = await axiosClient.post("/login", {
-                email,
+                login,
                 password,
             });
             setCurrentUser(data.user);
             setUserToken(data.token, keepSignedIn);
         } catch (error) {
-            let errorMessage = "Email or password is incorrect";
+            let errorMessage = "login or password is incorrect";
             if (error.response) {
                 if (error.response.status === 401) {
-                    errorMessage = "Email or password is incorrect";
+                    errorMessage = "login or password is incorrect";
                 } else {
                     const errors = error.response.data.errors || {
                         message: [error.response.data.message || errorMessage],
@@ -81,9 +81,9 @@ export default function Login() {
                         </h1>
                         <input
                             type="text"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(ev) => setEmail(ev.target.value)}
+                            placeholder="Login"
+                            value={login}
+                            onChange={(ev) => setLogin(ev.target.value)}
                             className="form-control p-3 my-3"
                         />
                         <div className="relative">
