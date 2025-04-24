@@ -4,8 +4,8 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite --port=3000",
-        "build": "vite build",
+        "dev": "vite --port=3000 --host",
+        "build": "rm -rf dist && vite build",
         "serve": "serve -s dist",
         "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview"
@@ -29,6 +29,7 @@
         "react-loading-skeleton": "^3.5.0",
         "react-router-dom": "^6.30.0",
         "react-select": "^5.8.0",
+        "recharts": "^2.15.3",
         "rsuite": "^5.79.1",
         "uuid": "^10.0.0",
         "vite-plugin-pwa": "^0.20.0"
