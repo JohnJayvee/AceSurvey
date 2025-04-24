@@ -127,7 +127,7 @@ export default function Login() {
                     </form>
                     <div className="mt-4 text-center">
                         <Link
-                            to="http://localhost:3000/forgot-password" // Forgot Password link
+                            to="/forgot-password" // Forgot Password link
                             className="text-blue-500 text-sm hover:underline"
                         >
                             Forgot your password?
