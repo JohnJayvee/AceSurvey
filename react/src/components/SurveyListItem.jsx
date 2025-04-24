@@ -41,7 +41,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
 
                 const monthlyData = Array.from({ length: 12 }, (_, i) => ({
                     name: new Date(0, i).toLocaleString("default", { month: "short" }),
-                    count: 0,
+                    response: 0,
                 }));
 
                 allStats
@@ -49,7 +49,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                     .forEach(item => {
                         const date = new Date(item.created_at); // or use your date field
                         const monthIndex = date.getMonth();
-                        monthlyData[monthIndex].count += item.answers;
+                        monthlyData[monthIndex].response += item.answers;
                     });
 
                 setGraphData(monthlyData);
@@ -104,7 +104,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                         <XAxis dataKey="name" />
                         <YAxis />
                         <RechartTooltip />
-                        <Line type="monotone" dataKey="count" stroke="#4CAF50" strokeWidth={2} />
+                        <Line type="monotone" dataKey="response" stroke="#4CAF50" strokeWidth={2} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
