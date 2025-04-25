@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Divider from "@mui/material/Divider";
 import { VscSignOut } from "react-icons/vsc";
 import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
@@ -22,8 +22,13 @@ const UserProfilePopup = ({ onLogout }) => {
     const [showPassword, setShowPassword] = useState(false);  // State to toggle password visibility
     const [showNewPassword, setShowNewPassword] = useState(false);  // State to toggle new password visibility
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);  // State to toggle confirm password visibility
+    const hasFetched = useRef(false);
+
 
     useEffect(() => {
+        if (hasFetched.current) return; // skip if already fetched
+        hasFetched.current = true;
+
         axiosClient.get("/me").then(({ data }) => {
             setCurrentUser(data);
             setCurrentEmail(data.email);

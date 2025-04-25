@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import DashboardCard from "../components/DashboardCard";
 import axiosClient from "../axios.js";
 import TButton from "../components/core/TButton.jsx";
@@ -17,33 +17,31 @@ export default function Dashboard() {
     const [data, setData] = useState({});
     const [analyticsData, setAnalyticsData] = useState({});
     const [chartData, setChartData] = useState([]);
+    const hasFetched = useRef(false);
 
     useEffect(() => {
-        setLoading(true);
+        if (hasFetched.current) return; // skip if already fetched
+        hasFetched.current = true;
 
-        // Fetch the dashboard data
-        axiosClient
-            .get(`/dashboard`)  // Keep your original dashboard API
-            .then((res) => {
-                setData(res.data);
-            })
-            .catch((error) => {
-                setLoading(false);
-                return error;
-            });
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const [dashboardRes, analyticsRes] = await Promise.all([
+                    axiosClient.get('/dashboard'),
+                    axiosClient.get('/survey-analytics'),
+                ]);
 
-        // Fetch the analytics data
-        axiosClient
-            .get(`/survey-analytics`)  // New API for analytics
-            .then((res) => {
+                setData(dashboardRes.data);
+                setAnalyticsData(analyticsRes.data.analytics);
+                setChartData(generateMonthlyData(analyticsRes.data.analytics.surveyStats));
+            } catch (err) {
+                console.error('Fetch failed:', err);
+            } finally {
                 setLoading(false);
-                setAnalyticsData(res.data.analytics); // Set the analytics data
-                setChartData(generateMonthlyData(res.data.analytics.surveyStats)); // Generate monthly data for chart
-            })
-            .catch((error) => {
-                setLoading(false);
-                return error;
-            });
+            }
+        };
+
+        fetchData();
     }, []);
 
     const generateMonthlyData = (surveyStats) => {
@@ -152,6 +150,7 @@ export default function Dashboard() {
                                         <img
                                             src={data.latestSurvey.image_url || '/AceLogo.png'} // Add default image path here
                                             className="w-full h-72 mx-auto object-cover rounded-lg"
+                                            loading="lazy"
                                         />
                                         <h3 className="font-bold text-xl mb-3 mt-4">
                                             {data.latestSurvey.title}

@@ -1,11 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useStateContext } from "../contexts/ContextProvider";
 import SurveyListItem from "../components/SurveyListItem";
-import TButton from "../components/core/TButton";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import axiosClient from "../axios";
 import PaginationLinks from "../components/PaginationLinks";
-import Loader from "../components/Loader";
 import Breadcrumbs from "../components/Breadcrumbs";
 import { Link } from "react-router-dom";
 import Skeleton from 'react-loading-skeleton';
@@ -18,6 +16,9 @@ export default function Surveys() {
     const [meta, setMeta] = useState({});
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+
+    // Ref to track ongoing request to prevent duplicates
+    const isRequesting = useRef(false);
 
     const onDeleteClick = (id) => {
         if (window.confirm("Are you sure you want to delete this survey?")) {
@@ -34,48 +35,43 @@ export default function Surveys() {
 
     const debouncedSearch = useCallback(
         debounce((term) => {
-            if (!term.trim()) {
-                getSurveys("/survey");
-            } else {
-                getSurveys("/survey?search=" + encodeURIComponent(term.trim()));
-            }
-        }, 100), // Reduced to 100ms for faster response
+            getSurveys(term ? `/survey?search=${encodeURIComponent(term)}` : "/survey");
+        }, 300), // Debounce search by 300ms
         []
     );
 
-    const getSurveys = (url) => {
-        url = url || "/survey";
-        // Only append search if there's a term and it's not already in URL
-        if (searchTerm.trim() && !url.includes('search')) {
-            url = `${url}${url.includes('?') ? '&' : '?'}search=${encodeURIComponent(searchTerm.trim())}`;
-        }
+    const getSurveys = (url = "/survey") => {
+        if (loading || isRequesting.current) return;  // Prevent duplicate requests if already loading
+
         setLoading(true);
-        axiosClient.get(url)
+        isRequesting.current = true;  // Mark the request as in progress
+
+        console.log("Making request to:", url);  // Log the URL to check the request flow
+
+        axiosClient
+            .get(url)
             .then(({ data }) => {
                 setSurveys(data.data);
                 setMeta(data.meta);
             })
-            .catch((error) => {
-                console.error("Error fetching surveys:", error);
+            .catch((err) => {
+                console.error("Error fetching surveys:", err);
             })
             .finally(() => {
                 setLoading(false);
+                isRequesting.current = false;  // Mark the request as completed
             });
     };
 
+    // This function handles the search input changes
     const handleSearch = (value) => {
         setSearchTerm(value);
-        // Immediate search for short terms (3 chars or less)
-        if (value.length <= 3) {
-            getSurveys("/survey" + (value ? `?search=${encodeURIComponent(value.trim())}` : ""));
-        } else {
-            debouncedSearch(value);
-        }
+        debouncedSearch(value);
     };
 
     useEffect(() => {
         getSurveys();
-    }, []);
+    }, []);  // This will only run once when the component is mounted
 
     const breadcrumbLinks = [
         { to: "/dashboard", label: "Home" },
@@ -83,7 +79,7 @@ export default function Surveys() {
     ];
 
     return (
-        <div className="w-full  xl:w-11/12 mx-auto ">
+        <div className="w-full xl:w-11/12 mx-auto ">
             <div className="flex justify-between mb-8 ">
                 <div className="py-4 items-center">
                     <p className=" font-semibold text-2xl">Survey List</p>
@@ -96,7 +92,7 @@ export default function Surveys() {
                         placeholder="Search surveys..."
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
                         value={searchTerm}
-                        onChange={(e) => handleSearch(e.target.value)}
+                        onChange={(e) => handleSearch(e.target.value)} // Using handleSearch here
                     />
                 </div>
 

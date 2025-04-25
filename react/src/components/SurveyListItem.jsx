@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     ArrowTopRightOnSquareIcon,
     PencilIcon,
@@ -18,6 +18,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
     const [graphData, setGraphData] = useState([]);
 
     const navigate = useNavigate();
+    const hasFetched = useRef(false); // 🛡️ Prevents double-fetching
 
     const isSurveyExpired = (expireDate) => {
         const today = new Date().setHours(0, 0, 0, 0);
@@ -35,8 +36,12 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
     };
 
     useEffect(() => {
-        axios.get("/survey-analytics")
-            .then((res) => {
+        if (hasFetched.current) return; // ⛔ Skip if already fetched
+        hasFetched.current = true;
+
+        const fetchAnalytics = async () => {
+            try {
+                const res = await axios.get("/survey-analytics");
                 const allStats = res.data.analytics.surveyStats;
 
                 const monthlyData = Array.from({ length: 12 }, (_, i) => ({
@@ -47,15 +52,19 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                 allStats
                     .filter(item => item.title === survey.title)
                     .forEach(item => {
-                        const date = new Date(item.created_at); // or use your date field
+                        const date = new Date(item.created_at);
                         const monthIndex = date.getMonth();
                         monthlyData[monthIndex].response += item.answers;
                     });
 
                 setGraphData(monthlyData);
-            });
-    }, [survey.title]);
+            } catch (error) {
+                console.error("Error fetching analytics:", error);
+            }
+        };
 
+        fetchAnalytics();
+    }, [survey.title]);
 
     return (
         <div className="relative flex flex-col p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 animate-fade-in-down">
@@ -63,6 +72,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                 src={survey.image_url || '/AceLogo.png'}
                 alt={survey.title}
                 className="w-full h-64 object-cover rounded-md"
+                loading="lazy"
             />
 
             <div className={`absolute top-6 right-6 text-xs py-1 px-2 rounded-full
@@ -71,8 +81,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                     : survey.status
                         ? "bg-green-300 bg-opacity-40 text-green-500 border border-green-300"
                         : "bg-red-300 bg-opacity-40 text-red-500 border border-red-300"
-                }`}
-            >
+                }`}>
                 {isSurveyExpired(survey.expire_date)
                     ? "Expired"
                     : survey.status
@@ -97,7 +106,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                 </div>
             </div>
 
-            {/* 🔥 SimpleLineChart */}
+            {/* 🔥 Chart */}
             <div className="mt-4 w-full h-40">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={graphData}>
@@ -124,13 +133,11 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                             <ArrowTopRightOnSquareIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
-
                     <Tooltip title="Responses" placement="bottom" arrow TransitionComponent={Fade}>
                         <button onClick={() => handleViewResponses(survey.id)} className="hover:bg-green-100 rounded-full p-2 hover:text-green-500">
                             <UsersIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
-
                     <Tooltip title="Delete" placement="bottom" arrow TransitionComponent={Fade}>
                         <button onClick={() => onDeleteClick(survey.id)} className="hover:bg-red-100 rounded-full p-2 hover:text-red-500">
                             <TrashIcon className="w-5 h-5" />

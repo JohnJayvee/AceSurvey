@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { useStateContext } from "../contexts/ContextProvider";
@@ -9,28 +9,36 @@ import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
 
 export default function DefaultLayout() {
-    const { currentUser, userToken, setCurrentUser, setUserToken } =
-        useStateContext();
+    const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
     const [isUserProfilePopupOpen, setIsUserProfilePopupOpen] = useState(false);
     const [anchor, setAnchor] = useState(null);
     const [placement, setPlacement] = useState("bottom-end");
 
-    useEffect(() => {
-        if (!userToken) {
-            return;
-        }
+    const hasFetchedRef = useRef(false);
 
-        axiosClient.get("/me").then(({ data }) => {
-            setCurrentUser(data);
-        });
+    useEffect(() => {
+        // if (!userToken || hasFetchedRef.current) return;
+        if (hasFetchedRef.current) return; // skip if already fetched
+        hasFetchedRef.current = true;
+
+        axiosClient.get("/me")
+            .then(({ data }) => {
+                setCurrentUser(data);
+                // hasFetchedRef.current = true;
+            })
+            .catch((error) => {
+                console.error("Error fetching user data:", error);
+            });
     }, [userToken, setCurrentUser]);
 
     const onLogout = (ev) => {
         ev.preventDefault();
-        axiosClient.post("logout").then((res) => {
-            setCurrentUser({});
-            setUserToken(null);
-        });
+        axiosClient.post("logout")
+            .then(() => {
+                setCurrentUser({});
+                setUserToken(null);
+                hasFetchedRef.current = false;
+            });
     };
 
     const toggleUserProfilePopup = (event) => {
@@ -54,7 +62,6 @@ export default function DefaultLayout() {
         };
 
         document.addEventListener("mousedown", handleOutsideClick);
-
         return () => {
             document.removeEventListener("mousedown", handleOutsideClick);
         };
@@ -65,17 +72,13 @@ export default function DefaultLayout() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col ">
+        <div className="min-h-screen flex flex-col">
             <div className="flex justify-between items-center py-4 bg-white px-8 border-b-1 border-gray-200">
                 <div className="flex gap-4">
                     <NavLink
                         to="/"
                         className={({ isActive }) =>
-                            `p-2 rounded-md cursor-pointer ${
-                                isActive
-                                    ? "bg-primary text-white"
-                                    : "hover:bg-gray-100"
-                            }`
+                            `p-2 rounded-md cursor-pointer ${isActive ? "bg-primary text-white" : "hover:bg-gray-100"}`
                         }
                         style={{ textDecoration: "none" }}
                     >
@@ -84,11 +87,7 @@ export default function DefaultLayout() {
                     <NavLink
                         to="/surveys"
                         className={({ isActive }) =>
-                            `p-2 rounded-md cursor-pointer ${
-                                isActive
-                                    ? "bg-primary text-white"
-                                    : "hover:bg-gray-100"
-                            }`
+                            `p-2 rounded-md cursor-pointer ${isActive ? "bg-primary text-white" : "hover:bg-gray-100"}`
                         }
                         style={{ textDecoration: "none" }}
                     >
@@ -96,13 +95,13 @@ export default function DefaultLayout() {
                     </NavLink>
                 </div>
                 <div className="flex gap-4">
-                    <p className="text-center self-center font-semibold text-slate-500 hidden md:block ">
+                    <p className="text-center self-center font-semibold text-slate-500 hidden md:block">
                         {currentUser.name}
                     </p>
                     <FaUserCircle
                         size={48}
                         className="text-gray-300 self-center cursor-pointer hover:bg-gray-100 p-2 rounded-full"
-                        onClick={(event) => toggleUserProfilePopup(event)}
+                        onClick={toggleUserProfilePopup}
                     />
                 </div>
             </div>
