@@ -57,17 +57,17 @@ export default function SurveyResponse() {
     const downloadCSV = () => {
         if (!responses.data.length || !survey.questions) return;
 
-        const allQuestions = survey.questions.map((q) => q.question);
-        const headers = ['id', ...allQuestions, 'created_at']; // moved 'created_at' to the end
-        const csvRows = [headers.join(",")];
+        const allQuestions = survey.questions.map(q => q.question);
+        const headers = ['id', ...allQuestions, 'created_at'];
+        const csvRows = [headers.join(',')];
 
-        responses.data.forEach((response) => {
-            const rawDate = response.answers[0]?.created_at || "";
-            let formattedDate = "";
-
+        responses.data.forEach(response => {
+            // format created_at as before
+            const rawDate = response.answers[0]?.created_at || '';
+            let formattedDate = '';
             if (rawDate) {
-                const date = new Date(rawDate);
-                formattedDate = date.toLocaleString('en-US', {
+                const d = new Date(rawDate);
+                formattedDate = d.toLocaleString('en-US', {
                     month: '2-digit',
                     day: '2-digit',
                     year: 'numeric',
@@ -79,25 +79,44 @@ export default function SurveyResponse() {
 
             const row = [
                 `"${response.id}"`,
-                ...allQuestions.map((q) => {
-                    const answers = response.answers.filter((ans) => ans.question === q);
-                    const combined = answers.map((ans) => ans.answer || '').join(" | ");
+                ...allQuestions.map(q => {
+                    // collect all answers for this question
+                    const answers = response.answers.filter(ans => ans.question === q);
+
+                    // flatten & normalize each ans.answer
+                    const flat = answers.flatMap(ans => {
+                        let val = ans.answer;
+                        // if it's a JSON-array string, parse it
+                        if (typeof val === 'string' && val.trim().startsWith('[') && val.trim().endsWith(']')) {
+                            try {
+                                const parsed = JSON.parse(val);
+                                if (Array.isArray(parsed)) return parsed;
+                            } catch (e) { /* fall through */ }
+                        }
+                        // otherwise treat as single answer
+                        return val != null ? [val] : [];
+                    });
+
+                    // join with commas
+                    const combined = flat.join(',');
+                    // escape quotes
                     return `"${combined.replace(/"/g, '""')}"`;
                 }),
                 `"${formattedDate}"`
             ];
 
-            csvRows.push(row.join(","));
+            csvRows.push(row.join(','));
         });
 
-        const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.href = url;
         a.download = `${survey.title}_responses.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
     };
+
 
 
 
@@ -251,7 +270,7 @@ export default function SurveyResponse() {
                     onClick={downloadCSV}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
-                    Download CSV
+                    Download Response
                 </button>
             </div>
 
