@@ -3,6 +3,8 @@ import axiosClient from '../axios';
 import { Loader as RsuiteLoader } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import 'rsuite/dist/rsuite.min.css';
+import logo from "/AceLogo.png"; // Update path according to your logo location
+
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
@@ -49,7 +51,17 @@ const ForgotPassword = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-5">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
+            {/* <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8"> */}
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8 animated fadeInDown">
+
+                <div className="flex justify-center mb-6">
+                    <img
+                        src={logo}
+                        alt="Logo"
+                        // className="h-16 w-auto"
+                        className="h-36 w-auto"
+                    />
+                </div>
                 <h1 className="text-2xl font-bold text-center mb-6 text-gray-700">
                     Forgot Password
                 </h1>

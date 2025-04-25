@@ -72,7 +72,8 @@ export default function Login() {
                         <img
                             src={logo}
                             alt="Logo"
-                            className="h-16 w-auto"
+                            // className="h-16 w-auto"
+                            className="h-36 w-auto"
                         />
                     </div>
                     <form onSubmit={onSubmit} className="w-full">
