@@ -149,7 +149,8 @@ export default function Dashboard() {
                                     <div>
                                         <img
                                             src={data.latestSurvey.image_url || '/AceLogo.png'} // Add default image path here
-                                            className="w-full h-72 mx-auto object-cover rounded-lg"
+                                            // className="w-full h-72 mx-auto object-cover rounded-lg"
+                                            className="w-auto h-72 mx-auto object-cover rounded-lg"
                                             loading="lazy"
                                         />
                                         <h3 className="font-bold text-xl mb-3 mt-4">

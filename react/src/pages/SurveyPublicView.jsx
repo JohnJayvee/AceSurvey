@@ -98,7 +98,7 @@ export default function SurveyPublicView() {
                             <div className="mr-4 w-full md:w-1/2">
                                 <img
                                     src={survey.image_url || '/AceLogo.png'}
-                                    className="w-full h-80 object-cover rounded-md"
+                                    className="w-auto h-80 object-cover rounded-md"
                                     alt={survey.title}
                                     loading="lazy"
                                 />

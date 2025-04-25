@@ -247,11 +247,12 @@ export default function SurveyView() {
                                                 </span>
                                             )} */}
                                             {!survey.image_url && (
-                                                <span className="flex justify-center items-center text-gray-400 w-full h-64 overflow-hidden bg-gray-100">
+                                                <span className="flex justify-center items-center text-gray-400 w-full h-64 overflow-hidden bg-gray-50">
                                                     <img
                                                         src="/default-survey-image.jpg"
                                                         alt="Default Survey"
-                                                        className="w-full h-full object-cover"
+                                                        // className="w-full h-full object-cover"
+                                                        className="w-auto h-full object-cover"
                                                         onError={(e) => {
                                                             e.target.onerror = null;
                                                             e.target.src = "/AceLogo.png"; // Fallback if image fails to load

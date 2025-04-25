@@ -71,7 +71,9 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
             <img
                 src={survey.image_url || '/AceLogo.png'}
                 alt={survey.title}
-                className="w-full h-64 object-cover rounded-md"
+                // className="w-full h-64 object-cover rounded-md"
+                className="w-auto h-auto object-cover rounded-md"
+
                 loading="lazy"
             />
 
