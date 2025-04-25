@@ -58,7 +58,7 @@ export default function SurveyResponse() {
         if (!responses.data.length || !survey.questions) return;
 
         const allQuestions = survey.questions.map(q => q.question);
-        const headers = ['id', ...allQuestions, 'created_at'];
+        const headers = ['id', ...allQuestions, 'Date'];
         const csvRows = [headers.join(',')];
 
         responses.data.forEach(response => {
