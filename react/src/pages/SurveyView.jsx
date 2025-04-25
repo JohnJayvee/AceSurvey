@@ -256,6 +256,7 @@ export default function SurveyView() {
                                                             e.target.onerror = null;
                                                             e.target.src = "/AceLogo.png"; // Fallback if image fails to load
                                                         }}
+                                                        loading="lazy"
                                                     />
                                                 </span>
                                             )}
