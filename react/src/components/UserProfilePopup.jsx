@@ -5,6 +5,7 @@ import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
 import { FaEye, FaEyeSlash } from "react-icons/fa";  // Eye icons for show/hide
 import { useStateContext } from "../contexts/ContextProvider";
 import axiosClient from "../axios";
+import logo from "../../public/AceLogo.png";
 
 const UserProfilePopup = ({ onLogout }) => {
     const { currentUser, setCurrentUser, showToast } = useStateContext();
@@ -147,7 +148,8 @@ const UserProfilePopup = ({ onLogout }) => {
         <div className="bg-white p-4 rounded-xl drop-shadow-xl border mt-3 border-gray-300 w-72 relative md:mt-0">
             <div className="flex items-center justify-center mb-4">
                 <div className="relative">
-                    <FaUserCircle size={85} className="text-gray-300 self-center" />
+                    {/* <FaUserCircle size={85} className="text-gray-300 self-center" /> */}
+                    <img src={logo} alt="" className="h-24 w-auto" />
                     <div className="absolute bottom-2 right-3 transform translate-x-1/2 -translate-y-1/2">
                         <div className="h-3 w-3 bg-green-500 rounded-full" />
                     </div>

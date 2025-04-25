@@ -7,6 +7,8 @@ import Toast from "./Toast";
 import UserProfilePopup from "./UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
+import logo from "../../public/AceLogo.png";
+
 
 export default function DefaultLayout() {
     const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
@@ -98,11 +100,13 @@ export default function DefaultLayout() {
                     <p className="text-center self-center font-semibold text-slate-500 hidden md:block">
                         {currentUser.name}
                     </p>
-                    <FaUserCircle
+                    {/* <FaUserCircle
                         size={48}
                         className="text-gray-300 self-center cursor-pointer hover:bg-gray-100 p-2 rounded-full"
                         onClick={toggleUserProfilePopup}
-                    />
+                    /> */}
+                    <img src={logo} alt="" className="h-12 w-auto self-center cursor-pointer rounded-full" onClick={toggleUserProfilePopup} />
+
                 </div>
             </div>
 
