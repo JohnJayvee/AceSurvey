@@ -78,7 +78,7 @@ export default function DefaultLayout() {
             <div className="flex justify-between items-center py-4 bg-white px-8 border-b-1 border-gray-200">
                 <div className="flex gap-4">
                     <NavLink
-                        to="/"
+                        to="/dashboard"
                         className={({ isActive }) =>
                             `p-2 rounded-md cursor-pointer ${isActive ? "bg-primary text-white" : "hover:bg-gray-100"}`
                         }
