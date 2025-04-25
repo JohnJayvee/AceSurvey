@@ -110,6 +110,7 @@ export default function Respondent() {
                             src={responseDetails.image_url || '/AceLogo.png'}
                             className="w-full h-80 object-cover rounded-md"
                             alt={responseDetails.title}
+                            loading="lazy"
                         />
                     </div>
                     <div className="w-full lg:w-1/2">
