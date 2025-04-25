@@ -70,12 +70,12 @@ const ForgotPassword = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input
-                        type="email"
+                        type="text"
                         placeholder="Enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
+
                     />
                     <button
                         type="submit"
