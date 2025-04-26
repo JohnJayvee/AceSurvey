@@ -5,7 +5,7 @@ import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
 import { FaEye, FaEyeSlash } from "react-icons/fa";  // Eye icons for show/hide
 import { useStateContext } from "../contexts/ContextProvider";
 import axiosClient from "../axios";
-import logo from "../../public/AceLogo.png";
+import logo from "/AceLogo.png";
 
 const UserProfilePopup = ({ onLogout }) => {
     const { currentUser, setCurrentUser, showToast } = useStateContext();

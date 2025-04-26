@@ -7,7 +7,7 @@ import Toast from "./Toast";
 import UserProfilePopup from "./UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
-import logo from "../../public/AceLogo.png";
+import logo from "/AceLogo.png"; // Update path according to your logo location
 
 
 export default function DefaultLayout() {
