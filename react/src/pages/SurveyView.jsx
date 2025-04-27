@@ -85,10 +85,18 @@ export default function SurveyView() {
             }
         }).catch((err) => {
             if (err && err.response) {
-                setError(err.response.data.message);
+                // If there are multiple errors, loop through and display them
+                if (err.response.data.errors) {
+                    const allErrors = Object.values(err.response.data.errors).flat();
+                    setError(allErrors.join('\n')); // Join all error messages with a space
+                } else {
+                    // If there's only a general message, show it
+                    setError(err.response.data.message);
+                }
             }
             console.log(err, err.response);
         });
+
     };
 
     const onDeleteClick = (id) => {
@@ -222,7 +230,7 @@ export default function SurveyView() {
                     </div>
                     <div className="w-full lg:9/12 xl:w-8/12 mx-auto ">
                         {error && (
-                            <div className="bg-red-100 text-red-500 p-3 rounded-md my-4">
+                            <div className="bg-red-100 text-red-500 p-3 rounded-md my-4" style={{ whiteSpace: 'pre-line' }}>
                                 {error}
                             </div>
                         )}

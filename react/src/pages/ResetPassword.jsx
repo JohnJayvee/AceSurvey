@@ -3,6 +3,7 @@ import axiosClient from '../axios';
 import { useParams } from 'react-router-dom';
 import { Loader as RsuiteLoader } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
+import logo from '/AceLogo.png'; // Adjust path if needed
 
 const ResetPassword = () => {
     const { token } = useParams();
@@ -10,6 +11,7 @@ const ResetPassword = () => {
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [message, setMessage] = useState('');
+    const [errors, setErrors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(null);
 
@@ -18,13 +20,14 @@ const ResetPassword = () => {
             const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
             return () => clearTimeout(timer);
         } else if (countdown === 0) {
-            window.location.href = '/login';  // Redirect to login page or any other page
+            window.location.href = '/login';
         }
     }, [countdown]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage('');
+        setErrors([]);
         setLoading(true);
 
         try {
@@ -35,58 +38,77 @@ const ResetPassword = () => {
                 password_confirmation: passwordConfirmation,
             });
             setMessage(data.message);
-            // Start countdown after successful reset
             setCountdown(5);
         } catch (error) {
-            setMessage(error.response.data.message);
+            if (error.response && error.response.data.errors) {
+                const allErrors = Object.values(error.response.data.errors).flat();
+                setErrors(allErrors);
+            } else if (error.response && error.response.data.message) {
+                setErrors([error.response.data.message]);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="relative min-h-screen flex flex-col justify-between">
-            <div className="flex flex-col items-center my-auto w-full max-w-lg mx-auto">
+        <div className="relative flex flex-col justify-between min-h-screen">
+            <div className="flex flex-col items-center w-full max-w-lg mx-auto my-auto">
                 {message && (
-                    <div className="w-full bg-green-100 text-center font-semibold text-sm rounded-md text-green-400 py-2 px-3 mb-2">
-                        {message} {countdown !== null && countdown > 0 && `Redirecting in ${countdown} seconds...`}
+                    <div className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-green-400 bg-green-100 rounded-md">
+                        {message}
+                        {countdown !== null && countdown > 0 && (
+                            <span> Redirecting in {countdown} seconds...</span>
+                        )}
                     </div>
                 )}
-                <div className="bg-white drop-shadow-xl p-6 m-4 rounded-lg w-full animated fadeInDown">
+
+
+                <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
+                    <div className="flex justify-center mb-6">
+                        <img src={logo} alt="Logo" className="w-auto h-36" />
+                    </div>
                     <form onSubmit={handleSubmit} className="w-full">
-                        <h1 className="text-2xl font-semibold text-center my-4">
+                        <h1 className="my-4 text-2xl font-semibold text-center">
                             Reset Password
                         </h1>
+                        {errors.length > 0 && (
+                            <div className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-red-400 bg-red-100 rounded-md">
+                                <ul className="text-left list-disc list-inside">
+                                    {errors.map((err, index) => (
+                                        <li key={index}>{err}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                         <input
-                            type="email"
+                            type="text"
                             placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="form-control p-3 my-3"
-                            required
+                            className="p-3 my-3 form-control"
                         />
                         <input
                             type="password"
                             placeholder="New Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="form-control p-3 my-3"
-                            required
+                            className="p-3 my-3 form-control"
                         />
                         <input
                             type="password"
                             placeholder="Confirm New Password"
                             value={passwordConfirmation}
                             onChange={(e) => setPasswordConfirmation(e.target.value)}
-                            className="form-control p-3 my-3"
-                            required
+                            className="p-3 my-3 form-control"
                         />
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"}`}
+                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? 'bg-blue-300' : 'bg-blue-500'
+                                }`}
                         >
-                            {loading ? <RsuiteLoader size="sm" /> : "Reset Password"}
+                            {loading ? <RsuiteLoader size="sm" /> : 'Reset Password'}
                         </button>
                     </form>
                 </div>
