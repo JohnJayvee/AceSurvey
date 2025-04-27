@@ -41,7 +41,8 @@ class SurveyStoreRequest extends FormRequest
             'status' => 'required|boolean',
             'description' => 'nullable|string',
             'expire_date' => 'nullable|date_format:Y-m-d|after:today',
-            'questions' => 'array',
+            'questions' => 'required|array',
+
         ];
     }
 }
