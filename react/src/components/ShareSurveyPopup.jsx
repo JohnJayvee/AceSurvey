@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { Box } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import ModalClose from "@mui/joy/ModalClose";
@@ -8,12 +8,11 @@ import { useStateContext } from "../contexts/ContextProvider";
 import { QRCodeSVG } from "qrcode.react";
 
 const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
-    const handleClosePopup = () => {
-        setOpenSharePopup(false);
-    };
+    const handleClosePopup = () => setOpenSharePopup(false);
     const { showToast } = useStateContext();
-
     const isMobile = useMediaQuery("(max-width:600px)");
+    const inputRef = useRef(null);
+    const qrRef = useRef(null);
 
     const dynamicPopupStyle = {
         position: "absolute",
@@ -26,34 +25,19 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
         overflowY: "auto",
     };
 
-    const qrRef = useRef(null);
-
-    const fallbackCopy = (text) => {
-        const input = document.createElement("input");
-        input.value = text;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        document.body.removeChild(input);
-    };
-
-    const handleCopyLink = () => {
-        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-            navigator.clipboard.writeText(shareLink).then(() => {
+    const copyToClipboard = () => {
+        if (inputRef.current) {
+            inputRef.current.select();
+            inputRef.current.setSelectionRange(0, 99999);
+            const success = document.execCommand("copy");
+            if (success) {
                 showToast("Link copied to clipboard!");
                 setOpenSharePopup(false);
-            }).catch(() => {
-                fallbackCopy(shareLink);
-                showToast("Copied using fallback!");
-                setOpenSharePopup(false);
-            });
-        } else {
-            fallbackCopy(shareLink);
-            showToast("Copied using fallback!");
-            setOpenSharePopup(false);
+            } else {
+                showToast("Failed to copy. Please copy manually.");
+            }
         }
     };
-
 
     const handleDownloadQR = () => {
         const svg = qrRef.current;
@@ -62,26 +46,19 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
         const ctx = canvas.getContext("2d");
         const img = new Image();
         const logo = new Image();
-
-        // Set higher resolution
         const scale = 4;
-        canvas.width = 300 * scale; // Updated to match new QR size
-        canvas.height = 300 * scale; // Updated to match new QR size
 
-        // Scale the context to maintain proper rendering
+        canvas.width = 300 * scale;
+        canvas.height = 300 * scale;
         ctx.scale(scale, scale);
 
         img.onload = () => {
-            ctx.drawImage(img, 0, 0, 300, 300); // Updated dimensions
-
+            ctx.drawImage(img, 0, 0, 300, 300);
             logo.onload = () => {
-                const logoSize = 60; // Updated logo size
+                const logoSize = 60;
                 const centerX = (300 - logoSize) / 2;
                 const centerY = (300 - logoSize) / 2;
-
                 ctx.drawImage(logo, centerX, centerY, logoSize, logoSize);
-
-                // Get high quality PNG
                 const pngFile = canvas.toDataURL("image/png", 1.0);
                 const downloadLink = document.createElement("a");
                 downloadLink.download = "survey-qr-code.png";
@@ -95,79 +72,58 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
     };
 
     return (
-        <div>
-            <Modal open={openSharePopup} onClose={handleClosePopup}>
-                <Box className="bg-white rounded-xl" sx={dynamicPopupStyle}>
-                    <div className="relative mb-6">
-                        <div className="absolute -top-3 right-0">
-                            <ModalClose
-                                variant="outlined"
-                                onClick={handleClosePopup}
-                            />
-                        </div>
-                        <div className="text-lg font-semibold mb-2 text-center">
-                            Share this survey
-                        </div>
+        <Modal open={openSharePopup} onClose={handleClosePopup}>
+            <Box className="bg-white rounded-xl" sx={dynamicPopupStyle}>
+                <div className="relative mb-6">
+                    <div className="absolute right-0 -top-3">
+                        <ModalClose variant="outlined" onClick={handleClosePopup} />
                     </div>
-                    <Divider />
-                    <div className="mt-8">
-                        <div className="flex gap-2 mb-6">
-                            <input
-                                type="text"
+                    <div className="mb-2 text-lg font-semibold text-center">Share this survey</div>
+                </div>
+                <Divider />
+                <div className="mt-8">
+                    <div className="flex gap-2 mb-6">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={shareLink}
+                            readOnly
+                            className="w-full p-2 border rounded-lg"
+                        />
+                        <button
+                            onClick={copyToClipboard}
+                            className="w-20 p-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+                        >
+                            Copy
+                        </button>
+                    </div>
+                    <div className="flex flex-col items-center mt-4">
+                        <div className="mb-4 text-gray-600">Scan QR Code</div>
+                        <div className="p-6 bg-white rounded-lg shadow-md">
+                            <QRCodeSVG
+                                ref={qrRef}
                                 value={shareLink}
-                                readOnly
-                                className="w-full p-2 border rounded-lg"
+                                size={300}
+                                level="H"
+                                includeMargin={true}
+                                imageSettings={{
+                                    src: "/AceLogo.png",
+                                    height: 60,
+                                    width: 60,
+                                    excavate: true,
+                                }}
                             />
-                            <button
-                                onClick={handleCopyLink}
-                                className="w-20 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                            >
-                                Copy
-                            </button>
                         </div>
-
-                        <div className="flex flex-col items-center mt-4">
-                            <div className="text-gray-600 mb-4">Scan QR Code</div>
-                            <div className="p-6 bg-white rounded-lg shadow-md">
-                                <QRCodeSVG
-                                    ref={qrRef}
-                                    value={shareLink}
-                                    size={300}
-                                    level="H"
-                                    includeMargin={true}
-                                    imageSettings={{
-                                        src: "/AceLogo.png",
-                                        x: undefined,
-                                        y: undefined,
-                                        height: 60,
-                                        width: 60,
-                                        excavate: true,
-                                    }}
-                                />
-                            </div>
-                            <button
-                                onClick={handleDownloadQR}
-                                className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-5 w-5"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                >
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                                Download QR Code
-                            </button>
-                        </div>
+                        <button
+                            onClick={handleDownloadQR}
+                            className="flex items-center gap-2 px-4 py-2 mt-4 text-white bg-green-500 rounded-lg hover:bg-green-600"
+                        >
+                            Download QR Code
+                        </button>
                     </div>
-                </Box>
-            </Modal>
-        </div>
+                </div>
+            </Box>
+        </Modal>
     );
 };
 
