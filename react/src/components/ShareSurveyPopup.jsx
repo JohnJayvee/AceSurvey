@@ -116,7 +116,7 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                         </div>
                         <button
                             onClick={handleDownloadQR}
-                            className="flex items-center gap-2 px-4 py-2 mt-4 text-white bg-green-500 rounded-lg hover:bg-green-600"
+                            className="flex items-center gap-2 px-4 py-2 mt-4 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
                         >
                             Download QR Code
                         </button>

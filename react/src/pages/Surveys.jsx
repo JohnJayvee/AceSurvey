@@ -79,10 +79,10 @@ export default function Surveys() {
     ];
 
     return (
-        <div className="w-full xl:w-11/12 mx-auto ">
+        <div className="w-full mx-auto xl:w-11/12 ">
             <div className="flex justify-between mb-8 ">
-                <div className="py-4 items-center">
-                    <p className=" font-semibold text-2xl">Survey List</p>
+                <div className="items-center py-4">
+                    <p className="text-2xl font-semibold ">Survey List</p>
                     <Breadcrumbs links={breadcrumbLinks} />
                 </div>
 
@@ -90,7 +90,7 @@ export default function Surveys() {
                     <input
                         type="text"
                         placeholder="Search surveys..."
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                         value={searchTerm}
                         onChange={(e) => handleSearch(e.target.value)} // Using handleSearch here
                     />
@@ -101,9 +101,9 @@ export default function Surveys() {
                         to="/surveys/create"
                         style={{ textDecoration: "none" }}
                     >
-                        <button className="flex p-2 bg-emerald-50 border border-emerald-300 text-emerald-500 rounded-lg hover:text-white hover:bg-emerald-300  ">
-                            <PlusCircleIcon className="h-6 w-6 mr-0 md:mr-2" />
-                            <p className="hidden md:block self-center">Create new</p>
+                        <button className="flex p-2 border rounded-lg bg-emerald-50 border-emerald-300 text-emerald-500 hover:text-white hover:bg-emerald-300 ">
+                            <PlusCircleIcon className="w-6 h-6 mr-0 md:mr-2" />
+                            <p className="self-center hidden md:block">Create new</p>
                         </button>
                     </Link>
                 </div>
@@ -112,11 +112,11 @@ export default function Surveys() {
             {loading && (
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {[...Array(8)].map((_, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div key={index} className="p-4 border border-gray-200 rounded-lg">
                             <Skeleton height={150} className="mb-4" /> {/* Image placeholder */}
                             <Skeleton height={24} className="mb-2" /> {/* Title */}
                             <Skeleton height={16} count={3} className="mb-4" /> {/* Description */}
-                            <div className="flex justify-between items-center">
+                            <div className="flex items-center justify-between">
                                 <Skeleton height={36} width={80} /> {/* Edit button */}
                                 <div className="flex gap-2">
                                     <Skeleton height={36} width={36} /> {/* Icon button 1 */}
