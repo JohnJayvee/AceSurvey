@@ -20,7 +20,7 @@ export default function Login() {
 
     const toggleShowPassword = () => setShowPassword(!showPassword);
 
-    const onSubmit = async (ev) => {
+    async function onSubmit(ev) {
         ev.preventDefault();
         setError("");
         setLoading(true);
@@ -53,39 +53,39 @@ export default function Login() {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     return (
-        <div className="relative min-h-screen flex flex-col justify-between">
+        <div className="relative flex flex-col justify-between min-h-screen">
             <div className="absolute top-10 right-10">
                 <Bulb />
             </div>
-            <div className="flex flex-col items-center my-auto w-full max-w-lg mx-auto">
-                {error && (
-                    <div
-                        className="w-full bg-red-100 text-center font-semibold text-sm rounded-md text-red-400 py-2 px-3 mb-2"
-                        dangerouslySetInnerHTML={{ __html: error }}
-                    ></div>
-                )}
-                <div className="bg-white drop-shadow-xl p-6 m-4 rounded-lg w-full animated fadeInDown">
+            <div className="flex flex-col items-center w-full max-w-lg mx-auto my-auto">
+                <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
                     <div className="flex justify-center mb-6">
                         <img
                             src={logo}
                             alt="Logo"
-                            // className="h-16 w-auto"
-                            className="h-36 w-auto"
+                            // className="w-auto h-16"
+                            className="w-auto h-36"
                         />
                     </div>
                     <form onSubmit={onSubmit} className="w-full">
-                        <h1 className="text-2xl font-semibold text-center my-4">
+                        <h1 className="my-4 text-2xl font-semibold text-center">
                             Login into your account
                         </h1>
+                        {error && (
+                            <div
+                                className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-red-400 bg-red-100 rounded-md"
+                                dangerouslySetInnerHTML={{ __html: error }}
+                            ></div>
+                        )}
                         <input
                             type="text"
                             placeholder="Login"
                             value={login}
                             onChange={(ev) => setLogin(ev.target.value)}
-                            className="form-control p-3 my-3"
+                            className="p-3 my-3 form-control"
                         />
                         <div className="relative">
                             <input
@@ -93,16 +93,16 @@ export default function Login() {
                                 placeholder="Password"
                                 value={password}
                                 onChange={(ev) => setPassword(ev.target.value)}
-                                className="form-control p-3 my-3 w-full pr-10"
+                                className="w-full p-3 pr-10 my-3 form-control"
                             />
                             <span
                                 onClick={toggleShowPassword}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
                             >
                                 {showPassword ? (
-                                    <FaEye className="w-5 h-5 text-gray-500 mr-2" />
+                                    <FaEye className="w-5 h-5 mr-2 text-gray-500" />
                                 ) : (
-                                    <FaEyeSlash className="w-5 h-5 text-gray-500 mr-2" />
+                                    <FaEyeSlash className="w-5 h-5 mr-2 text-gray-500" />
                                 )}
                             </span>
                         </div>
@@ -122,6 +122,7 @@ export default function Login() {
                             disabled={loading}
                             className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"
                                 }`}
+
                         >
                             {loading ? <RsuiteLoader size="sm" /> : "Login"}
                         </button>
@@ -129,7 +130,7 @@ export default function Login() {
                     <div className="mt-4 text-center">
                         <Link
                             to="/forgot-password" // Forgot Password link
-                            className="text-blue-500 text-sm hover:underline"
+                            className="text-sm text-blue-500 hover:underline"
                         >
                             Forgot your password?
                         </Link>
@@ -140,3 +141,4 @@ export default function Login() {
         </div>
     );
 }
+
