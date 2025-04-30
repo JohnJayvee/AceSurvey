@@ -36,15 +36,15 @@ export default function Respondent() {
     }, [surveyId, responseId]);
 
     if (loading) return (
-        <div className="min-h-screen w-full relative">
-            <div className="w-11/12 md:w-3/4 xl:w-1/2 mx-auto">
-                <div className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full">
+        <div className="relative w-full min-h-screen">
+            <div className="w-11/12 mx-auto md:w-3/4 xl:w-1/2">
+                <div className="flex justify-between w-full px-4 mb-4 bg-white rounded-lg">
                     <div className="py-2">
                         <Skeleton circle width={40} height={40} />
                     </div>
                 </div>
-                <div className="bg-white p-4 flex flex-col md:flex-row rounded-lg border border-gray-200 mb-4">
-                    <div className="mr-4 w-full md:w-1/2">
+                <div className="flex flex-col p-4 mb-4 bg-white border border-gray-200 rounded-lg md:flex-row">
+                    <div className="w-full mr-4 md:w-1/2">
                         <Skeleton height={320} />
                     </div>
                     <div className="w-full lg:w-1/2">
@@ -55,7 +55,7 @@ export default function Respondent() {
                 </div>
                 <div className="w-full">
                     {[1, 2, 3].map((_, index) => (
-                        <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+                        <div key={index} className="p-4 mb-4 bg-white border border-gray-200 rounded-lg">
                             <Skeleton height={24} width="60%" className="mb-4" />
                             <Skeleton height={40} />
                         </div>
@@ -80,10 +80,10 @@ export default function Respondent() {
     }
 
     return (
-        <div className="min-h-screen w-full relative">
-            <div className=" w-11/12 md:w-3/4 xl:w-1/2 mx-auto">
+        <div className="relative w-full min-h-screen">
+            <div className="w-11/12 mx-auto  md:w-3/4 xl:w-1/2">
                 <div
-                    className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full animate-fade-in-down"
+                    className="flex justify-between w-full px-4 mb-4 bg-white rounded-lg animate-fade-in-down"
                     style={{ animationDelay: "0.1s" }}
                 >
                     <div className="py-2">
@@ -93,7 +93,7 @@ export default function Respondent() {
                             TransitionComponent={Fade}
                         >
                             <div
-                                className="rounded-full p-4 cursor-pointer hover:bg-gray-100"
+                                className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
                                 onClick={handleGoBack}
                             >
                                 <FaArrowLeft className="text-gray-700" />
@@ -102,26 +102,26 @@ export default function Respondent() {
                     </div>
                 </div>
                 <div
-                    className="bg-white p-4 flex flex-col md:flex-row rounded-lg border border-gray-200 mb-4 animate-fade-in-down"
+                    className="flex flex-col p-4 mb-4 bg-white border border-gray-200 rounded-lg md:flex-row animate-fade-in-down"
                     style={{ animationDelay: "0.2s" }}
                 >
-                    <div className="mr-4 w-full md:w-1/2">
+                    <div className="w-full mr-4 md:w-1/2">
                         <img
                             src={responseDetails.image_url || '/AceLogo.png'}
-                            className="w-full h-80 object-cover rounded-md"
+                            className="object-cover w-full rounded-md h-80"
                             alt={responseDetails.title}
                             loading="lazy"
                         />
                     </div>
                     <div className="w-full lg:w-1/2">
-                        <h1 className="text-4xl my-3 font-semibold">
+                        <h1 className="my-3 text-4xl font-semibold">
                             {responseDetails.title}
                         </h1>
-                        <p className="text-gray-500 text-sm mb-1">
+                        <p className="mb-1 text-sm text-gray-500">
                             Status:{" "}
                             {responseDetails.status ? "Active" : "Closed"}
                         </p>
-                        <p className="text-gray-500 text-sm mb-3 max-h-48 overflow-y-auto">
+                        <p className="mb-3 overflow-y-auto text-sm text-gray-500 max-h-48">
                             {responseDetails.description}
                         </p>
                     </div>

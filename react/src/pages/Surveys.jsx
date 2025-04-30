@@ -90,7 +90,7 @@ export default function Surveys() {
                     <input
                         type="text"
                         placeholder="Search surveys..."
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500"
                         value={searchTerm}
                         onChange={(e) => handleSearch(e.target.value)} // Using handleSearch here
                     />
@@ -101,7 +101,7 @@ export default function Surveys() {
                         to="/surveys/create"
                         style={{ textDecoration: "none" }}
                     >
-                        <button className="flex p-2 border rounded-lg bg-emerald-50 border-emerald-300 text-emerald-500 hover:text-white hover:bg-emerald-300 ">
+                        <button className="flex p-2 text-indigo-500 border border-indigo-300 rounded-lg bg-indigo-50 hover:text-white hover:bg-indigo-300 ">
                             <PlusCircleIcon className="w-6 h-6 mr-0 md:mr-2" />
                             <p className="self-center hidden md:block">Create new</p>
                         </button>

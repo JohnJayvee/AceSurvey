@@ -71,8 +71,8 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
             <img
                 src={survey.image_url || '/AceLogo.png'}
                 alt={survey.title}
-                // className="w-full h-64 object-cover rounded-md"
-                className="w-auto h-auto object-cover rounded-md"
+                // className="object-cover w-full h-64 rounded-md"
+                className="object-cover w-auto h-auto rounded-md"
 
                 loading="lazy"
             />
@@ -93,10 +93,10 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
 
             <h4 className="mt-4 text-lg font-bold">{survey.title}</h4>
 
-            <div className="overflow-hidden flex-1 truncate-ellipsis relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-white to-transparent pointer-events-none h-full max-h-32 overflow-hidden text-gray-500">
+            <div className="relative flex-1 overflow-hidden truncate-ellipsis">
+                <div className="absolute inset-0 h-full overflow-hidden text-gray-500 pointer-events-none bg-gradient-to-t from-white to-transparent max-h-32">
                     <div
-                        className="h-full max-h-32 overflow-hidden"
+                        className="h-full overflow-hidden max-h-32"
                         style={{
                             WebkitLineClamp: 4,
                             display: "-webkit-box",
@@ -109,7 +109,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
             </div>
 
             {/* 🔥 Chart */}
-            <div className="mt-4 w-full h-40">
+            <div className="w-full h-40 mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={graphData}>
                         <XAxis dataKey="name" />
@@ -121,27 +121,27 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
             </div>
 
             {/* 🔧 Actions */}
-            <div className="flex justify-between items-center mt-3">
+            <div className="flex items-center justify-between mt-3">
                 <Link
                     to={`/surveys/${survey.id}`}
-                    className="flex py-3 px-4 bg-blue-500 rounded-lg text-white hover:text-white m-2 hover:bg-opacity-75"
+                    className="flex px-4 py-3 m-2 text-white bg-blue-500 rounded-lg hover:text-white hover:bg-opacity-75"
                 >
                     <PencilIcon className="w-5 h-5 mr-2" />
                     Edit
                 </Link>
                 <div className="flex items-center gap-2">
                     <Tooltip title="Share" placement="bottom" arrow TransitionComponent={Fade}>
-                        <button onClick={handleOpenShare} className="hover:bg-blue-100 rounded-full p-2 hover:text-blue-500">
+                        <button onClick={handleOpenShare} className="p-2 rounded-full hover:bg-blue-100 hover:text-blue-500">
                             <ArrowTopRightOnSquareIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
                     <Tooltip title="Responses" placement="bottom" arrow TransitionComponent={Fade}>
-                        <button onClick={() => handleViewResponses(survey.id)} className="hover:bg-green-100 rounded-full p-2 hover:text-green-500">
+                        <button onClick={() => handleViewResponses(survey.id)} className="p-2 rounded-full hover:bg-green-100 hover:text-green-500">
                             <UsersIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
                     <Tooltip title="Delete" placement="bottom" arrow TransitionComponent={Fade}>
-                        <button onClick={() => onDeleteClick(survey.id)} className="hover:bg-red-100 rounded-full p-2 hover:text-red-500">
+                        <button onClick={() => onDeleteClick(survey.id)} className="p-2 rounded-full hover:bg-red-100 hover:text-red-500">
                             <TrashIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
