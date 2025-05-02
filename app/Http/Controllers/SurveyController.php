@@ -27,6 +27,11 @@ class SurveyController extends Controller
      */
     public function index(Request $request)
     {
+
+        //! No filter
+        // $query = Survey::query();
+
+        //! Filter by user
         $user = $request->user();
         $query = Survey::where("user_id", $user->id);
 
@@ -366,7 +371,7 @@ class SurveyController extends Controller
         }
 
         // Count the number of responses
-        $count = SurveyAnswer::where('survey_id', $survey->id)->count();
+        $count = SurveyAnswer::count();
 
         return response()->json(['count' => $count]);
     }
