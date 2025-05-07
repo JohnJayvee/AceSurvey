@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Loader as RsuiteLoader } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import logo from '/AceLogo.png'; // Adjust path if needed
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const ResetPassword = () => {
     const { token } = useParams();
@@ -14,6 +15,11 @@ const ResetPassword = () => {
     const [errors, setErrors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const toggleShowPassword = () => setShowPassword(!showPassword);
+    const toggleShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
 
     useEffect(() => {
         if (countdown !== null && countdown > 0) {
@@ -63,7 +69,6 @@ const ResetPassword = () => {
                     </div>
                 )}
 
-
                 <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
                     <div className="flex justify-center mb-6">
                         <img src={logo} loading="lazy" alt="Logo" className="w-auto h-36" />
@@ -88,20 +93,44 @@ const ResetPassword = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             className="p-3 my-3 form-control"
                         />
-                        <input
-                            type="password"
-                            placeholder="New Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="p-3 my-3 form-control"
-                        />
-                        <input
-                            type="password"
-                            placeholder="Confirm New Password"
-                            value={passwordConfirmation}
-                            onChange={(e) => setPasswordConfirmation(e.target.value)}
-                            className="p-3 my-3 form-control"
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="New Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full p-3 my-3 form-control"
+                            />
+                            <span
+                                onClick={toggleShowPassword}
+                                className="absolute text-gray-500 transform -translate-y-1/2 cursor-pointer top-1/2 right-3"
+                            >
+                                {showPassword ? (
+                                    <FaEye className="w-5 h-5" />
+                                ) : (
+                                    <FaEyeSlash className="w-5 h-5" />
+                                )}
+                            </span>
+                        </div>
+                        <div className="relative">
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder="Confirm New Password"
+                                value={passwordConfirmation}
+                                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                className="w-full p-3 my-3 form-control"
+                            />
+                            <span
+                                onClick={toggleShowConfirmPassword}
+                                className="absolute text-gray-500 transform -translate-y-1/2 cursor-pointer top-1/2 right-3"
+                            >
+                                {showConfirmPassword ? (
+                                    <FaEye className="w-5 h-5" />
+                                ) : (
+                                    <FaEyeSlash className="w-5 h-5" />
+                                )}
+                            </span>
+                        </div>
                         <button
                             type="submit"
                             disabled={loading}
