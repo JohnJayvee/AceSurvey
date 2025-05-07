@@ -147,11 +147,11 @@ export default function SurveyView() {
             {loading && <Loader />}
             {!loading && (
                 <div>
-                    <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto mb-4 text-2xl font-semibold ">
+                    <div className="w-full mx-auto mb-4 text-2xl font-semibold lg:w-9/12 xl:w-8/12 ">
                         {!id ? "Create new Survey" : "Edit Survey"}
                     </div>
                     <div
-                        className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full lg:9/12 xl:w-8/12 mx-auto animate-fade-in-down "
+                        className="flex justify-between w-full px-4 mx-auto mb-4 bg-white rounded-lg lg:9/12 xl:w-8/12 animate-fade-in-down "
                         style={{ animationDelay: "0.1s" }}
                     >
                         <div className="py-2">
@@ -161,7 +161,7 @@ export default function SurveyView() {
                                 TransitionComponent={Fade}
                             >
                                 <div
-                                    className="rounded-full p-4 cursor-pointer hover:bg-gray-100"
+                                    className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
                                     onClick={handleGoBack}
                                 >
                                     <FaArrowLeft className="text-gray-700" />
@@ -177,7 +177,7 @@ export default function SurveyView() {
                                 >
                                     <button
                                         onClick={handleOpenShare}
-                                        className="flex items-center rounded-full p-4 cursor-pointer hover:bg-gray-100"
+                                        className="flex items-center p-4 rounded-full cursor-pointer hover:bg-gray-100"
                                     >
                                         <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-800" />
                                     </button>
@@ -191,7 +191,7 @@ export default function SurveyView() {
                                         onClick={() =>
                                             handleViewResponses(survey.id)
                                         }
-                                        className="flex items-center rounded-full p-4 cursor-pointer hover:bg-gray-100"
+                                        className="flex items-center p-4 rounded-full cursor-pointer hover:bg-gray-100"
                                     >
                                         <UsersIcon className="w-5 h-5 text-gray-800" />
                                     </button>
@@ -206,7 +206,7 @@ export default function SurveyView() {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                     >
-                                        <button className="flex items-center rounded-full p-4 cursor-pointer hover:bg-gray-100">
+                                        <button className="flex items-center p-4 rounded-full cursor-pointer hover:bg-gray-100">
                                             <EyeIcon className="w-5 h-5 text-gray-800" />
                                         </button>
                                     </a>
@@ -220,7 +220,7 @@ export default function SurveyView() {
                                         onClick={(ev) =>
                                             onDeleteClick(survey.id)
                                         }
-                                        className="rounded-full p-4 cursor-pointer hover:bg-gray-100"
+                                        className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
                                     >
                                         <TrashIcon className="w-5 h-5 text-gray-800 " />
                                     </button>
@@ -228,56 +228,57 @@ export default function SurveyView() {
                             </div>
                         )}
                     </div>
-                    <div className="w-full lg:9/12 xl:w-8/12 mx-auto ">
+                    <div className="w-full mx-auto lg:9/12 xl:w-8/12 ">
                         {error && (
-                            <div className="bg-red-100 text-red-500 p-3 rounded-md my-4" style={{ whiteSpace: 'pre-line' }}>
+                            <div className="p-3 my-4 text-red-500 bg-red-100 rounded-md" style={{ whiteSpace: 'pre-line' }}>
                                 {error}
                             </div>
                         )}
                         <form action="#" method="POST" onSubmit={onSubmit}>
                             <div>
                                 <div
-                                    className="space-y-6 bg-white p-4 rounded-lg border border-gray-200 w-full flex flex-col lg:flex-row animate-fade-in-down "
+                                    className="flex flex-col w-full p-4 space-y-6 bg-white border border-gray-200 rounded-lg lg:flex-row animate-fade-in-down "
                                     style={{ animationDelay: "0.2s" }}
                                 >
                                     <div className="w-full lg:w-1/2">
-                                        <div className="mt-1 flex items-center">
+                                        <div className="flex items-center mt-1">
                                             {survey.image_url && (
                                                 <img
                                                     src={survey.image_url}
+                                                    loading="lazy"
                                                     alt=""
-                                                    className="w-full h-full object-cover"
+                                                    className="object-cover w-full h-full"
                                                 />
                                             )}
                                             {/* {!survey.image_url && (
-                                                <span className="flex justify-center items-center text-gray-400 w-full h-64 overflow-hidden  bg-gray-100">
+                                                <span className="flex items-center justify-center w-full h-64 overflow-hidden text-gray-400 bg-gray-100">
                                                     <PhotoIcon className="w-8 h-8" />
                                                 </span>
                                             )} */}
                                             {!survey.image_url && (
-                                                <span className="flex justify-center items-center text-gray-400 w-full h-64 overflow-hidden bg-gray-50">
+                                                <span className="flex items-center justify-center w-full h-64 overflow-hidden text-gray-400 bg-gray-50">
                                                     <img
                                                         src="/default-survey-image.jpg"
+                                                        loading="lazy"
                                                         alt="Default Survey"
-                                                        // className="w-full h-full object-cover"
-                                                        className="w-auto h-full object-cover"
+                                                        // className="object-cover w-full h-full"
+                                                        className="object-cover w-auto h-full"
                                                         onError={(e) => {
                                                             e.target.onerror = null;
                                                             e.target.src = "/AceLogo.png"; // Fallback if image fails to load
                                                         }}
-                                                        loading="lazy"
                                                     />
                                                 </span>
                                             )}
                                         </div>
                                         <button
                                             type="button"
-                                            className="w-full bg-blue-500 text-white mt-4 relative rounded-md border border-gray-300  py-2 px-3 text-sm font-medium leading-4 shadow-sm hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 cursor-pointer"
+                                            className="relative w-full px-3 py-2 mt-4 text-sm font-medium leading-4 text-white bg-blue-500 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                         >
                                             <input
                                                 type="file"
                                                 accept="image/*"
-                                                className="cursor-pointer absolute left-0 top-0 right-0 bottom-0 opacity-0"
+                                                className="absolute top-0 bottom-0 left-0 right-0 opacity-0 cursor-pointer"
                                                 onChange={onImageChoose}
                                             />
                                             Choose an Image
@@ -289,7 +290,7 @@ export default function SurveyView() {
                                         <div className="mb-4">
                                             <label
                                                 htmlFor="title"
-                                                className=" text-base font-semibold"
+                                                className="text-base font-semibold "
                                             >
                                                 Survey Title
                                             </label>
@@ -305,7 +306,7 @@ export default function SurveyView() {
                                                     })
                                                 }
                                                 placeholder="Survey Title"
-                                                className="form-control w-full p-2 text-sm border border-gray-200 rounded-md mt-2"
+                                                className="w-full p-2 mt-2 text-sm border border-gray-200 rounded-md form-control"
                                             />
                                         </div>
 
@@ -313,7 +314,7 @@ export default function SurveyView() {
                                         <div className="mb-4">
                                             <label
                                                 htmlFor="description"
-                                                className=" text-base font-semibold"
+                                                className="text-base font-semibold "
                                             >
                                                 Description
                                             </label>
@@ -329,7 +330,7 @@ export default function SurveyView() {
                                                     })
                                                 }
                                                 placeholder="Describe your survey"
-                                                className="form-control w-full h-28 p-2 text-sm border border-gray-200 rounded-md mt-2"
+                                                className="w-full p-2 mt-2 text-sm border border-gray-200 rounded-md form-control h-28"
                                             ></textarea>
                                         </div>
 
@@ -337,7 +338,7 @@ export default function SurveyView() {
                                         <div className="mb-4">
                                             <label
                                                 htmlFor="expire_date"
-                                                className=" text-base font-semibold"
+                                                className="text-base font-semibold "
                                             >
                                                 Expire Date
                                             </label>
@@ -353,12 +354,12 @@ export default function SurveyView() {
                                                             ev.target.value,
                                                     })
                                                 }
-                                                className="form-control w-full p-2 text-sm border border-gray-200 rounded-md mt-2"
+                                                className="w-full p-2 mt-2 text-sm border border-gray-200 rounded-md form-control"
                                             />
                                             {isSurveyExpired(
                                                 survey.expire_date
                                             ) && (
-                                                    <p className="text-red-500 text-sm mt-2">
+                                                    <p className="mt-2 text-sm text-red-500">
                                                         This survey has already
                                                         expired and is now closed to
                                                         public access.
@@ -373,7 +374,7 @@ export default function SurveyView() {
                                             >
                                                 Status
                                             </label>
-                                            <div className="flex self-center items-center mt-2">
+                                            <div className="flex items-center self-center mt-2">
                                                 <input
                                                     id="status"
                                                     name="status"
@@ -414,9 +415,9 @@ export default function SurveyView() {
                                                             );
                                                         }
                                                     }}
-                                                    className="h-4 w-4 rounded border-gray-300 cursor-pointer"
+                                                    className="w-4 h-4 border-gray-300 rounded cursor-pointer"
                                                 />
-                                                <div className="ml-2 text-sm w-full">
+                                                <div className="w-full ml-2 text-sm">
                                                     <p
                                                         className={
                                                             survey.status &&

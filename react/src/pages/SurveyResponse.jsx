@@ -163,7 +163,7 @@ export default function SurveyResponse() {
                     >
                         <div
                             onClick={() => handleViewDetail(id, params.row.id)}
-                            className="p-2 my-2 rounded-lg text-black cursor-pointer border"
+                            className="p-2 my-2 text-black border rounded-lg cursor-pointer"
                         >
                             <MdOutlineInfo size={18} className="text-gray-600" />
                         </div>
@@ -194,21 +194,21 @@ export default function SurveyResponse() {
 
     if (loading) {
         return (
-            <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
+            <div className="w-full mx-auto lg:w-9/12 xl:w-8/12">
                 <div className="w-full mb-4">
                     <Skeleton height={32} width={300} />
                 </div>
-                <div className="flex justify-between mb-4 bg-white rounded-lg px-4 w-full">
+                <div className="flex justify-between w-full px-4 mb-4 bg-white rounded-lg">
                     <Skeleton circle width={48} height={48} />
                 </div>
-                <div className="w-full flex gap-4 flex-col">
-                    <div className="bg-white rounded-lg w-full p-6">
+                <div className="flex flex-col w-full gap-4">
+                    <div className="w-full p-6 bg-white rounded-lg">
                         <div className="w-full">
                             <Skeleton height={60} width={120} />
                             <Skeleton height={20} width={200} />
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 w-full">
+                    <div className="w-full p-4 bg-white rounded-lg">
                         <div className="h-[400px]">
                             {[...Array(5)].map((_, index) => (
                                 <div key={index} className="flex justify-between p-4 border-b">
@@ -226,21 +226,21 @@ export default function SurveyResponse() {
     }
 
     if (error)
-        return <div className="text-red-500 text-center">Error: {error}</div>;
+        return <div className="text-center text-red-500">Error: {error}</div>;
 
     if (!responses?.data?.length) {
         return (
-            <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
+            <div className="w-full mx-auto lg:w-9/12 xl:w-8/12">
                 <div className="w-full mb-4 text-2xl font-semibold">
                     {survey.title} survey responses
                 </div>
-                <div className="bg-white rounded-lg p-8 text-center">
-                    <p className="text-gray-600 text-lg">
+                <div className="p-8 text-center bg-white rounded-lg">
+                    <p className="text-lg text-gray-600">
                         No responses found for this survey
                     </p>
                     <button
                         onClick={handleGoBack}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="px-4 py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                     >
                         Go Back
                     </button>
@@ -250,17 +250,17 @@ export default function SurveyResponse() {
     }
 
     return (
-        <div className="w-full lg:w-9/12 xl:w-8/12 mx-auto">
+        <div className="w-full mx-auto lg:w-9/12 xl:w-8/12">
             <div className="w-full mb-4 text-2xl font-semibold">
                 {survey.title} survey responses
             </div>
             <div
-                className="flex justify-between items-center mb-4 bg-white rounded-lg px-4 w-full animate-fade-in-down"
+                className="flex items-center justify-between w-full px-4 mb-4 bg-white rounded-lg animate-fade-in-down"
                 style={{ animationDelay: "0.1s" }}
             >
                 <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
                     <div
-                        className="rounded-full p-4 cursor-pointer hover:bg-gray-100"
+                        className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
                         onClick={handleGoBack}
                     >
                         <FaArrowLeft className="text-gray-700" />
@@ -268,20 +268,20 @@ export default function SurveyResponse() {
                 </Tooltip>
                 <button
                     onClick={downloadCSV}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
                 >
                     Download Response
                 </button>
             </div>
 
-            <div className="w-full flex gap-4 flex-col">
+            <div className="flex flex-col w-full gap-4">
                 <div
-                    className="bg-white rounded-lg w-full flex bg-gradient-to-r from-blue-400 to-blue-800 animate-fade-in-down"
+                    className="flex w-full bg-white rounded-lg bg-gradient-to-r from-blue-400 to-blue-800 animate-fade-in-down"
                     style={{ animationDelay: "0.2s" }}
                 >
-                    <div className="w-full ml-4 md:ml-8 text-white mt-14">
+                    <div className="w-full ml-4 text-white md:ml-8 mt-14">
                         <div className="flex gap-2">
-                            <p className="text-3xl md:text-5xl font-semibold">
+                            <p className="text-3xl font-semibold md:text-5xl">
                                 {responseCount}
                             </p>
                         </div>
@@ -293,14 +293,15 @@ export default function SurveyResponse() {
                     {survey.image_url && (
                         <img
                             src={survey.image_url}
+                            loading="lazy"
                             alt={survey.title}
-                            className="w-1/2 h-40 object-cover mt-4 mr-4 rounded-t-md"
+                            className="object-cover w-1/2 h-40 mt-4 mr-4 rounded-t-md"
                         />
                     )}
                 </div>
 
                 <div
-                    className="bg-white rounded-lg p-4 w-full h-full animate-fade-in-down"
+                    className="w-full h-full p-4 bg-white rounded-lg animate-fade-in-down"
                     style={{ animationDelay: "0.3s" }}
                 >
                     <input
@@ -308,7 +309,7 @@ export default function SurveyResponse() {
                         placeholder="Search responses"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="mb-4 px-4 py-2 border rounded-lg w-full"
+                        className="w-full px-4 py-2 mb-4 border rounded-lg"
                     />
                     <DataGrid
                         sx={{

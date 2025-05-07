@@ -74,8 +74,8 @@ export default function DefaultLayout() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <div className="flex justify-between items-center py-4 bg-white px-8 border-b-1 border-gray-200">
+        <div className="flex flex-col min-h-screen">
+            <div className="flex items-center justify-between px-8 py-4 bg-white border-gray-200 border-b-1">
                 <div className="flex gap-4">
                     <NavLink
                         to="/dashboard"
@@ -97,20 +97,20 @@ export default function DefaultLayout() {
                     </NavLink>
                 </div>
                 <div className="flex gap-4">
-                    <p className="text-center self-center font-semibold text-slate-500 hidden md:block">
+                    <p className="self-center hidden font-semibold text-center text-slate-500 md:block">
                         {currentUser.name}
                     </p>
                     {/* <FaUserCircle
                         size={48}
-                        className="text-gray-300 self-center cursor-pointer hover:bg-gray-100 p-2 rounded-full"
+                        className="self-center p-2 text-gray-300 rounded-full cursor-pointer hover:bg-gray-100"
                         onClick={toggleUserProfilePopup}
                     /> */}
-                    <img src={logo} alt="" className="h-12 w-auto self-center cursor-pointer rounded-full" onClick={toggleUserProfilePopup} />
+                    <img src={logo} alt="" loading="lazy" className="self-center w-auto h-12 rounded-full cursor-pointer" onClick={toggleUserProfilePopup} />
 
                 </div>
             </div>
 
-            <div className="flex-grow p-4 md:p-6 bg-gray-100">
+            <div className="flex-grow p-4 bg-gray-100 md:p-6">
                 <Outlet />
             </div>
 

@@ -34,8 +34,8 @@ const AboutPopup = ({ openAboutPopup, setOpenAboutPopup }) => {
                     boxShadow: 24,
                 }}
             >
-                <div className="relative mb-6 p-4">
-                    <div className="absolute -top-3 right-0">
+                <div className="relative p-4 mb-6">
+                    <div className="absolute right-0 -top-3">
                         <ModalClose
                             variant="outlined"
                             onClick={() => setOpenAboutPopup(false)}
@@ -43,7 +43,7 @@ const AboutPopup = ({ openAboutPopup, setOpenAboutPopup }) => {
                     </div>
                     <Typography
                         variant="h5"
-                        className="font-semibold text-center mb-4"
+                        className="mb-4 font-semibold text-center"
                     >
                         About SurveyForm
                     </Typography>
@@ -56,11 +56,11 @@ const AboutPopup = ({ openAboutPopup, setOpenAboutPopup }) => {
                     </Typography>
                     <Typography
                         variant="h6"
-                        className="font-semibold mb-2 mt-2"
+                        className="mt-2 mb-2 font-semibold"
                     >
                         Features
                     </Typography>
-                    <ul className="list-disc list-inside mb-4 p-4 bg-gray-100 rounded-lg mt-4">
+                    <ul className="p-4 mt-4 mb-4 list-disc list-inside bg-gray-100 rounded-lg">
                         <li className="mb-2">
                             <strong>Intuitive Dashboard</strong> - Upon logging
                             in, you’ll be greeted by a sleek dashboard
@@ -99,10 +99,10 @@ const AboutPopup = ({ openAboutPopup, setOpenAboutPopup }) => {
                             to keep your data safe.
                         </li>
                     </ul>
-                    <Typography variant="h6" className="font-semibold mb-2">
+                    <Typography variant="h6" className="mb-2 font-semibold">
                         Built With
                     </Typography>
-                    <ul className="list-disc list-inside p-4 bg-gray-100 rounded-lg mt-4">
+                    <ul className="p-4 mt-4 list-disc list-inside bg-gray-100 rounded-lg">
                         <li>
                             <strong>React JS</strong> for a dynamic and
                             responsive frontend experience.

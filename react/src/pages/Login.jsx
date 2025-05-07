@@ -65,6 +65,7 @@ export default function Login() {
                     <div className="flex justify-center mb-6">
                         <img
                             src={logo}
+                            loading="lazy"
                             alt="Logo"
                             // className="w-auto h-16"
                             className="w-auto h-36"

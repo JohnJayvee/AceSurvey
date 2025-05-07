@@ -50,19 +50,20 @@ const ForgotPassword = () => {
     }, [message, isError, navigate]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-5">
-            {/* <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8"> */}
-            <div className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8 animated fadeInDown">
+        <div className="flex items-center justify-center min-h-screen px-5 bg-gray-50">
+            {/* <div className="w-full max-w-md p-8 bg-white shadow-md rounded-2xl"> */}
+            <div className="w-full max-w-lg p-8 bg-white shadow-md rounded-2xl animated fadeInDown">
 
                 <div className="flex justify-center mb-6">
                     <img
                         src={logo}
+                        loading="lazy"
                         alt="Logo"
-                        // className="h-16 w-auto"
-                        className="h-36 w-auto"
+                        // className="w-auto h-16"
+                        className="w-auto h-36"
                     />
                 </div>
-                <h1 className="text-2xl font-bold text-center mb-6 text-gray-700">
+                <h1 className="mb-6 text-2xl font-bold text-center text-gray-700">
                     Forgot Password
                 </h1>
 
@@ -73,7 +74,7 @@ const ForgotPassword = () => {
                     >
                         {message}
                         {!isError && (
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className="mt-1 text-xs text-gray-600">
                                 Redirecting to login in {countdown} second{countdown !== 1 && 's'}...
                             </p>
                         )}

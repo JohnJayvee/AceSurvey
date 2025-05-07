@@ -81,7 +81,7 @@ export default function Respondent() {
 
     return (
         <div className="relative w-full min-h-screen">
-            <div className="w-11/12 mx-auto  md:w-3/4 xl:w-1/2">
+            <div className="w-11/12 mx-auto md:w-3/4 xl:w-1/2">
                 <div
                     className="flex justify-between w-full px-4 mb-4 bg-white rounded-lg animate-fade-in-down"
                     style={{ animationDelay: "0.1s" }}
@@ -108,9 +108,9 @@ export default function Respondent() {
                     <div className="w-full mr-4 md:w-1/2">
                         <img
                             src={responseDetails.image_url || '/AceLogo.png'}
+                            loading="lazy"
                             className="object-cover w-full rounded-md h-80"
                             alt={responseDetails.title}
-                            loading="lazy"
                         />
                     </div>
                     <div className="w-full lg:w-1/2">

@@ -145,17 +145,17 @@ const UserProfilePopup = ({ onLogout }) => {
     };
 
     return (
-        <div className="bg-white p-4 rounded-xl drop-shadow-xl border mt-3 border-gray-300 w-72 relative md:mt-0">
+        <div className="relative p-4 mt-3 bg-white border border-gray-300 rounded-xl drop-shadow-xl w-72 md:mt-0">
             <div className="flex items-center justify-center mb-4">
                 <div className="relative">
-                    {/* <FaUserCircle size={85} className="text-gray-300 self-center" /> */}
-                    <img src={logo} alt="" className="h-24 w-auto" />
-                    <div className="absolute bottom-2 right-3 transform translate-x-1/2 -translate-y-1/2">
-                        <div className="h-3 w-3 bg-green-500 rounded-full" />
+                    {/* <FaUserCircle size={85} className="self-center text-gray-300" /> */}
+                    <img src={logo} loading="lazy" alt="" className="w-auto h-24" />
+                    <div className="absolute transform translate-x-1/2 -translate-y-1/2 bottom-2 right-3">
+                        <div className="w-3 h-3 bg-green-500 rounded-full" />
                     </div>
                 </div>
             </div>
-            <div className="text-center mb-4">
+            <div className="mb-4 text-center">
                 <p className="text-base font-semibold">{currentUser.name}</p>
                 <p className="text-sm text-gray-500">{currentUser.email}</p>
             </div>
@@ -164,9 +164,9 @@ const UserProfilePopup = ({ onLogout }) => {
 
             <div
                 onClick={openPasswordModal}
-                className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
+                className="flex items-center w-full p-2 mt-2 mb-1 bg-white rounded-full cursor-pointer hover:bg-gray-100"
             >
-                <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
+                <div className="flex items-center justify-center w-10 p-2 bg-gray-300 rounded-full">
                     <FaUnlockAlt size={22} />
                 </div>
                 <span className="ml-2">Change Password</span>
@@ -174,9 +174,9 @@ const UserProfilePopup = ({ onLogout }) => {
 
             <div
                 onClick={openEmailModal}
-                className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
+                className="flex items-center w-full p-2 mt-2 mb-1 bg-white rounded-full cursor-pointer hover:bg-gray-100"
             >
-                <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
+                <div className="flex items-center justify-center w-10 p-2 bg-gray-300 rounded-full">
                     <FaEnvelope size={22} />
                 </div>
                 <span className="ml-2">Change Email</span>
@@ -184,18 +184,18 @@ const UserProfilePopup = ({ onLogout }) => {
 
             <div
                 onClick={onLogout}
-                className="flex items-center w-full p-2 bg-white hover:bg-gray-100 rounded-full mb-1 cursor-pointer mt-2"
+                className="flex items-center w-full p-2 mt-2 mb-1 bg-white rounded-full cursor-pointer hover:bg-gray-100"
             >
-                <div className="p-2 bg-gray-300 rounded-full w-10 flex justify-center items-center">
+                <div className="flex items-center justify-center w-10 p-2 bg-gray-300 rounded-full">
                     <VscSignOut size={22} />
                 </div>
                 <span className="ml-2">Logout</span>
             </div>
 
             {isPasswordModalOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white p-6 rounded-md w-80">
-                        <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="p-6 bg-white rounded-md w-80">
+                        <h2 className="mb-4 text-lg font-semibold">Change Password</h2>
                         <form onSubmit={handleChangePassword}>
                             <div className="mb-2">
                                 <label className="block text-sm font-medium text-gray-700">Current Password</label>
@@ -204,11 +204,11 @@ const UserProfilePopup = ({ onLogout }) => {
                                         type={showPassword ? "text" : "password"}
                                         value={currentPassword}
                                         onChange={(e) => setCurrentPassword(e.target.value)}
-                                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                        className="block w-full p-2 mt-1 border border-gray-300 rounded-md"
                                     />
                                     <div
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-2 top-2 cursor-pointer"
+                                        className="absolute cursor-pointer right-2 top-2"
                                     >
                                         {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                                     </div>
@@ -221,11 +221,11 @@ const UserProfilePopup = ({ onLogout }) => {
                                         type={showNewPassword ? "text" : "password"}
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                        className="block w-full p-2 mt-1 border border-gray-300 rounded-md"
                                     />
                                     <div
                                         onClick={() => setShowNewPassword(!showNewPassword)}
-                                        className="absolute right-2 top-2 cursor-pointer"
+                                        className="absolute cursor-pointer right-2 top-2"
                                     >
                                         {showNewPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                                     </div>
@@ -238,11 +238,11 @@ const UserProfilePopup = ({ onLogout }) => {
                                         type={showConfirmPassword ? "text" : "password"}
                                         value={newPasswordConfirmation}
                                         onChange={(e) => setNewPasswordConfirmation(e.target.value)}
-                                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                        className="block w-full p-2 mt-1 border border-gray-300 rounded-md"
                                     />
                                     <div
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-2 top-2 cursor-pointer"
+                                        className="absolute cursor-pointer right-2 top-2"
                                     >
                                         {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                                     </div>
@@ -251,10 +251,10 @@ const UserProfilePopup = ({ onLogout }) => {
                             <button
                                 type="submit"
                                 disabled={loadingPassword}
-                                className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex justify-center items-center gap-2"
+                                className="flex items-center justify-center w-full gap-2 p-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
                             >
                                 {loadingPassword && (
-                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    <span className="w-4 h-4 border-2 border-white rounded-full border-t-transparent animate-spin"></span>
                                 )}
                                 Change Password
                             </button>
@@ -266,7 +266,7 @@ const UserProfilePopup = ({ onLogout }) => {
                         </form>
                         <button
                             onClick={closePasswordModal}
-                            className="w-full p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 mt-4"
+                            className="w-full p-2 mt-4 text-white bg-gray-500 rounded-md hover:bg-gray-600"
                         >
                             Cancel
                         </button>
@@ -275,9 +275,9 @@ const UserProfilePopup = ({ onLogout }) => {
             )}
 
             {isEmailModalOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white p-6 rounded-md w-80">
-                        <h2 className="text-lg font-semibold mb-4">Change Email</h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="p-6 bg-white rounded-md w-80">
+                        <h2 className="mb-4 text-lg font-semibold">Change Email</h2>
                         <form onSubmit={handleChangeEmail}>
                             <div className="mb-2">
                                 <label className="block text-sm font-medium text-gray-700">Current Email</label>
@@ -285,7 +285,7 @@ const UserProfilePopup = ({ onLogout }) => {
                                     type="email"
                                     value={currentEmail}
                                     onChange={(e) => setCurrentEmail(e.target.value)}
-                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                    className="block w-full p-2 mt-1 border border-gray-300 rounded-md"
                                     disabled
                                 />
                             </div>
@@ -295,7 +295,7 @@ const UserProfilePopup = ({ onLogout }) => {
                                     type="email"
                                     value={newEmail}
                                     onChange={(e) => setNewEmail(e.target.value)}
-                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                    className="block w-full p-2 mt-1 border border-gray-300 rounded-md"
                                 />
                             </div>
                             <div className="mb-2">
@@ -304,16 +304,16 @@ const UserProfilePopup = ({ onLogout }) => {
                                     type="email"
                                     value={newEmailConfirmation}
                                     onChange={(e) => setNewEmailConfirmation(e.target.value)}
-                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                                    className="block w-full p-2 mt-1 border border-gray-300 rounded-md"
                                 />
                             </div>
                             <button
                                 type="submit"
                                 disabled={loadingEmail}
-                                className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex justify-center items-center gap-2"
+                                className="flex items-center justify-center w-full gap-2 p-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
                             >
                                 {loadingEmail && (
-                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    <span className="w-4 h-4 border-2 border-white rounded-full border-t-transparent animate-spin"></span>
                                 )}
                                 Change Email
                             </button>
@@ -325,7 +325,7 @@ const UserProfilePopup = ({ onLogout }) => {
                         </form>
                         <button
                             onClick={closeEmailModal}
-                            className="w-full p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 mt-4"
+                            className="w-full p-2 mt-4 text-white bg-gray-500 rounded-md hover:bg-gray-600"
                         >
                             Cancel
                         </button>

@@ -96,15 +96,15 @@ export default function Dashboard() {
 
     return (
         <div>
-            <div className="flex flex-col lg:flex-row w-full xl:w-3/4 mx-auto gap-5 text-gray-700">
+            <div className="flex flex-col w-full gap-5 mx-auto text-gray-700 lg:flex-row xl:w-3/4">
                 <div className="flex flex-col w-full lg:w-3/4">
                     {/* Card section */}
                     <div className="flex gap-4">
                         <DashboardCard
-                            className="order-1 lg:order-2 w-full rounded-lg p-8"
+                            className="order-1 w-full p-8 rounded-lg lg:order-2"
                             style={{ animationDelay: "0.1s" }}
                         >
-                            <div className="text-4xl md:text-5xl pb-2 font-semibold">
+                            <div className="pb-2 text-4xl font-semibold md:text-5xl">
                                 {loading ? <Skeleton /> : data.totalSurveys}
                             </div>
                             <p className="text-blue-400">
@@ -112,10 +112,10 @@ export default function Dashboard() {
                             </p>
                         </DashboardCard>
                         <DashboardCard
-                            className="order-2 lg:order-4 w-full rounded-lg p-8"
+                            className="order-2 w-full p-8 rounded-lg lg:order-4"
                             style={{ animationDelay: "0.2s" }}
                         >
-                            <div className="text-4xl md:text-5xl pb-2 font-semibold">
+                            <div className="pb-2 text-4xl font-semibold md:text-5xl">
                                 {loading ? <Skeleton /> : data.totalAnswers}
                             </div>
                             <p className="text-blue-400">
@@ -127,10 +127,10 @@ export default function Dashboard() {
                     {/* Latest survey section */}
                     <div className="mt-4">
                         <DashboardCard
-                            className="order-3 lg:order-1 row-span-2 p-6"
+                            className="order-3 row-span-2 p-6 lg:order-1"
                             style={{ animationDelay: "0.2s" }}
                         >
-                            <p className="font-semibold mb-4">
+                            <p className="mb-4 font-semibold">
                                 {loading ? <Skeleton width={150} /> : "Latest Survey"}
                             </p>
                             {loading ? (
@@ -149,14 +149,14 @@ export default function Dashboard() {
                                     <div>
                                         <img
                                             src={data.latestSurvey.image_url || '/AceLogo.png'} // Add default image path here
-                                            // className="w-full h-72 mx-auto object-cover rounded-lg"
-                                            className="w-auto h-72 mx-auto object-cover rounded-lg"
+                                            // className="object-cover w-full mx-auto rounded-lg h-72"
                                             loading="lazy"
+                                            className="object-cover w-auto mx-auto rounded-lg h-72"
                                         />
-                                        <h3 className="font-bold text-xl mb-3 mt-4">
+                                        <h3 className="mt-4 mb-3 text-xl font-bold">
                                             {data.latestSurvey.title}
                                         </h3>
-                                        <div className="flex justify-between text-xs md:text-sm mb-1 mt-2">
+                                        <div className="flex justify-between mt-2 mb-1 text-xs md:text-sm">
                                             <div>Created Date:</div>
                                             <div>
                                                 {formatDate(
@@ -164,7 +164,7 @@ export default function Dashboard() {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex justify-between text-xs md:text-sm mb-1">
+                                        <div className="flex justify-between mb-1 text-xs md:text-sm">
                                             <div>Expire Date:</div>
                                             <div>
                                                 {formatDate(
@@ -172,7 +172,7 @@ export default function Dashboard() {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex justify-between text-xs md:text-sm mb-1">
+                                        <div className="flex justify-between mb-1 text-xs md:text-sm">
                                             <div>Status:</div>
                                             <div>
                                                 {isSurveyExpired(
@@ -184,13 +184,13 @@ export default function Dashboard() {
                                                         : "Closed"}
                                             </div>
                                         </div>
-                                        <div className="flex justify-between text-xs md:text-sm mb-1">
+                                        <div className="flex justify-between mb-1 text-xs md:text-sm">
                                             <div>Questions:</div>
                                             <div>
                                                 {data.latestSurvey.questions}
                                             </div>
                                         </div>
-                                        <div className="flex justify-between text-xs md:text-sm mb-3">
+                                        <div className="flex justify-between mb-3 text-xs md:text-sm">
                                             <div>Responses:</div>
                                             <div>
                                                 {data.latestSurvey.answers}
@@ -204,21 +204,21 @@ export default function Dashboard() {
                                                     textDecoration: "none",
                                                 }}
                                             >
-                                                <button className="flex text-xs md:text-sm py-2 px-4 hover:bg-blue-50 text-blue-500 rounded-lg">
-                                                    <PencilIcon className="w-4 md:w-5 h-4 md:h-5 mr-2" />
+                                                <button className="flex px-4 py-2 text-xs text-blue-500 rounded-lg md:text-sm hover:bg-blue-50">
+                                                    <PencilIcon className="w-4 h-4 mr-2 md:w-5 md:h-5" />
                                                     Edit Survey
                                                 </button>
                                             </Link>
 
                                             <button
-                                                className="flex text-xs md:text-sm py-2 px-4 hover:bg-blue-50 text-blue-500 rounded-lg"
+                                                className="flex px-4 py-2 text-xs text-blue-500 rounded-lg md:text-sm hover:bg-blue-50"
                                                 onClick={() =>
                                                     handleViewResponses(
                                                         data.latestSurvey.id
                                                     )
                                                 }
                                             >
-                                                <EyeIcon className="w-4 md:w-5 h-4 md:h-5 mr-2" />
+                                                <EyeIcon className="w-4 h-4 mr-2 md:w-5 md:h-5" />
                                                 View Responses
                                             </button>
                                         </div>
@@ -226,7 +226,7 @@ export default function Dashboard() {
                                 )
                             )}
                             {!loading && !data.latestSurvey && (
-                                <div className="text-gray-600 text-center py-16">
+                                <div className="py-16 text-center text-gray-600">
                                     No surveys available
                                 </div>
                             )}
@@ -237,10 +237,10 @@ export default function Dashboard() {
                 {/* Analytics Section */}
                 <div className="w-full lg:w-2/3">
                     <DashboardCard
-                        className="order-4 lg:order-3 row-span-2 p-6 mt-5 lg:mt-0 mb-4"
+                        className="order-4 row-span-2 p-6 mt-5 mb-4 lg:order-3 lg:mt-0"
                         style={{ animationDelay: "0.3s" }}
                     >
-                        <p className="font-semibold mb-4">
+                        <p className="mb-4 font-semibold">
                             {loading ? <Skeleton width={150} /> : "Survey Analytics"}
                         </p>
                         {loading ? (
@@ -279,10 +279,10 @@ export default function Dashboard() {
                     </DashboardCard>
 
                     <DashboardCard
-                        className="order-4 lg:order-3 row-span-2 p-6"
+                        className="order-4 row-span-2 p-6 lg:order-3"
                         style={{ animationDelay: "0.3s" }}
                     >
-                        <p className="font-semibold mb-4">
+                        <p className="mb-4 font-semibold">
                             {loading ? <Skeleton width={150} /> : "Latest Responses"}
                         </p>
                         {loading ? (
@@ -298,21 +298,21 @@ export default function Dashboard() {
                             </div>
                         ) : (
                             data.latestAnswers && data.latestAnswers.length > 0 ? (
-                                <div className="text-left h-96 overflow-y-auto">
+                                <div className="overflow-y-auto text-left h-96">
                                     {data.latestAnswers.map((answer) => (
                                         <div
                                             key={answer.id}
-                                            className="border-b-1 border-gray-200 py-2 cursor-pointer"
+                                            className="py-2 border-gray-200 cursor-pointer border-b-1"
                                             onClick={() =>
                                                 handleViewDetail(answer.survey_id, answer.id)
                                             }
                                         >
-                                            <div className="px-4 py-2 hover:bg-gray-50 rounded-lg flex justify-between ">
-                                                <div className="font-semibold text-blue-400 text-sm md:text-base">
+                                            <div className="flex justify-between px-4 py-2 rounded-lg hover:bg-gray-50 ">
+                                                <div className="text-sm font-semibold text-blue-400 md:text-base">
                                                     {answer.survey.title}
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs md:text-sm bg-gray-50 py-1 px-2 rounded-lg">
+                                                    <p className="px-2 py-1 text-xs rounded-lg md:text-sm bg-gray-50">
                                                         {formatDate(answer.end_date)}
                                                     </p>
                                                 </div>
@@ -321,7 +321,7 @@ export default function Dashboard() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-gray-600 text-center py-16">
+                                <div className="py-16 text-center text-gray-600">
                                     You don't have responses yet
                                 </div>
                             )

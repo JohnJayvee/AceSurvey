@@ -49,10 +49,10 @@ export default function SurveyPublicView() {
 
     if (loading) {
         return (
-            <div className="bg-gray-50 min-h-screen w-full">
-                <div className="py-8 w-11/12 md:w-3/4 xl:w-1/2 mx-auto">
-                    <div className="bg-white p-4 flex flex-col md:flex-row rounded-lg border border-gray-200 mb-4">
-                        <div className="mr-4 w-full md:w-1/2">
+            <div className="w-full min-h-screen bg-gray-50">
+                <div className="w-11/12 py-8 mx-auto md:w-3/4 xl:w-1/2">
+                    <div className="flex flex-col p-4 mb-4 bg-white border border-gray-200 rounded-lg md:flex-row">
+                        <div className="w-full mr-4 md:w-1/2">
                             <Skeleton height={320} />
                         </div>
                         <div className="w-full lg:w-1/2">
@@ -63,7 +63,7 @@ export default function SurveyPublicView() {
                     </div>
                     <div>
                         {[1, 2, 3].map((index) => (
-                            <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+                            <div key={index} className="p-4 mb-4 bg-white border border-gray-200 rounded-lg">
                                 <Skeleton height={24} width={200} className="mb-4" />
                                 <Skeleton count={4} className="mb-2" />
                             </div>
@@ -76,9 +76,9 @@ export default function SurveyPublicView() {
 
     if (error) {
         return (
-            <div className="bg-gray-50 min-h-screen w-full ">
-                <div className="p-10 flex items-center flex-col">
-                    <InformationCircleIcon className="w-40 h-40 p-6 text-gray-400  mt-16" />
+            <div className="w-full min-h-screen bg-gray-50 ">
+                <div className="flex flex-col items-center p-10">
+                    <InformationCircleIcon className="w-40 h-40 p-6 mt-16 text-gray-400" />
                     <div className="bg-blue-50 border border-blue-500 p-6 rounded-lg w-full md:w-3/4 max-w-[40rem]">
                         <h1 className="text-base font-semibold text-blue-500">
                             {error}
@@ -90,38 +90,38 @@ export default function SurveyPublicView() {
     }
 
     return (
-        <div className="bg-gray-50 min-h-screen w-full relative">
-            <div className="py-8 w-11/12 md:w-3/4 xl:w-1/2 mx-auto">
+        <div className="relative w-full min-h-screen bg-gray-50">
+            <div className="w-11/12 py-8 mx-auto md:w-3/4 xl:w-1/2">
                 <form onSubmit={(ev) => onSubmit(ev)}>
                     <div>
-                        <div className="bg-white p-4 flex flex-col md:flex-row rounded-lg border border-gray-200 mb-4">
-                            <div className="mr-4 w-full md:w-1/2">
+                        <div className="flex flex-col p-4 mb-4 bg-white border border-gray-200 rounded-lg md:flex-row">
+                            <div className="w-full mr-4 md:w-1/2">
                                 <img
                                     src={survey.image_url || '/AceLogo.png'}
-                                    className="w-auto h-80 object-cover rounded-md"
-                                    alt={survey.title}
                                     loading="lazy"
+                                    className="object-cover w-auto rounded-md h-80"
+                                    alt={survey.title}
                                 />
                             </div>
                             <div className="w-full lg:w-1/2">
-                                <h1 className="text-4xl my-3 font-semibold">
+                                <h1 className="my-3 text-4xl font-semibold">
                                     {survey.title}
                                 </h1>
-                                <p className="text-gray-500 text-sm mb-1">
+                                <p className="mb-1 text-sm text-gray-500">
                                     Status:{" "}
                                     {survey.status ? "Active" : "Closed"}
                                 </p>
-                                <p className="text-gray-500 text-sm mb-1">
+                                <p className="mb-1 text-sm text-gray-500">
                                     Expire Date: {survey.expire_date}
                                 </p>
-                                <p className="text-gray-500 text-sm mb-3 max-h-48 overflow-y-auto">
+                                <p className="mb-3 overflow-y-auto text-sm text-gray-500 max-h-48">
                                     {survey.description}
                                 </p>
                             </div>
                         </div>
 
                         {surveyFinished && (
-                            <div className="py-8 px-6 bg-green-50 text-green-500 border border-green-300 w-full rounded-lg mx-auto ">
+                            <div className="w-full px-6 py-8 mx-auto text-green-500 border border-green-300 rounded-lg bg-green-50 ">
                                 Thank you for participating in the survey!
                             </div>
                         )}
@@ -142,7 +142,7 @@ export default function SurveyPublicView() {
                                     )}
                                 </div>
                                 <button
-                                    className="bg-blue-500 text-white font-semibold rounded-md py-2 px-3 hover:opacity-70"
+                                    className="px-3 py-2 font-semibold text-white bg-blue-500 rounded-md hover:opacity-70"
                                     type="submit"
                                 >
                                     Submit

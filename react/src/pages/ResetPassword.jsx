@@ -66,7 +66,7 @@ const ResetPassword = () => {
 
                 <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
                     <div className="flex justify-center mb-6">
-                        <img src={logo} alt="Logo" className="w-auto h-36" />
+                        <img src={logo} loading="lazy" alt="Logo" className="w-auto h-36" />
                     </div>
                     <form onSubmit={handleSubmit} className="w-full">
                         <h1 className="my-4 text-2xl font-semibold text-center">
