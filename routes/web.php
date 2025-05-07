@@ -31,7 +31,7 @@ Route::get('/api/reset', function () {
     }
 
     // Get the current scheme and host (e.g., http://localhost:3000 or http://10.12.4.56:3000)
-    $baseUrl = request()->getScheme() . '://' . request()->getHost() . ':3000';
+    $baseUrl = request()->getScheme() . '://' . request()->getHost();
 
     return redirect()->away($baseUrl . '/reset-password/' . $token);
 });
