@@ -35,7 +35,7 @@ Route::get('/api/reset', function () {
     $fullHost = $host . ($port ? ":$port" : ''); // Append port if it exists
 
     // Debugging: Output the full host
-    // dd($fullHost); // Uncomment this line to debug
+    dd($fullHost);  // Check what this value outputs, it should be 'white-emu-581912.hostingersite.com' or 'survey.test:8080'
 
     // Map host:port combinations to frontend URLs
     $frontendMap = [
@@ -43,10 +43,7 @@ Route::get('/api/reset', function () {
         'survey.test:8080' => 'http://localhost:3000',
     ];
 
-    // Debugging: See what key is being looked up
-    // dd($frontendMap[$fullHost] ?? 'default'); // Uncomment this line to debug
-
-    // Default to localhost if no match is found
+    // See which URL it's using
     $frontendBase = $frontendMap[$fullHost] ?? 'http://localhost:3000';
 
     return redirect()->away(rtrim($frontendBase, '/') . '/reset-password/' . $token);
