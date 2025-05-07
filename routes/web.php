@@ -24,18 +24,18 @@ Route::get('/', function () {
 // });
 Route::get('/api/reset', function () {
     $token = request('token');
-    $host = request()->getHost(); // e.g. exam.com, staging.exam.com
+    $host = request()->getHost(); // e.g. white-emu-581912.hostingersite.com
 
     if (!$token) {
         return response()->json(['error' => 'Token missing'], 400);
     }
 
-    // Map backend domains to their corresponding frontend URLs
+    // Map just the hostnames (no scheme)
     $frontendMap = [
-        'https://white-emu-581912.hostingersite.com' => 'https://white-raccoon-508494.hostingersite.com',
+        'white-emu-581912.hostingersite.com' => 'https://white-raccoon-508494.hostingersite.com',
     ];
 
-    $frontendBase = $frontendMap[$host] ?? 'http://localhost:3000'; // fallback
+    $frontendBase = $frontendMap[$host] ?? 'http://localhost:3000';
 
     return redirect()->away(rtrim($frontendBase, '/') . '/reset-password/' . $token);
 });
