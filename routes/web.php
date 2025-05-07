@@ -24,10 +24,10 @@ Route::get('/', function () {
 // });
 Route::get('/api/reset', function () {
     $token = request('token');
-    $host = request()->getHost(); // e.g. survey.test
-    $port = request()->getPort(); // Get port, e.g. 8080
+    $host = request()->getHost(); // e.g., white-emu-581912.hostingersite.com
+    $port = request()->getPort(); // e.g., 8080
 
-    // Debugging: Check what Laravel is receiving
+    // Debugging: Output the host and port
     dd($host, $port);
 
     if (!$token) {
@@ -36,7 +36,8 @@ Route::get('/api/reset', function () {
 
     // Combine host and port if necessary
     $fullHost = $host . ($port ? ":$port" : ''); // Append port if it exists
-    // Debugging: See the fullHost
+
+    // Debugging: Output the combined full host
     dd($fullHost);
 
     // Map host:port combinations to frontend URLs
