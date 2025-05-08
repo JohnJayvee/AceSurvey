@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const StateContext = createContext({
     currentUser: {},
@@ -196,7 +196,11 @@ const tmpSurveys = [
 ];
 
 export const ContextProvider = ({ children }) => {
-    const [currentUser, setCurrentUser] = useState({});
+    const [currentUser, setCurrentUser] = useState(() => {
+        const savedUser = localStorage.getItem('CURRENT_USER');
+        return savedUser ? JSON.parse(savedUser) : {};
+    });
+
     const [userToken, _setUserToken] = useState(
         localStorage.getItem("TOKEN") || sessionStorage.getItem("TOKEN") || ""
     );
@@ -211,18 +215,34 @@ export const ContextProvider = ({ children }) => {
 
     const [toast, setToast] = useState({ message: "", show: false });
 
-    const setUserToken = (token, keepSignedIn) => {
+    const setUserToken = (token, keepSignedIn, userData = null) => {
         if (token) {
             if (keepSignedIn) {
+                // If "Remember Me" is checked, store in localStorage
                 localStorage.setItem("TOKEN", token);
-                sessionStorage.removeItem("TOKEN");
+                localStorage.removeItem("SHARED_TOKEN");
+                if (userData) {
+                    localStorage.setItem('CURRENT_USER', JSON.stringify(userData));
+                }
             } else {
+                // If "Remember Me" is not checked, store in sessionStorage and share across tabs
                 sessionStorage.setItem("TOKEN", token);
-                localStorage.removeItem("TOKEN");
+                localStorage.setItem("SHARED_TOKEN", token); // For cross-tab communication
+                if (userData) {
+                    sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
+                    localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData)); // For cross-tab communication
+                }
             }
+            setCurrentUser(userData || {});
         } else {
+            // Clear all storage on logout
             localStorage.removeItem("TOKEN");
+            localStorage.removeItem("SHARED_TOKEN");
+            localStorage.removeItem("SHARED_CURRENT_USER");
             sessionStorage.removeItem("TOKEN");
+            localStorage.removeItem('CURRENT_USER');
+            sessionStorage.removeItem('CURRENT_USER');
+            setCurrentUser({});
         }
         _setUserToken(token);
     };
@@ -233,6 +253,80 @@ export const ContextProvider = ({ children }) => {
             setToast({ message: "", show: false });
         }, 4700);
     };
+
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'SHARED_TOKEN') {
+                const newToken = e.newValue;
+                if (newToken) {
+                    sessionStorage.setItem("TOKEN", newToken);
+                    _setUserToken(newToken);
+                } else {
+                    sessionStorage.removeItem("TOKEN");
+                    _setUserToken('');
+                    setCurrentUser({});
+                }
+            } else if (e.key === 'SHARED_CURRENT_USER') {
+                const userData = e.newValue ? JSON.parse(e.newValue) : {};
+                sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
+                setCurrentUser(userData);
+            }
+        };
+
+        const checkAuthStatus = () => {
+            const token = localStorage.getItem("TOKEN") ||
+                (document.visibilityState === 'visible' ? localStorage.getItem("SHARED_TOKEN") : null) ||
+                sessionStorage.getItem("TOKEN");
+
+            if (token) {
+                _setUserToken(token);
+                // If using SHARED_TOKEN, ensure it's in sessionStorage
+                if (localStorage.getItem("SHARED_TOKEN") === token) {
+                    sessionStorage.setItem("TOKEN", token);
+                    const sharedUser = localStorage.getItem('SHARED_CURRENT_USER');
+                    if (sharedUser) {
+                        try {
+                            sessionStorage.setItem('CURRENT_USER', sharedUser);
+                            setCurrentUser(JSON.parse(sharedUser));
+                        } catch (e) {
+                            console.error('Error parsing user data:', e);
+                        }
+                    }
+                } else {
+                    const savedUser = token === localStorage.getItem("TOKEN")
+                        ? localStorage.getItem('CURRENT_USER')
+                        : sessionStorage.getItem('CURRENT_USER');
+
+                    if (savedUser) {
+                        try {
+                            const userData = JSON.parse(savedUser);
+                            setCurrentUser(userData);
+                        } catch (e) {
+                            console.error('Error parsing user data:', e);
+                        }
+                    }
+                }
+            } else {
+                _setUserToken('');
+                setCurrentUser({});
+                localStorage.removeItem("SHARED_TOKEN");
+                localStorage.removeItem("SHARED_CURRENT_USER");
+                localStorage.removeItem("CURRENT_USER");
+                sessionStorage.removeItem("CURRENT_USER");
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        document.addEventListener('visibilitychange', checkAuthStatus);
+
+        // Initial check
+        checkAuthStatus();
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            document.removeEventListener('visibilitychange', checkAuthStatus);
+        };
+    }, []); // Remove currentUser from dependencies
 
     return (
         <StateContext.Provider
