@@ -217,21 +217,17 @@ export const ContextProvider = ({ children }) => {
 
     const setUserToken = (token, keepSignedIn, userData = null) => {
         if (token) {
-            if (keepSignedIn) {
-                // If "Remember Me" is checked, store in localStorage
-                localStorage.setItem("TOKEN", token);
-                localStorage.removeItem("SHARED_TOKEN");
-                if (userData) {
-                    localStorage.setItem('CURRENT_USER', JSON.stringify(userData));
-                }
-            } else {
-                // If "Remember Me" is not checked, store in sessionStorage and share across tabs
-                sessionStorage.setItem("TOKEN", token);
-                localStorage.setItem("SHARED_TOKEN", token); // For cross-tab communication
-                if (userData) {
-                    sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
-                    localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData)); // For cross-tab communication
-                }
+            // Always store token and user data in localStorage for persistence
+            localStorage.setItem("TOKEN", token);
+            localStorage.setItem("SHARED_TOKEN", token);
+            if (userData) {
+                localStorage.setItem('CURRENT_USER', JSON.stringify(userData));
+                localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData));
+            }
+            // Also set in sessionStorage for current tab usage
+            sessionStorage.setItem("TOKEN", token);
+            if (userData) {
+                sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
             }
             setCurrentUser(userData || {});
         } else {
