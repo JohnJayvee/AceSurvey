@@ -20,6 +20,12 @@ export default function Login() {
 
     const toggleShowPassword = () => setShowPassword(!showPassword);
 
+    const handleLogin = (response) => {
+        // Always store user data in localStorage regardless of keepSignedIn
+        localStorage.setItem('CURRENT_USER', JSON.stringify(response.user));
+        setUserToken(response.token, keepSignedIn, response.user);
+    };
+
     async function onSubmit(ev) {
         ev.preventDefault();
         setError("");
@@ -31,7 +37,7 @@ export default function Login() {
                 password,
             });
             setCurrentUser(data.user);
-            setUserToken(data.token, keepSignedIn);
+            handleLogin(data);
         } catch (error) {
             let errorMessage = "login or password is incorrect";
             if (error.response) {
