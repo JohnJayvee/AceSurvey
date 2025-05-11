@@ -217,14 +217,22 @@ export const ContextProvider = ({ children }) => {
 
     const setUserToken = (token, keepSignedIn, userData = null) => {
         if (token) {
-            // Always store token and user data in localStorage for persistence
-            localStorage.setItem("TOKEN", token);
-            localStorage.setItem("SHARED_TOKEN", token);
-            if (userData) {
-                localStorage.setItem('CURRENT_USER', JSON.stringify(userData));
-                localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData));
+            if (keepSignedIn) {
+                // Store token and user data in localStorage for persistence
+                localStorage.setItem("TOKEN", token);
+                localStorage.setItem("SHARED_TOKEN", token);
+                if (userData) {
+                    localStorage.setItem('CURRENT_USER', JSON.stringify(userData));
+                    localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData));
+                }
+            } else {
+                // Remove from localStorage for non-persistent login
+                localStorage.removeItem("TOKEN");
+                localStorage.removeItem("SHARED_TOKEN");
+                localStorage.removeItem("SHARED_CURRENT_USER");
+                localStorage.removeItem('CURRENT_USER');
             }
-            // Also set in sessionStorage for current tab usage
+            // Always set in sessionStorage for current tab usage
             sessionStorage.setItem("TOKEN", token);
             if (userData) {
                 sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
