@@ -47,7 +47,7 @@ export default function SurveyQuestions({ questions, onQuestionsUpdate }) {
                 <h3 className="text-2xl font-bold">Questions</h3>
                 <button
                     type="button"
-                    className="flex items-center text-sm py-1 px-4 rounded-md text-blue-500  bg-blue-50 border border-blue-400 hover:bg-blue-100"
+                    className="flex items-center px-4 py-1 text-sm text-blue-500 border border-blue-400 rounded-md bg-blue-50 hover:bg-blue-100"
                     onClick={() => addQuestion()}
                 >
                     <PlusIcon className="w-4 mr-2" />
@@ -66,7 +66,7 @@ export default function SurveyQuestions({ questions, onQuestionsUpdate }) {
                     />
                 ))
             ) : (
-                <div className="text-gray-400 text-center py-4">
+                <div className="py-4 text-center text-gray-400">
                     You don't have any question created
                 </div>
             )}

@@ -28,7 +28,7 @@ export default function QuestionEditor({
     questionChange,
 }) {
     const [model, setModel] = useState({ ...question });
-    const { questionTypes } = useStateContext(); 
+    const { questionTypes } = useStateContext();
 
     useEffect(() => {
         questionChange(model);
@@ -126,8 +126,8 @@ export default function QuestionEditor({
 
     return (
         <>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 my-4">
-                <div className="flex flex-col lg:flex-row gap-3 justify-between mb-3 mt-2">
+            <div className="p-4 my-4 bg-white border border-gray-200 rounded-lg">
+                <div className="flex flex-col justify-between gap-3 mt-2 mb-3 lg:flex-row">
                     {/* Question Text */}
                     <div className="flex w-full">
                         <p className="self-center mr-2">{index + 1}. </p>
@@ -143,7 +143,7 @@ export default function QuestionEditor({
                                     question: ev.target.value,
                                 })
                             }
-                            className="mt-1 block w-full rounded-md  py-2 px-3 form-control sm:text-sm"
+                            className="block w-full px-3 py-2 mt-1 rounded-md form-control sm:text-sm"
                         />
                     </div>
 
@@ -156,17 +156,17 @@ export default function QuestionEditor({
                             onChange={onTypeChange}
                             options={questionTypeOptions}
                             styles={customStyles}
-                            className="mt-1 block w-full rounded-md sm:text-sm cursor-pointer"
+                            className="block w-full mt-1 rounded-md cursor-pointer sm:text-sm"
                             isSearchable={false}
                         />
                     </div>
                 </div>
 
-                <div className="mb-4 mt-6">
+                <div className="mt-6 mb-4">
                     {shouldHaveOptions() && (
                         <div>
                             {model.data.options.length === 0 && (
-                                <div className="text-xs text-gray-600 text-center py-3">
+                                <div className="py-3 text-xs text-center text-gray-600">
                                     You don't have any options defined
                                 </div>
                             )}
@@ -179,16 +179,16 @@ export default function QuestionEditor({
                                         >
                                             {model.type ===
                                                 "multiple choice" && (
-                                                <input
-                                                    type="radio"
-                                                    className="mr-2 w-6 h-6"
-                                                    disabled
-                                                />
-                                            )}
+                                                    <input
+                                                        type="radio"
+                                                        className="w-6 h-6 mr-2"
+                                                        disabled
+                                                    />
+                                                )}
                                             {model.type === "checkboxes" && (
                                                 <input
                                                     type="checkbox"
-                                                    className="mr-2  w-5 h-5"
+                                                    className="w-5 h-5 mr-2"
                                                     disabled
                                                 />
                                             )}
@@ -205,12 +205,12 @@ export default function QuestionEditor({
                                                     op.text = ev.target.value;
                                                     setModel({ ...model });
                                                 }}
-                                                className="w-full rounded-sm p-2 text-xs border border-gray-300 form-control"
+                                                className="w-full p-2 text-xs border border-gray-300 rounded-sm form-control"
                                             />
                                             <button
                                                 onClick={() => deleteOption(op)}
                                                 type="button"
-                                                className="h-8 w-8 rounded-full flex items-center text-gray-700 justify-center hover:bg-red-50 hover:text-red-500 p-2 mx-1"
+                                                className="flex items-center justify-center w-8 h-8 p-2 mx-1 text-gray-700 rounded-full hover:bg-red-50 hover:text-red-500"
                                             >
                                                 <Tooltip
                                                     arrow
@@ -226,11 +226,11 @@ export default function QuestionEditor({
                                 </div>
                             )}
 
-                            <h4 className="text-sm font-semibold my-3 flex items-center ml-6">
+                            <h4 className="flex items-center my-3 ml-6 text-sm font-semibold">
                                 <button
                                     onClick={addOption}
                                     type="button"
-                                    className="flex items-center text-xs py-1 px-2 rounded-md text-white bg-gray-500 hover:bg-gray-700"
+                                    className="flex items-center px-2 py-1 text-xs text-white bg-gray-500 rounded-md hover:bg-gray-700"
                                 >
                                     Add option
                                 </button>
@@ -249,7 +249,7 @@ export default function QuestionEditor({
                         >
                             <button
                                 type="button"
-                                className="flex items-center text-xs text-gray-500 hover:bg-green-100 hover:text-green-500 p-2 rounded-full"
+                                className="flex items-center p-2 text-xs text-gray-500 rounded-full hover:bg-green-100 hover:text-green-500"
                                 onClick={() => addQuestion(index + 1)}
                             >
                                 <PlusCircleIcon className="w-5 h-5" />
@@ -263,7 +263,7 @@ export default function QuestionEditor({
                         >
                             <button
                                 type="button"
-                                className="flex items-center text-xs text-gray-500 hover:bg-red-100 hover:text-red-500 p-2 rounded-full"
+                                className="flex items-center p-2 text-xs text-gray-500 rounded-full hover:bg-red-100 hover:text-red-500"
                                 onClick={() => deleteQuestion(question)}
                             >
                                 <TrashIcon className="w-5 h-5" />

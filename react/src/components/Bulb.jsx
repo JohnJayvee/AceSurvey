@@ -21,10 +21,10 @@ export default function Bulb() {
             >
                 <div
                     onClick={handleOpenAbout}
-                    className="relative cursor-pointer flex items-center justify-center"
+                    className="relative flex items-center justify-center cursor-pointer"
                 >
                     {/* Animated background */}
-                    <div className="absolute rounded-full bg-yellow-200 opacity-75 w-10 h-10 animate-ping"></div>
+                    <div className="absolute w-10 h-10 bg-yellow-200 rounded-full opacity-75 animate-ping"></div>
                     {/* Icon centered on top */}
                     <FaLightbulb
                         size={25}

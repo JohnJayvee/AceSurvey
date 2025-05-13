@@ -3,7 +3,7 @@ import "rsuite/Loader/styles/index.css";
 
 const Loader = () => {
     return (
-        <div className="flex justify-center items-center w-full h-full absolute top-0 left-0 bg-transparent">
+        <div className="absolute top-0 left-0 flex items-center justify-center w-full h-full bg-transparent">
             <RsuiteLoader size="md" content="Loading..." />
         </div>
     );

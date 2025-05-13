@@ -68,20 +68,20 @@ export default function Signup() {
     };
 
     return (
-        <div className="relative min-h-screen flex flex-col justify-between">
+        <div className="relative flex flex-col justify-between min-h-screen">
             <div className="absolute top-10 right-10">
                 <Bulb />
             </div>
-            <div className="flex flex-col items-center my-auto w-full max-w-lg mx-auto">
+            <div className="flex flex-col items-center w-full max-w-lg mx-auto my-auto">
                 {error.__html && (
                     <div
-                        className="w-full bg-red-100 text-center font-semibold text-sm rounded-md text-red-400 py-2 px-3 mb-2"
+                        className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-red-400 bg-red-100 rounded-md"
                         dangerouslySetInnerHTML={error}
                     ></div>
                 )}
-                <div className="bg-white drop-shadow-xl p-6 m-4 rounded-lg w-full animated fadeInDown">
+                <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
                     <form onSubmit={onSubmit}>
-                        <h1 className="text-2xl font-semibold text-center my-4">
+                        <h1 className="my-4 text-2xl font-semibold text-center">
                             Signup for free
                         </h1>
                         <input
@@ -89,7 +89,7 @@ export default function Signup() {
                             placeholder="Full name"
                             value={fullName}
                             onChange={(ev) => setFullName(ev.target.value)}
-                            className="form-control p-3 my-3"
+                            className="p-3 my-3 form-control"
                             required
                         />
                         <input
@@ -97,7 +97,7 @@ export default function Signup() {
                             placeholder="Email"
                             value={email}
                             onChange={(ev) => setEmail(ev.target.value)}
-                            className="form-control p-3 my-3"
+                            className="p-3 my-3 form-control"
                             required
                         />
                         <div className="relative">
@@ -106,17 +106,17 @@ export default function Signup() {
                                 placeholder="Password"
                                 value={password}
                                 onChange={(ev) => setPassword(ev.target.value)}
-                                className="form-control p-3 my-3 w-full pr-10"
+                                className="w-full p-3 pr-10 my-3 form-control"
                                 required
                             />
                             <span
                                 onClick={toggleShowPassword}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
                             >
                                 {showPassword ? (
-                                    <FaEye className="w-5 h-5 text-gray-500 mr-2" />
+                                    <FaEye className="w-5 h-5 mr-2 text-gray-500" />
                                 ) : (
-                                    <FaEyeSlash className="w-5 h-5 text-gray-500 mr-2" />
+                                    <FaEyeSlash className="w-5 h-5 mr-2 text-gray-500" />
                                 )}
                             </span>
                         </div>
@@ -132,30 +132,29 @@ export default function Signup() {
                                 onChange={(ev) =>
                                     setPasswordConfirmation(ev.target.value)
                                 }
-                                className="form-control p-3 my-3 w-full pr-10"
+                                className="w-full p-3 pr-10 my-3 form-control"
                                 required
                             />
                             <span
                                 onClick={toggleShowPasswordConfirmation}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
                             >
                                 {showPasswordConfirmation ? (
-                                    <FaEye className="w-5 h-5 text-gray-500 mr-2" />
+                                    <FaEye className="w-5 h-5 mr-2 text-gray-500" />
                                 ) : (
-                                    <FaEyeSlash className="w-5 h-5 text-gray-500 mr-2" />
+                                    <FaEyeSlash className="w-5 h-5 mr-2 text-gray-500" />
                                 )}
                             </span>
                         </div>
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${
-                                loading ? "bg-blue-300" : "bg-blue-500"
-                            }`}
+                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"
+                                }`}
                         >
                             {loading ? <RsuiteLoader size="sm" /> : "Signup"}
                         </button>
-                        <p className="text-center mt-4 text-slate-500 text-sm md:text-base">
+                        <p className="mt-4 text-sm text-center text-slate-500 md:text-base">
                             Have an account?{" "}
                             <Link
                                 to="/login"

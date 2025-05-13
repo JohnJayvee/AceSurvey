@@ -10,12 +10,12 @@ export default function PaginationLinks({ meta, onPageClick }) {
     }
 
     return (
-        <div className="flex items-center justify-between border border-gray-200 bg-white px-4 py-3 sm:px-6 mt-8 rounded-lg">
-            <div className="flex flex-1 justify-between sm:hidden">
+        <div className="flex items-center justify-between px-4 py-3 mt-8 bg-white border border-gray-200 rounded-lg sm:px-6">
+            <div className="flex justify-between flex-1 sm:hidden">
                 <a
                     href="#"
                     onClick={(ev) => onClick(ev, meta.links[0])}
-                    className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                     Previous
                 </a>
@@ -24,7 +24,7 @@ export default function PaginationLinks({ meta, onPageClick }) {
                     onClick={(ev) =>
                         onClick(ev, meta.links[meta.links.length - 1])
                     }
-                    className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                     Next
                 </a>
@@ -42,7 +42,7 @@ export default function PaginationLinks({ meta, onPageClick }) {
                     {meta.total > meta.per_page && (
                         <nav
                             aria-label="Pagination"
-                            className="isolate inline-flex space-x-1 rounded-md shadow-sm"
+                            className="inline-flex space-x-1 rounded-md shadow-sm isolate"
                         >
                             {meta.links &&
                                 meta.links.map((link, ind) => (
@@ -54,7 +54,7 @@ export default function PaginationLinks({ meta, onPageClick }) {
                                         className={
                                             "relative z-10 inline-flex items-center py-2 text-sm font-semibold focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 rounded-lg hover:opacity-90 m-1 " +
                                             (link.label.includes("Previous") ||
-                                            link.label.includes("Next")
+                                                link.label.includes("Next")
                                                 ? "px-2 bg-gray-200 rounded-full"
                                                 : "px-4 ") +
                                             (ind === 0 ? "rounded-l-md " : "") +
@@ -68,13 +68,13 @@ export default function PaginationLinks({ meta, onPageClick }) {
                                     >
                                         {link.label.includes("Previous") && (
                                             <ChevronLeftIcon
-                                                className="h-5 w-5"
+                                                className="w-5 h-5"
                                                 aria-hidden="true"
                                             />
                                         )}
                                         {link.label.includes("Next") && (
                                             <ChevronRightIcon
-                                                className="h-5 w-5"
+                                                className="w-5 h-5"
                                                 aria-hidden="true"
                                             />
                                         )}

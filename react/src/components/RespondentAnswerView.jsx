@@ -19,13 +19,13 @@ export default function RespondentAnswerView({ question, index, answer }) {
     }
 
     return (
-        <div className="bg-white p-4 my-4 border border-gray-200 rounded-lg">
+        <div className="p-4 my-4 bg-white border border-gray-200 rounded-lg">
             <fieldset className="mb-4">
                 <div>
                     <legend className="text-base font-semibold text-gray-900">
                         {index + 1}. {question.question}
                     </legend>
-                    <p className="text-gray-500 text-sm ">
+                    <p className="text-sm text-gray-500 ">
                         {question.description}
                     </p>
                 </div>
@@ -34,7 +34,7 @@ export default function RespondentAnswerView({ question, index, answer }) {
                         <div>
                             <select
                                 value={answer || ""}
-                                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none form-control sm:text-sm cursor-pointer"
+                                className="block w-full px-3 py-2 mt-1 bg-white border border-gray-300 rounded-md shadow-sm cursor-pointer focus:outline-none form-control sm:text-sm"
                                 disabled
                             >
                                 <option value="">Please Select</option>
@@ -62,12 +62,12 @@ export default function RespondentAnswerView({ question, index, answer }) {
                                         value={option.text}
                                         checked={answer === option.text}
                                         type="radio"
-                                        className="h-5 w-5 text-gray-600 border-gray-300 my-1 cursor-pointer"
+                                        className="w-5 h-5 my-1 text-gray-600 border-gray-300 cursor-pointer"
                                         disabled
                                     />
                                     <label
                                         htmlFor={option.uuid}
-                                        className="ml-3 block text-base text-gray-700"
+                                        className="block ml-3 text-base text-gray-700"
                                     >
                                         {option.text}
                                     </label>
@@ -91,12 +91,12 @@ export default function RespondentAnswerView({ question, index, answer }) {
                                             onCheckboxChanged(option, ev)
                                         }
                                         type="checkbox"
-                                        className="h-4 w-5 text-gray-600 border-gray-300 rounded my-1 cursor-pointer"
+                                        className="w-5 h-4 my-1 text-gray-600 border-gray-300 rounded cursor-pointer"
                                         disabled
                                     />
                                     <label
                                         htmlFor={option.uuid}
-                                        className="ml-3 block text-base text-gray-700"
+                                        className="block ml-3 text-base text-gray-700"
                                     >
                                         {option.text}
                                     </label>
@@ -109,7 +109,7 @@ export default function RespondentAnswerView({ question, index, answer }) {
                             <input
                                 type="text"
                                 value={answer || ""}
-                                className="form-control w-full border-gray-300 rounded-md shadow-sm sm:text-sm p-2"
+                                className="w-full p-2 border-gray-300 rounded-md shadow-sm form-control sm:text-sm"
                                 disabled
                             />
                         </div>
@@ -118,7 +118,7 @@ export default function RespondentAnswerView({ question, index, answer }) {
                         <div>
                             <textarea
                                 value={answer || ""}
-                                className="mt-1 form-control w-full shadow-sm sm:text-sm border-gray-300 bg-white rounded-md p-2"
+                                className="w-full p-2 mt-1 bg-white border-gray-300 rounded-md shadow-sm form-control sm:text-sm"
                                 disabled
                             ></textarea>
                         </div>
