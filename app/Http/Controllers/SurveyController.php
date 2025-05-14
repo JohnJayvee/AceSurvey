@@ -370,8 +370,8 @@ class SurveyController extends Controller
             return abort(403, 'Unauthorized action');
         }
 
-        // Count the number of responses
-        $count = SurveyAnswer::count();
+        // Count only responses related to the specific survey
+        $count = SurveyAnswer::where('survey_id', $survey->id)->count();
 
         return response()->json(['count' => $count]);
     }
