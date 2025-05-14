@@ -11,12 +11,39 @@ import Footer from "../components/Footer.jsx";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';  // Importing Recharts
+import { PieChart, Pie, Cell } from 'recharts'; // Importing PieChart components
+
+const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF9800', '#F44336'];
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.6; // Increased to 0.6
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+        <text
+            x={x}
+            y={y}
+            fill="white"
+            textAnchor={x > cx ? 'start' : 'end'}
+            dominantBaseline="central"
+            style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+            }}
+        >
+            {percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
+        </text>
+    );
+};
 
 export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({});
     const [analyticsData, setAnalyticsData] = useState({});
     const [chartData, setChartData] = useState([]);
+    const [ratingsData, setRatingsData] = useState([]); // Added state for ratings data
     const hasFetched = useRef(false);
 
     useEffect(() => {
@@ -26,9 +53,33 @@ export default function Dashboard() {
         const fetchData = async () => {
             setLoading(true);
             try {
+                const fetchRatingsData = async () => {
+                    try {
+                        const response = await axiosClient.get('http://survey.test:8080/api/total-ratings');
+                        const ratings = response.data.ratings;
+                        const ratingLabels = {
+                            '5': 'Very Satisfied',
+                            '4': 'Satisfied',
+                            '3': 'Neutral',
+                            '2': 'Dissatisfied',
+                            '1': 'Very Dissatisfied'
+                        };
+
+                        const formattedData = Object.entries(ratings).map(([rating, data]) => ({
+                            name: `${rating} - ${ratingLabels[rating]}`,
+                            value: data.count
+                        })).reverse(); // Reverse to show 5 stars first
+
+                        setRatingsData(formattedData);
+                    } catch (error) {
+                        console.error('Error fetching ratings:', error);
+                    }
+                };
+
                 const [dashboardRes, analyticsRes] = await Promise.all([
                     axiosClient.get('/dashboard'),
                     axiosClient.get('/survey-analytics'),
+                    fetchRatingsData() // Added fetchRatingsData to Promise.all
                 ]);
 
                 setData(dashboardRes.data);
@@ -70,9 +121,6 @@ export default function Dashboard() {
 
         return chartData;
     };
-
-
-
 
     const navigate = useNavigate();
 
@@ -236,8 +284,45 @@ export default function Dashboard() {
 
                 {/* Analytics Section */}
                 <div className="w-full lg:w-2/3">
+                    {/* Rating Distribution Pie Chart - Moved to top */}
                     <DashboardCard
-                        className="order-4 row-span-2 p-6 mt-5 mb-4 lg:order-3 lg:mt-0"
+                        className="order-1 row-span-2 p-6 lg:order-1 lg:mt-0"
+                        style={{ animationDelay: "0.3s" }}
+                    >
+                        <p className="mb-4 font-semibold">
+                            {loading ? <Skeleton width={150} /> : "Rating Distribution"}
+                        </p>
+                        {loading ? (
+                            <div className="h-72">
+                                <Skeleton circle height={288} />
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                    <Pie
+                                        data={ratingsData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={renderCustomizedLabel}
+                                        outerRadius={120}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                    >
+                                        {ratingsData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
+                    </DashboardCard>
+
+                    {/* Survey Analytics Line Chart */}
+                    <DashboardCard
+                        className="order-2 row-span-2 p-6 mt-5 mb-4 lg:order-2"
                         style={{ animationDelay: "0.3s" }}
                     >
                         <p className="mb-4 font-semibold">
@@ -278,8 +363,9 @@ export default function Dashboard() {
                         )}
                     </DashboardCard>
 
+                    {/* Latest Responses */}
                     <DashboardCard
-                        className="order-4 row-span-2 p-6 lg:order-3"
+                        className="order-3 row-span-2 p-6 mt-5 lg:order-3"
                         style={{ animationDelay: "0.3s" }}
                     >
                         <p className="mb-4 font-semibold">

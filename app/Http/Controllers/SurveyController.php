@@ -466,7 +466,6 @@ class SurveyController extends Controller
 
         return response()->json([
             'ratings' => $ratings,
-            'debug_total_answers' => $totalAnswers
         ]);
     }
 
