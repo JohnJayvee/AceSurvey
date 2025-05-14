@@ -4,6 +4,8 @@ import { Loader as RsuiteLoader } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import 'rsuite/dist/rsuite.min.css';
 import logo from "/AceLogo.png"; // Update path according to your logo location
+import AnimatedBackground from "../components/AnimatedBackground";
+
 
 
 const ForgotPassword = () => {
@@ -51,6 +53,7 @@ const ForgotPassword = () => {
 
     return (
         <div className="flex items-center justify-center min-h-screen px-5 bg-gray-50">
+            <AnimatedBackground />
             {/* <div className="w-full max-w-md p-8 bg-white shadow-md rounded-2xl"> */}
             <div className="w-full max-w-lg p-8 bg-white shadow-md rounded-2xl animated fadeInDown">
 

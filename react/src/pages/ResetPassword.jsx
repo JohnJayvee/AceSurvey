@@ -5,6 +5,8 @@ import { Loader as RsuiteLoader } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import logo from '/AceLogo.png'; // Adjust path if needed
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import AnimatedBackground from "../components/AnimatedBackground";
+
 
 const ResetPassword = () => {
     const { token } = useParams();
@@ -59,6 +61,7 @@ const ResetPassword = () => {
 
     return (
         <div className="relative flex flex-col justify-between min-h-screen">
+            <AnimatedBackground />
             <div className="flex flex-col items-center w-full max-w-lg mx-auto my-auto">
                 {message && (
                     <div className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-green-400 bg-green-100 rounded-md">
