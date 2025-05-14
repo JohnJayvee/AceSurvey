@@ -102,7 +102,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                             WebkitBoxOrient: "vertical",
                         }}
                     >
-                        {survey.description}
+                        {/* {survey.description} */}
                     </div>
                 </div>
             </div>
