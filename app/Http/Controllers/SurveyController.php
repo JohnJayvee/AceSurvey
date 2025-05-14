@@ -420,18 +420,55 @@ class SurveyController extends Controller
         ]);
     }
 
+    public function totalRatings()
+    {
+        $totalAnswers = SurveyQuestionAnswer::count();
 
+        if ($totalAnswers === 0) {
+            return response()->json([
+                'message' => 'No ratings found',
+                'ratings' => []
+            ]);
+        }
 
+        // Initialize ratings array
+        $ratings = [
+            '5' => ['count' => 0, 'percentage' => 0],
+            '4' => ['count' => 0, 'percentage' => 0],
+            '3' => ['count' => 0, 'percentage' => 0],
+            '2' => ['count' => 0, 'percentage' => 0],
+            '1' => ['count' => 0, 'percentage' => 0]
+        ];
 
+        // Get all answers that start with a number
+        $answers = SurveyQuestionAnswer::whereRaw('answer REGEXP "^[1-5]"')->get();
 
+        foreach ($answers as $answer) {
+            // Extract the first character (rating number)
+            $rating = substr($answer->answer, 0, 1);
 
+            // Only process if it's a valid rating (1-5)
+            if (isset($ratings[$rating])) {
+                $ratings[$rating]['count']++;
+            }
+        }
 
+        // Calculate percentages
+        $validAnswers = array_sum(array_column($ratings, 'count'));
+        if ($validAnswers > 0) {
+            foreach ($ratings as $rating => $data) {
+                $ratings[$rating]['percentage'] = round(($data['count'] / $validAnswers) * 100, 2);
+            }
+        }
 
+        // Debug information
+        \Log::info('Unique rating answers:', SurveyQuestionAnswer::distinct()->pluck('answer')->toArray());
 
-
-
-
-
+        return response()->json([
+            'ratings' => $ratings,
+            'debug_total_answers' => $totalAnswers
+        ]);
+    }
 
 }
 
