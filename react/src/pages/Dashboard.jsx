@@ -55,7 +55,7 @@ export default function Dashboard() {
             try {
                 const fetchRatingsData = async () => {
                     try {
-                        const response = await axiosClient.get('http://survey.test:8080/api/total-ratings');
+                        const response = await axiosClient.get('/total-ratings');
                         const ratings = response.data.ratings;
                         const ratingLabels = {
                             '5': 'Very Satisfied',
