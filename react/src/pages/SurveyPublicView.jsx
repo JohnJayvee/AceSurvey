@@ -5,6 +5,9 @@ import PublicQuestionView from "../components/PublicQuestionView";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import AnimatedBackground from "../components/AnimatedBackground";
+
+
 
 export default function SurveyPublicView() {
     const answers = {};
@@ -91,7 +94,10 @@ export default function SurveyPublicView() {
 
     return (
         <div className="relative w-full min-h-screen bg-gray-50">
-            <div className="w-11/12 py-8 mx-auto md:w-3/4 xl:w-1/2">
+            <div className="absolute inset-0">
+                <AnimatedBackground />
+            </div>
+            <div className="relative z-10 w-11/12 py-8 mx-auto md:w-3/4 xl:w-1/2">
                 <form onSubmit={(ev) => onSubmit(ev)}>
                     <div>
                         <div className="flex flex-col p-4 mb-4 bg-white border border-gray-200 rounded-lg md:flex-row">
