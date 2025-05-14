@@ -1,0 +1,98 @@
+.animated-lines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 0;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+/* Common line styles */
+.line {
+    position: absolute;
+    animation-duration: 4s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+/* Vertical lines (y-axis) */
+.line:nth-child(odd) {
+    width: 2px;
+    /* Slightly thicker for better visibility */
+    height: 100vh;
+    top: 0;
+    animation-name: moveVertical;
+}
+
+/* Horizontal lines (x-axis) */
+.line:nth-child(even) {
+    width: 100vw;
+    height: 2px;
+    /* Slightly thicker for better visibility */
+    left: 0;
+    animation-name: moveHorizontal;
+}
+
+@keyframes moveVertical {
+    0% {
+        transform: translateY(-100vh);
+    }
+
+    100% {
+        transform: translateY(100vh);
+    }
+}
+
+@keyframes moveHorizontal {
+    0% {
+        transform: translateX(-100vw);
+    }
+
+    100% {
+        transform: translateX(100vw);
+    }
+}
+
+/* Position vertical lines */
+.line:nth-child(1) {
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.line:nth-child(3) {
+    left: 40%;
+    animation-delay: -1s;
+}
+
+.line:nth-child(5) {
+    left: 60%;
+    animation-delay: -2s;
+}
+
+.line:nth-child(7) {
+    left: 80%;
+    animation-delay: -3s;
+}
+
+/* Position horizontal lines */
+.line:nth-child(2) {
+    top: 20%;
+    animation-delay: -0.5s;
+}
+
+.line:nth-child(4) {
+    top: 40%;
+    animation-delay: -1.5s;
+}
+
+.line:nth-child(6) {
+    top: 60%;
+    animation-delay: -2.5s;
+}
+
+.line:nth-child(8) {
+    top: 80%;
+    animation-delay: -3.5s;
+}

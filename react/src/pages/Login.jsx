@@ -8,6 +8,7 @@ import { Loader as RsuiteLoader } from "rsuite";
 import "rsuite/dist/rsuite.min.css";
 import Bulb from "../components/Bulb";
 import logo from "/AceLogo.png"; // Update path according to your logo location
+import AnimatedBackground from "../components/AnimatedBackground";
 
 export default function Login() {
     const { setCurrentUser, setUserToken } = useStateContext();
@@ -63,10 +64,11 @@ export default function Login() {
 
     return (
         <div className="relative flex flex-col justify-between min-h-screen">
-            <div className="absolute top-10 right-10">
+            <AnimatedBackground />
+            <div className="absolute z-10 top-10 right-10">
                 <Bulb />
             </div>
-            <div className="flex flex-col items-center w-full max-w-lg mx-auto my-auto">
+            <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto my-auto">
                 <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
                     <div className="flex justify-center mb-6">
                         <img
@@ -144,7 +146,7 @@ export default function Login() {
                     </div>
                 </div>
             </div>
-            <Footer />
+            <Footer className="relative z-10" />
         </div>
     );
 }
