@@ -1,19 +1,11 @@
-import React from "react";
+import React from 'react';
 
-export default function DashboardCard({
-    title,
-    children,
-    style = "",
-    className = "",
-}) {
+export default function DashboardCard({ children, className, animationDelay }) {
     return (
         <div
-            className={
-                "bg-white rounded-lg p-3 animate-fade-in-down " + className
-            }
-            style={style}
+            className={`bg-white shadow-md rounded-lg ${className}`}
+            style={animationDelay ? { animationDelay: `${animationDelay}s` } : {}}
         >
-            {title && <h3>{title}</h3>}
             {children}
         </div>
     );
