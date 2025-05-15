@@ -469,5 +469,55 @@ class SurveyController extends Controller
         ]);
     }
 
+
+
+
+    public function totalDepartmentRatings($surveyAnswerId, Survey $survey, Request $request)
+    {
+
+        $totalAnswers = SurveyQuestionAnswer::where('survey_answer_id', $surveyAnswerId)->count();
+
+        if ($totalAnswers === 0) {
+            return response()->json([
+                'message' => 'No ratings found for this survey answer',
+                'ratings' => []
+            ]);
+        }
+
+        $ratings = [
+            '5' => ['count' => 0, 'percentage' => 0],
+            '4' => ['count' => 0, 'percentage' => 0],
+            '3' => ['count' => 0, 'percentage' => 0],
+            '2' => ['count' => 0, 'percentage' => 0],
+            '1' => ['count' => 0, 'percentage' => 0]
+        ];
+
+        $answers = SurveyQuestionAnswer::where('survey_answer_id', $surveyAnswerId)
+            ->whereRaw('answer REGEXP "^[1-5]"')
+            ->get();
+
+        foreach ($answers as $answer) {
+            $rating = substr($answer->answer, 0, 1);
+
+            if (isset($ratings[$rating])) {
+                $ratings[$rating]['count']++;
+            }
+        }
+
+        $validAnswers = array_sum(array_column($ratings, 'count'));
+
+        if ($validAnswers > 0) {
+            foreach ($ratings as $rating => $data) {
+                $ratings[$rating]['percentage'] = round(($data['count'] / $validAnswers) * 100, 2);
+            }
+        }
+
+        return response()->json([
+            'ratings' => $ratings,
+        ]);
+    }
+
+
+
 }
 

@@ -27,5 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/survey/{survey}/responses/count', [SurveyController::class, 'countResponses'])->name('survey.countResponses');
     Route::get('/survey/{survey}/responses/{responseId}/details', [SurveyController::class, 'getResponseDetails'])->name('survey.getResponseDetails');
     Route::get('/total-ratings', [SurveyController::class, 'totalRatings'])->name('totalRatings');
+    Route::get('/total-department-ratings/{surveyAnswerId}', [SurveyController::class, 'totalDepartmentRatings'])->name('totalDepartmentRatings');
+
 });
 
