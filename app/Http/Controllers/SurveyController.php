@@ -420,9 +420,17 @@ class SurveyController extends Controller
         ]);
     }
 
-    public function totalRatings()
+    public function totalRatings(Request $request)
     {
-        $totalAnswers = SurveyQuestionAnswer::count();
+        $user = $request->user();
+
+        // Get IDs of surveys belonging to the logged-in user
+        $userSurveyIds = Survey::where('user_id', $user->id)->pluck('id');
+
+        // Get survey answers for user's surveys
+        $totalAnswers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($userSurveyIds) {
+            $query->whereIn('survey_id', $userSurveyIds);
+        })->count();
 
         if ($totalAnswers === 0) {
             return response()->json([
@@ -440,29 +448,24 @@ class SurveyController extends Controller
             '1' => ['count' => 0, 'percentage' => 0]
         ];
 
-        // Get all answers that start with a number
-        $answers = SurveyQuestionAnswer::whereRaw('answer REGEXP "^[1-5]"')->get();
+        // Get all answers that start with a number for user's surveys
+        $answers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($userSurveyIds) {
+            $query->whereIn('survey_id', $userSurveyIds);
+        })->whereRaw('answer REGEXP "^[1-5]"')->get();
 
         foreach ($answers as $answer) {
-            // Extract the first character (rating number)
             $rating = substr($answer->answer, 0, 1);
-
-            // Only process if it's a valid rating (1-5)
             if (isset($ratings[$rating])) {
                 $ratings[$rating]['count']++;
             }
         }
 
-        // Calculate percentages
         $validAnswers = array_sum(array_column($ratings, 'count'));
         if ($validAnswers > 0) {
             foreach ($ratings as $rating => $data) {
                 $ratings[$rating]['percentage'] = round(($data['count'] / $validAnswers) * 100, 2);
             }
         }
-
-        // Debug information
-        \Log::info('Unique rating answers:', SurveyQuestionAnswer::distinct()->pluck('answer')->toArray());
 
         return response()->json([
             'ratings' => $ratings,
@@ -474,8 +477,15 @@ class SurveyController extends Controller
 
     public function totalDepartmentRatings($surveyAnswerId, Survey $survey, Request $request)
     {
+        $user = $request->user();
 
-        $totalAnswers = SurveyQuestionAnswer::where('survey_answer_id', $surveyAnswerId)->count();
+        // Get IDs of surveys belonging to the logged-in user
+        $userSurveyIds = Survey::where('user_id', $user->id)->pluck('id');
+
+        // Get survey answers for user's surveys
+        $totalAnswers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($userSurveyIds) {
+            $query->whereIn('survey_id', $userSurveyIds);
+        })->count();
 
         if ($totalAnswers === 0) {
             return response()->json([
@@ -492,20 +502,23 @@ class SurveyController extends Controller
             '1' => ['count' => 0, 'percentage' => 0]
         ];
 
-        $answers = SurveyQuestionAnswer::where('survey_answer_id', $surveyAnswerId)
+        $answers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($user, $surveyAnswerId) {
+            $query->where('id', $surveyAnswerId)
+                ->whereHas('survey', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                });
+        })
             ->whereRaw('answer REGEXP "^[1-5]"')
             ->get();
 
         foreach ($answers as $answer) {
             $rating = substr($answer->answer, 0, 1);
-
             if (isset($ratings[$rating])) {
                 $ratings[$rating]['count']++;
             }
         }
 
         $validAnswers = array_sum(array_column($ratings, 'count'));
-
         if ($validAnswers > 0) {
             foreach ($ratings as $rating => $data) {
                 $ratings[$rating]['percentage'] = round(($data['count'] / $validAnswers) * 100, 2);
