@@ -57,22 +57,37 @@ export default function Dashboard() {
                     try {
                         const response = await axiosClient.get('/total-ratings');
                         const ratings = response.data.ratings;
-                        const ratingLabels = {
-                            '5': 'Very Satisfied',
-                            '4': 'Satisfied',
-                            '3': 'Neutral',
-                            '2': 'Dissatisfied',
-                            '1': 'Very Dissatisfied'
-                        };
 
-                        const formattedData = Object.entries(ratings).map(([rating, data]) => ({
-                            name: `${rating} - ${ratingLabels[rating]}`,
-                            value: data.count
-                        })).reverse(); // Reverse to show 5 stars first
+                        // Default data with zeros (without number prefixes)
+                        const defaultData = [
+                            { name: 'Very Satisfied', value: 0, rating: '5' },
+                            { name: 'Satisfied', value: 0, rating: '4' },
+                            { name: 'Undecided', value: 0, rating: '3' },
+                            { name: 'Unsatisfied', value: 0, rating: '2' },
+                            { name: 'Very Unsatisfied', value: 0, rating: '1' }
+                        ];
 
-                        setRatingsData(formattedData);
+                        // If we have ratings data, update the values
+                        if (ratings && Object.keys(ratings).length > 0) {
+                            Object.entries(ratings).forEach(([rating, data]) => {
+                                const index = defaultData.findIndex(item => item.rating === rating);
+                                if (index !== -1) {
+                                    defaultData[index].value = data.count;
+                                }
+                            });
+                        }
+
+                        setRatingsData(defaultData);
                     } catch (error) {
                         console.error('Error fetching ratings:', error);
+                        // Set default zero data on error
+                        setRatingsData([
+                            { name: 'Very Satisfied', value: 0, rating: '5' },
+                            { name: 'Satisfied', value: 0, rating: '4' },
+                            { name: 'Undecided', value: 0, rating: '3' },
+                            { name: 'Unsatisfied', value: 0, rating: '2' },
+                            { name: 'Very Unsatisfied', value: 0, rating: '1' }
+                        ]);
                     }
                 };
 

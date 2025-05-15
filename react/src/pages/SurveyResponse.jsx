@@ -56,29 +56,44 @@ export default function SurveyResponse() {
                         axiosClient.get(`/survey/${id}`),
                         axiosClient.get(`/survey/${id}/responses`),
                         axiosClient.get(`/survey/${id}/responses/count`),
-                        axiosClient.get(`/total-department-ratings/${id}`)  // Updated endpoint
+                        axiosClient.get(`/total-department-ratings/${id}`)
                     ]);
                 setSurvey(surveyResponse.data.data);
                 setResponses(responsesResponse.data);
                 setResponseCount(countResponse.data.count);
 
+                // Default data with zeros (without number prefixes)
+                const defaultData = [
+                    { name: 'Very Satisfied', value: 0, rating: '5' },
+                    { name: 'Satisfied', value: 0, rating: '4' },
+                    { name: 'Undecided', value: 0, rating: '3' },
+                    { name: 'Unsatisfied', value: 0, rating: '2' },
+                    { name: 'Very Unsatisfied', value: 0, rating: '1' }
+                ];
+
                 const ratings = ratingsResponse.data.ratings;
-                const ratingLabels = {
-                    '5': 'Very Satisfied',
-                    '4': 'Satisfied',
-                    '3': 'Neutral',
-                    '2': 'Dissatisfied',
-                    '1': 'Very Dissatisfied'
-                };
 
-                const formattedData = Object.entries(ratings).map(([rating, data]) => ({
-                    name: `${rating} - ${ratingLabels[rating]}`,
-                    value: data.count
-                })).reverse();
+                // Update values if ratings exist
+                if (ratings && Object.keys(ratings).length > 0) {
+                    Object.entries(ratings).forEach(([rating, data]) => {
+                        const index = defaultData.findIndex(item => item.rating === rating);
+                        if (index !== -1) {
+                            defaultData[index].value = data.count;
+                        }
+                    });
+                }
 
-                setRatingsData(formattedData);
+                setRatingsData(defaultData);
             } catch (error) {
                 setError(error.message);
+                // Set default zero data on error
+                setRatingsData([
+                    { name: 'Very Satisfied', value: 0, rating: '5' },
+                    { name: 'Satisfied', value: 0, rating: '4' },
+                    { name: 'Undecided', value: 0, rating: '3' },
+                    { name: 'Unsatisfied', value: 0, rating: '2' },
+                    { name: 'Very Unsatisfied', value: 0, rating: '1' }
+                ]);
                 console.error('Error fetching data:', error);
             } finally {
                 setLoading(false);
