@@ -532,5 +532,46 @@ class SurveyController extends Controller
 
 
 
+    public function topSurvey(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $topSurveys = Survey::query()
+            ->select('id', 'title', 'expire_date')
+            ->where('user_id', $user->id) // Only the user's surveys
+            ->withCount('answers')
+            ->having('answers_count', '>', 0)
+            ->orderBy('answers_count', 'desc') // Highest first
+            ->limit(5)
+            ->get();
+
+        return response()->json($topSurveys);
+    }
+
+
+    public function botSurvey(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $botSurveys = Survey::query()
+            ->select('id', 'title', 'expire_date')
+            ->where('user_id', $user->id) // only show surveys owned by the user
+            ->withCount('answers')
+            ->having('answers_count', '>', 0)
+            ->orderBy('answers_count', 'asc')
+            ->limit(5)
+            ->get();
+
+        return response()->json($botSurveys);
+    }
+
 }
 

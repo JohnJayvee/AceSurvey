@@ -107,30 +107,4 @@ class DashboardController extends Controller
             ],
         ]);
     }
-
-    public function topSurvey()
-    {
-        $topSurveys = Survey::query()
-            ->select('id', 'title', 'expire_date')
-            ->withCount('answers')
-            ->having('answers_count', '>', 0)  // Only include surveys with responses
-            ->orderBy('answers_count', 'desc') // Highest first
-            ->limit(5)
-            ->get();
-
-        return response()->json($topSurveys);
-    }
-
-    public function botSurvey()
-    {
-        $botSurveys = Survey::query()
-            ->select('id', 'title', 'expire_date')
-            ->withCount('answers')
-            ->having('answers_count', '>', 0)  // Only include surveys with responses
-            ->orderBy('answers_count', 'asc')  // Lowest first
-            ->limit(5)
-            ->get();
-
-        return response()->json($botSurveys);
-    }
 }
