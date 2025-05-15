@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useStateContext } from "../contexts/ContextProvider";
 import SurveyListItem from "../components/SurveyListItem";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
@@ -8,17 +8,15 @@ import Breadcrumbs from "../components/Breadcrumbs";
 import { Link } from "react-router-dom";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import { debounce } from 'lodash';
+import SearchBar from "../components/SearchBar";
 
 export default function Surveys() {
     const { showToast } = useStateContext();
-    const [surveys, setSurveys] = useState([]);
+    const [allSurveys, setAllSurveys] = useState([]); // Store all surveys
+    const [filteredSurveys, setFilteredSurveys] = useState([]); // Store filtered surveys
     const [meta, setMeta] = useState({});
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-
-    // Ref to track ongoing request to prevent duplicates
-    const isRequesting = useRef(false);
 
     const onDeleteClick = (id) => {
         if (window.confirm("Are you sure you want to delete this survey?")) {
@@ -33,25 +31,16 @@ export default function Surveys() {
         getSurveys(link.url);
     };
 
-    const debouncedSearch = useCallback(
-        debounce((term) => {
-            getSurveys(term ? `/survey?search=${encodeURIComponent(term)}` : "/survey");
-        }, 300), // Debounce search by 300ms
-        []
-    );
-
     const getSurveys = (url = "/survey") => {
-        if (loading || isRequesting.current) return;  // Prevent duplicate requests if already loading
+        if (loading) return;
 
         setLoading(true);
-        isRequesting.current = true;  // Mark the request as in progress
-
-        console.log("Making request to:", url);  // Log the URL to check the request flow
 
         axiosClient
             .get(url)
             .then(({ data }) => {
-                setSurveys(data.data);
+                setAllSurveys(data.data);
+                setFilteredSurveys(data.data);
                 setMeta(data.meta);
             })
             .catch((err) => {
@@ -59,19 +48,26 @@ export default function Surveys() {
             })
             .finally(() => {
                 setLoading(false);
-                isRequesting.current = false;  // Mark the request as completed
             });
     };
 
-    // This function handles the search input changes
+    // Updated search handler for local filtering
     const handleSearch = (value) => {
         setSearchTerm(value);
-        debouncedSearch(value);
+
+        // Remove any trim() check to allow single character searches
+        const searchValue = value.toLowerCase();
+        const filtered = allSurveys.filter((survey) =>
+            survey.title.toLowerCase().includes(searchValue) ||
+            survey.description.toLowerCase().includes(searchValue)
+        );
+
+        setFilteredSurveys(filtered);
     };
 
     useEffect(() => {
         getSurveys();
-    }, []);  // This will only run once when the component is mounted
+    }, []);
 
     const breadcrumbLinks = [
         { to: "/dashboard", label: "Home" },
@@ -79,32 +75,27 @@ export default function Surveys() {
     ];
 
     return (
-        <div className="w-full mx-auto xl:w-11/12 ">
-            <div className="flex justify-between mb-8 ">
-                <div className="items-center py-4">
-                    <p className="text-2xl font-semibold ">Survey List</p>
+        <div className="w-full mx-auto xl:w-11/12">
+            <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col justify-center">
+                    <p className="text-2xl font-semibold">Survey List</p>
                     <Breadcrumbs links={breadcrumbLinks} />
                 </div>
 
-                <div className="py-4">
-                    <input
-                        type="text"
-                        placeholder="Search surveys..."
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500"
-                        value={searchTerm}
-                        onChange={(e) => handleSearch(e.target.value)} // Using handleSearch here
-                    />
-                </div>
+                <div className="flex items-center gap-4">
+                    <div className="w-64"> {/* Fixed width for search bar */}
+                        <SearchBar
+                            searchTerm={searchTerm}
+                            onSearch={handleSearch}
+                        />
+                    </div>
 
-                <div className="items-center py-4 ">
                     <Link
                         to="/surveys/create"
-                        style={{ textDecoration: "none" }}
+                        className="flex items-center p-2 text-indigo-500 transition-colors duration-200 border border-indigo-300 rounded-lg bg-indigo-50 hover:text-white hover:bg-indigo-300"
                     >
-                        <button className="flex p-2 text-indigo-500 border border-indigo-300 rounded-lg bg-indigo-50 hover:text-white hover:bg-indigo-300 ">
-                            <PlusCircleIcon className="w-6 h-6 mr-0 md:mr-2" />
-                            <p className="self-center hidden md:block">Create new</p>
-                        </button>
+                        <PlusCircleIcon className="w-6 h-6 mr-0 md:mr-2" />
+                        <span className="hidden md:block">Create new</span>
                     </Link>
                 </div>
             </div>
@@ -131,13 +122,15 @@ export default function Surveys() {
 
             {!loading && (
                 <div>
-                    {surveys.length === 0 && (
+                    {filteredSurveys.length === 0 && (
                         <div className="py-8 text-center text-gray-500">
-                            You don't have surveys created
+                            {searchTerm
+                                ? "No surveys found matching your search"
+                                : "You don't have surveys created"}
                         </div>
                     )}
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {surveys.map((survey) => (
+                        {filteredSurveys.map((survey) => (
                             <SurveyListItem
                                 survey={survey}
                                 key={survey.id}
@@ -145,7 +138,7 @@ export default function Surveys() {
                             />
                         ))}
                     </div>
-                    {surveys.length > 0 && (
+                    {filteredSurveys.length > 0 && (
                         <PaginationLinks
                             meta={meta}
                             onPageClick={onPageClick}
