@@ -12,6 +12,29 @@ import { format } from "date-fns";
 import { MdOutlineInfo } from "react-icons/md";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+
+const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF9800', '#F44336'];
+const RADIAN = Math.PI / 180;
+
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+        <text
+            x={x}
+            y={y}
+            fill="white"
+            textAnchor={x > cx ? 'start' : 'end'}
+            dominantBaseline="central"
+            style={{ fontSize: '14px', fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
+        >
+            {percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
+        </text>
+    );
+};
 
 export default function SurveyResponse() {
     const { id } = useParams();
@@ -22,22 +45,41 @@ export default function SurveyResponse() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [ratingsData, setRatingsData] = useState([]);
 
     useEffect(() => {
         const fetchSurveyData = async () => {
             try {
                 setLoading(true);
-                const [surveyResponse, responsesResponse, countResponse] =
+                const [surveyResponse, responsesResponse, countResponse, ratingsResponse] =
                     await Promise.all([
                         axiosClient.get(`/survey/${id}`),
                         axiosClient.get(`/survey/${id}/responses`),
                         axiosClient.get(`/survey/${id}/responses/count`),
+                        axiosClient.get(`/total-department-ratings/${id}`)  // Updated endpoint
                     ]);
                 setSurvey(surveyResponse.data.data);
                 setResponses(responsesResponse.data);
                 setResponseCount(countResponse.data.count);
+
+                const ratings = ratingsResponse.data.ratings;
+                const ratingLabels = {
+                    '5': 'Very Satisfied',
+                    '4': 'Satisfied',
+                    '3': 'Neutral',
+                    '2': 'Dissatisfied',
+                    '1': 'Very Dissatisfied'
+                };
+
+                const formattedData = Object.entries(ratings).map(([rating, data]) => ({
+                    name: `${rating} - ${ratingLabels[rating]}`,
+                    value: data.count
+                })).reverse();
+
+                setRatingsData(formattedData);
             } catch (error) {
                 setError(error.message);
+                console.error('Error fetching data:', error);
             } finally {
                 setLoading(false);
             }
@@ -62,7 +104,6 @@ export default function SurveyResponse() {
         const csvRows = [headers.join(',')];
 
         responses.data.forEach(response => {
-            // format created_at as before
             const rawDate = response.answers[0]?.created_at || '';
             let formattedDate = '';
             if (rawDate) {
@@ -80,26 +121,20 @@ export default function SurveyResponse() {
             const row = [
                 `"${response.id}"`,
                 ...allQuestions.map(q => {
-                    // collect all answers for this question
                     const answers = response.answers.filter(ans => ans.question === q);
 
-                    // flatten & normalize each ans.answer
                     const flat = answers.flatMap(ans => {
                         let val = ans.answer;
-                        // if it's a JSON-array string, parse it
                         if (typeof val === 'string' && val.trim().startsWith('[') && val.trim().endsWith(']')) {
                             try {
                                 const parsed = JSON.parse(val);
                                 if (Array.isArray(parsed)) return parsed;
-                            } catch (e) { /* fall through */ }
+                            } catch (e) { }
                         }
-                        // otherwise treat as single answer
                         return val != null ? [val] : [];
                     });
 
-                    // join with commas
                     const combined = flat.join(',');
-                    // escape quotes
                     return `"${combined.replace(/"/g, '""')}"`;
                 }),
                 `"${formattedDate}"`
@@ -116,14 +151,6 @@ export default function SurveyResponse() {
         a.click();
         window.URL.revokeObjectURL(url);
     };
-
-
-
-
-
-
-
-
 
     const columns = [
         {
@@ -298,6 +325,38 @@ export default function SurveyResponse() {
                             className="object-cover w-1/2 h-40 mt-4 mr-4 rounded-t-md"
                         />
                     )}
+                </div>
+
+                <div
+                    className="w-full p-4 bg-white rounded-lg animate-fade-in-down"
+                    style={{ animationDelay: "0.25s" }}
+                >
+                    <p className="mb-4 font-semibold">Rating Distribution</p>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={ratingsData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={renderCustomizedLabel}
+                                    outerRadius={120}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {ratingsData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={COLORS[index % COLORS.length]}
+                                        />
+                                    ))}
+                                </Pie>
+                                <RechartsTooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
                 <div
