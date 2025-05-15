@@ -115,35 +115,33 @@ export default function Login() {
                                 )}
                             </span>
                         </div>
-                        <div className="flex items-center my-3">
-                            <input
-                                type="checkbox"
-                                checked={keepSignedIn}
-                                onChange={(ev) => setKeepSignedIn(ev.target.checked)}
-                                className="form-checkbox"
-                            />
-                            <label className="ml-2 text-sm text-gray-600">
-                                Keep me signed in
-                            </label>
+                        <div className="flex items-center justify-between my-3">
+                            <div className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={keepSignedIn}
+                                    onChange={(ev) => setKeepSignedIn(ev.target.checked)}
+                                    className="form-checkbox"
+                                />
+                                <label className="ml-2 text-sm text-gray-600">
+                                    Keep me signed in
+                                </label>
+                            </div>
+                            <Link
+                                to="/forgot-password"
+                                className="text-sm text-blue-500 hover:underline"
+                            >
+                                Forgot your password?
+                            </Link>
                         </div>
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"
-                                }`}
-
+                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"}`}
                         >
                             {loading ? <RsuiteLoader size="sm" /> : "Login"}
                         </button>
                     </form>
-                    <div className="mt-4 text-center">
-                        <Link
-                            to="/forgot-password" // Forgot Password link
-                            className="text-sm text-blue-500 hover:underline"
-                        >
-                            Forgot your password?
-                        </Link>
-                    </div>
                 </div>
             </div>
             <Footer className="relative z-10" />
