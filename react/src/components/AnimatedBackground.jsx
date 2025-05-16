@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import './css/AnimatedBackground.css';
 
-const AnimatedBackground = () => {
+const AnimatedBackground = memo(() => {
     const getRandomColor = () => {
         // Use more vibrant colors with lower opacity
         return Math.random() < 0.5
@@ -10,7 +10,7 @@ const AnimatedBackground = () => {
     };
 
     return (
-        <div className="animated-lines">
+        <div className="fixed inset-0 animated-lines">
             {Array.from({ length: 8 }).map((_, index) => (
                 <div
                     key={index}
@@ -22,6 +22,8 @@ const AnimatedBackground = () => {
             ))}
         </div>
     );
-};
+});
+
+AnimatedBackground.displayName = 'AnimatedBackground';
 
 export default AnimatedBackground;

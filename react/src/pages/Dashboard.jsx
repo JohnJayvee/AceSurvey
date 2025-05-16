@@ -13,7 +13,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';  // Importing Recharts
 import { PieChart, Pie, Cell } from 'recharts'; // Importing PieChart components
 
-const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF9800', '#F44336'];
+const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#6366F1'];
 const RADIAN = Math.PI / 180;
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
@@ -247,7 +247,7 @@ export default function Dashboard() {
                                     tickLine={false}
                                 />
                                 <Tooltip
-                                    formatter={(value) => [`${value} responses`, "Total Responses"]}
+                                    formatter={(value) => [`${value}`, "Total Responses"]}
                                     cursor={{ fill: 'rgba(224, 224, 224, 0.2)' }}
                                     contentStyle={{
                                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -352,7 +352,7 @@ export default function Dashboard() {
                                     tickLine={false}
                                 />
                                 <Tooltip
-                                    formatter={(value) => [`${value} responses`, "Total Responses"]}
+                                    formatter={(value) => [`${value}`, "Total Responses"]}
                                     cursor={{ fill: 'rgba(224, 224, 224, 0.2)' }}
                                     contentStyle={{
                                         backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -480,16 +480,21 @@ export default function Dashboard() {
 
                     {/* Latest survey section */}
                     <div className="mt-4">
-                        <DashboardCard
-                            className="order-3 row-span-2 p-6 lg:order-1"
-                            style={{ animationDelay: '0.2s' }}
-                        >
-                            <p className="mb-4 font-semibold">
-                                {loading ? <Skeleton width={150} /> : "Latest Survey"}
-                            </p>
+                        <DashboardCard className="order-3 row-span-2 p-6 transition-all duration-300 transform hover:shadow-xl bg-gradient-to-br from-white to-gray-50">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800">Latest Survey</h3>
+                                    <p className="text-sm text-gray-600">Most recently created survey</p>
+                                </div>
+                                <div className="p-2 bg-indigo-100 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
+                                </div>
+                            </div>
                             {loading ? (
                                 <div>
-                                    <Skeleton height={288} className="mb-4" />
+                                    <Skeleton height={288} className="mb-4 rounded-lg" />
                                     <Skeleton height={24} className="mb-3" />
                                     <Skeleton count={5} className="mb-2" />
                                     <Divider className="my-4" />
@@ -499,90 +504,102 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             ) : (
-                                data.latestSurvey && (
-                                    <div>
-                                        <img
-                                            src={data.latestSurvey.image_url || '/AceLogo.png'} // Add default image path here
-                                            // className="object-cover w-full mx-auto rounded-lg h-72"
-                                            loading="lazy"
-                                            className="object-cover w-auto mx-auto rounded-lg h-72"
-                                        />
-                                        <h3 className="mt-4 mb-3 text-xl font-bold">
+                                data.latestSurvey ? (
+                                    <div className="space-y-4">
+                                        <div className="relative overflow-hidden transition-all duration-300 transform rounded-lg group hover:scale-[1.02]">
+                                            <img
+                                                src={data.latestSurvey.image_url || '/AceLogo.png'}
+                                                loading="lazy"
+                                                className="object-contain w-full mx-auto rounded-lg h-72 bg-gray-50"
+                                                alt={data.latestSurvey.title}
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = '/AceLogo.png';
+                                                }}
+                                            />
+                                            <div className="absolute inset-0 transition-opacity duration-300 bg-black opacity-0 group-hover:opacity-10"></div>
+                                        </div>
+
+                                        <h3 className="mt-4 text-xl font-bold text-transparent bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text">
                                             {data.latestSurvey.title}
                                         </h3>
-                                        <div className="flex justify-between mt-2 mb-1 text-xs md:text-sm">
-                                            <div>Created Date:</div>
-                                            <div>
-                                                {formatDate(
-                                                    data.latestSurvey.created_at
-                                                )}
+
+                                        <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
+                                            <div className="space-y-3">
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-medium text-gray-500">Created Date</p>
+                                                    <p className="text-sm font-semibold text-gray-700">
+                                                        {formatDate(data.latestSurvey.created_at)}
+                                                    </p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-medium text-gray-500">Questions</p>
+                                                    <p className="text-sm font-semibold text-gray-700">
+                                                        {data.latestSurvey.questions}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-medium text-gray-500">Expire Date</p>
+                                                    <p className="text-sm font-semibold text-gray-700">
+                                                        {formatDate(data.latestSurvey.expire_date)}
+                                                    </p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-medium text-gray-500">Responses</p>
+                                                    <p className="text-sm font-semibold text-gray-700">
+                                                        {data.latestSurvey.answers}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex justify-between mb-1 text-xs md:text-sm">
-                                            <div>Expire Date:</div>
-                                            <div>
-                                                {formatDate(
-                                                    data.latestSurvey.expire_date
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between mb-1 text-xs md:text-sm">
-                                            <div>Status:</div>
-                                            <div>
-                                                {isSurveyExpired(
-                                                    data.latestSurvey.expire_date
-                                                )
+
+                                        <div className="flex items-center justify-between p-2">
+                                            <div className={`
+                                                px-3 py-1 text-sm font-medium rounded-full
+                                                ${isSurveyExpired(data.latestSurvey.expire_date)
+                                                    ? "bg-red-100 text-red-600"
+                                                    : data.latestSurvey.status
+                                                        ? "bg-green-100 text-green-600"
+                                                        : "bg-gray-100 text-gray-600"}
+                                            `}>
+                                                {isSurveyExpired(data.latestSurvey.expire_date)
                                                     ? "Expired"
                                                     : data.latestSurvey.status
                                                         ? "Active"
                                                         : "Closed"}
                                             </div>
                                         </div>
-                                        <div className="flex justify-between mb-1 text-xs md:text-sm">
-                                            <div>Questions:</div>
-                                            <div>
-                                                {data.latestSurvey.questions}
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between mb-3 text-xs md:text-sm">
-                                            <div>Responses:</div>
-                                            <div>
-                                                {data.latestSurvey.answers}
-                                            </div>
-                                        </div>
+
                                         <Divider />
-                                        <div className="flex justify-between mt-4">
+
+                                        <div className="flex justify-between mt-4 space-x-4">
                                             <Link
                                                 to={`/surveys/${data.latestSurvey.id}`}
-                                                style={{
-                                                    textDecoration: "none",
-                                                }}
+                                                className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium text-white transition-all duration-300 bg-indigo-600 rounded-lg hover:bg-indigo-700"
                                             >
-                                                <button className="flex px-4 py-2 text-xs text-blue-500 rounded-lg md:text-sm hover:bg-blue-50">
-                                                    <PencilIcon className="w-4 h-4 mr-2 md:w-5 md:h-5" />
-                                                    Edit Survey
-                                                </button>
+                                                <PencilIcon className="w-4 h-4 mr-2" />
+                                                Edit Survey
                                             </Link>
 
                                             <button
-                                                className="flex px-4 py-2 text-xs text-blue-500 rounded-lg md:text-sm hover:bg-blue-50"
-                                                onClick={() =>
-                                                    handleViewResponses(
-                                                        data.latestSurvey.id
-                                                    )
-                                                }
+                                                className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium text-indigo-600 transition-all duration-300 bg-indigo-100 rounded-lg hover:bg-indigo-200"
+                                                onClick={() => handleViewResponses(data.latestSurvey.id)}
                                             >
-                                                <EyeIcon className="w-4 h-4 mr-2 md:w-5 md:h-5" />
+                                                <EyeIcon className="w-4 h-4 mr-2" />
                                                 View Responses
                                             </button>
                                         </div>
                                     </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <p className="text-gray-500">No surveys available</p>
+                                    </div>
                                 )
-                            )}
-                            {!loading && !data.latestSurvey && (
-                                <div className="py-16 text-center text-gray-600">
-                                    No surveys available
-                                </div>
                             )}
                         </DashboardCard>
                     </div>
@@ -590,131 +607,287 @@ export default function Dashboard() {
 
                 {/* Analytics Section */}
                 <div className="w-full lg:w-2/3">
-                    {/* Rating Distribution Pie Chart - Moved to top */}
+                    {/* Rating Distribution Pie Chart - Enhanced version */}
                     <DashboardCard
-                        className="order-1 row-span-2 p-6 lg:order-1 lg:mt-0"
+                        className="order-1 row-span-2 p-6 transition-all duration-300 transform lg:order-1 lg:mt-0 hover:shadow-xl"
                         style={{ animationDelay: '0.3s' }}
                     >
-                        <p className="mb-4 font-semibold">
-                            {loading ? <Skeleton width={150} /> : "Rating Distribution"}
-                        </p>
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800">Rating Distribution</h3>
+                                <p className="text-sm text-gray-600">Overall survey satisfaction levels</p>
+                            </div>
+                            <div className="p-2 bg-purple-100 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                                </svg>
+                            </div>
+                        </div>
                         {loading ? (
                             <div className="h-72">
                                 <Skeleton circle height={288} />
                             </div>
                         ) : (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <PieChart>
-                                    <Pie
-                                        data={ratingsData}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        label={renderCustomizedLabel}
-                                        outerRadius={120}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                    >
-                                        {ratingsData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <div className="relative">
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <PieChart>
+                                        <Pie
+                                            data={ratingsData}
+                                            cx="50%"
+                                            cy="50%"
+                                            labelLine={false}
+                                            label={renderCustomizedLabel}
+                                            outerRadius={120}
+                                            paddingAngle={2}
+                                            dataKey="value"
+                                        >
+                                            {ratingsData.map((entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={COLORS[index % COLORS.length]}
+                                                    stroke="none"
+                                                    className="transition-all duration-300 hover:opacity-80"
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                                padding: '8px 12px'
+                                            }}
+                                            formatter={(value, name) => [`${value} responses`, name]}
+                                        />
+                                        <Legend
+                                            verticalAlign="bottom"
+                                            height={36}
+                                            iconType="circle"
+                                            iconSize={10}
+                                            formatter={(value, entry) => (
+                                                <span className="text-sm font-medium text-gray-600">
+                                                    {value}
+                                                </span>
+                                            )}
+                                            wrapperStyle={{
+                                                paddingTop: '20px'
+                                            }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                {ratingsData.every(item => item.value === 0) && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-gray-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                                        </svg>
+                                        <p className="text-gray-500">No ratings available</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </DashboardCard>
 
                     {/* Survey Analytics Line Chart */}
                     <DashboardCard
-                        className="order-2 row-span-2 p-6 mt-5 mb-4 lg:order-2"
+                        className="order-2 row-span-2 p-6 mt-5 mb-4 transition-all duration-300 transform hover:shadow-xl bg-gradient-to-br from-white to-gray-50"
                         style={{ animationDelay: '0.3s' }}
                     >
-                        <p className="mb-4 font-semibold">
-                            {loading ? <Skeleton width={150} /> : "Survey Analytics"}
-                        </p>
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800">Survey Analytics</h3>
+                                <p className="text-sm text-gray-600">Monthly survey and response trends</p>
+                            </div>
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                        </div>
                         {loading ? (
                             <div className="h-96">
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                    <div key={i} className="px-4 py-2 mb-2">
-                                        <div className="flex justify-between">
-                                            <Skeleton width={200} />
-                                            <Skeleton width={100} />
-                                        </div>
-                                    </div>
-                                ))}
+                                <Skeleton height={300} className="mb-4 rounded-lg" />
                             </div>
                         ) : (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="surveys"
-                                        stroke="#8884d8"
-                                        activeDot={{ r: 8 }}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="responses"
-                                        stroke="#82ca9d"
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
+                            <div className="relative">
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <LineChart data={chartData}>
+                                        <defs>
+                                            <linearGradient id="surveysGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.2} />
+                                                <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                                            </linearGradient>
+                                            <linearGradient id="responsesGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.2} />
+                                                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                            vertical={false}
+                                            stroke="#f0f0f0"
+                                        />
+                                        <XAxis
+                                            dataKey="name"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            style={{
+                                                fontSize: '12px',
+                                                fill: '#4B5563'
+                                            }}
+                                        />
+                                        <YAxis
+                                            axisLine={false}
+                                            tickLine={false}
+                                            style={{
+                                                fontSize: '12px',
+                                                fill: '#4B5563'
+                                            }}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                                padding: '8px 12px'
+                                            }}
+                                        />
+                                        <Legend
+                                            verticalAlign="top"
+                                            align="right"
+                                            iconType="circle"
+                                            iconSize={8}
+                                            wrapperStyle={{
+                                                paddingBottom: '20px'
+                                            }}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="surveys"
+                                            stroke="#8884d8"
+                                            strokeWidth={2}
+                                            dot={{ r: 4, strokeWidth: 2 }}
+                                            activeDot={{ r: 6, strokeWidth: 0 }}
+                                            name="Surveys Created"
+                                            fill="url(#surveysGradient)"
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="responses"
+                                            stroke="#82ca9d"
+                                            strokeWidth={2}
+                                            dot={{ r: 4, strokeWidth: 2 }}
+                                            activeDot={{ r: 6, strokeWidth: 0 }}
+                                            name="Responses Received"
+                                            fill="url(#responsesGradient)"
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+
+                                {chartData.length === 0 ? (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-gray-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        <p className="text-gray-500">No analytics data available</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-4 mt-4">
+                                        <div className="p-3 rounded-lg bg-purple-50">
+                                            <p className="text-sm font-medium text-purple-600">Total Surveys</p>
+                                            <p className="text-2xl font-bold text-purple-700">
+                                                {chartData.reduce((sum, item) => sum + item.surveys, 0)}
+                                            </p>
+                                        </div>
+                                        <div className="p-3 rounded-lg bg-green-50">
+                                            <p className="text-sm font-medium text-green-600">Total Responses</p>
+                                            <p className="text-2xl font-bold text-green-700">
+                                                {chartData.reduce((sum, item) => sum + item.responses, 0)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </DashboardCard>
 
                     {/* Latest Responses */}
                     <DashboardCard
-                        className="order-3 row-span-2 p-6 mt-5 lg:order-3"
+                        className="order-3 row-span-2 p-6 mt-5 transition-all duration-300 transform lg:order-3 hover:shadow-xl bg-gradient-to-br from-white to-gray-50"
                         style={{ animationDelay: '0.3s' }}
                     >
-                        <p className="mb-4 font-semibold">
-                            {loading ? <Skeleton width={150} /> : "Latest Responses"}
-                        </p>
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800">Latest Responses</h3>
+                                <p className="text-sm text-gray-600">Most recent survey submissions</p>
+                            </div>
+                            <div className="p-2 bg-teal-100 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                        </div>
                         {loading ? (
-                            <div className="h-96">
+                            <div className="space-y-4">
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <div key={i} className="px-4 py-2 mb-2">
-                                        <div className="flex justify-between">
-                                            <Skeleton width={200} />
-                                            <Skeleton width={100} />
+                                    <div key={i} className="p-4 rounded-lg bg-gray-50 animate-pulse">
+                                        <div className="flex items-center justify-between">
+                                            <div className="space-y-2">
+                                                <Skeleton width={200} height={20} />
+                                                <Skeleton width={100} height={16} />
+                                            </div>
+                                            <Skeleton width={100} height={32} className="rounded-full" />
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             data.latestAnswers && data.latestAnswers.length > 0 ? (
-                                <div className="overflow-y-auto text-left h-96">
+                                <div className="space-y-2 overflow-y-auto max-h-[600px] pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent hover:scrollbar-thumb-gray-300">
                                     {data.latestAnswers.map((answer) => (
                                         <div
                                             key={answer.id}
-                                            className="py-2 border-gray-200 cursor-pointer border-b-1"
-                                            onClick={() =>
-                                                handleViewDetail(answer.survey_id, answer.id)
-                                            }
+                                            onClick={() => handleViewDetail(answer.survey_id, answer.id)}
+                                            className="p-4 transition-all duration-300 transform bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 hover:scale-[1.01] group"
                                         >
-                                            <div className="flex justify-between px-4 py-2 rounded-lg hover:bg-gray-50 ">
-                                                <div className="text-sm font-semibold text-blue-400 md:text-base">
-                                                    {answer.survey.title}
-                                                </div>
-                                                <div>
-                                                    <p className="px-2 py-1 text-xs rounded-lg md:text-sm bg-gray-50">
-                                                        {formatDate(answer.end_date)}
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-1">
+                                                    <h4 className="text-sm font-semibold text-gray-800 transition-colors duration-300 md:text-base group-hover:text-indigo-600 line-clamp-1">
+                                                        {answer.survey.title}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-500 md:text-sm">
+                                                        Response ID: #{answer.id}
                                                     </p>
+                                                </div>
+                                                <div className="flex items-center space-x-3">
+                                                    <span className="px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-100 rounded-full whitespace-nowrap md:text-sm">
+                                                        {formatDate(answer.end_date)}
+                                                    </span>
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="w-5 h-5 text-gray-400 transition-transform duration-300 group-hover:translate-x-1"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
                                                 </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="py-16 text-center text-gray-600">
-                                    You don't have responses yet
+                                <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                                    <div className="p-4 rounded-full bg-gray-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="text-lg font-medium text-center text-gray-600">No Responses Yet</h4>
+                                    <p className="text-sm text-center text-gray-500">Responses will appear here once surveys are completed</p>
                                 </div>
                             )
                         )}

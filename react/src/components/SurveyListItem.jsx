@@ -16,6 +16,7 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
     const [openSharePopup, setOpenSharePopup] = useState(false);
     const [shareLink, setShareLink] = useState("");
     const [graphData, setGraphData] = useState([]);
+    const [totalResponses, setTotalResponses] = useState(0);
 
     const navigate = useNavigate();
     const hasFetched = useRef(false); // 🛡️ Prevents double-fetching
@@ -49,15 +50,19 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                     response: 0,
                 }));
 
+                let total = 0; // Track total responses
+
                 allStats
                     .filter(item => item.title === survey.title)
                     .forEach(item => {
                         const date = new Date(item.created_at);
                         const monthIndex = date.getMonth();
                         monthlyData[monthIndex].response += item.answers;
+                        total += item.answers; // Add to total
                     });
 
                 setGraphData(monthlyData);
+                setTotalResponses(total); // Update total responses
             } catch (error) {
                 console.error("Error fetching analytics:", error);
             }
@@ -67,21 +72,26 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
     }, [survey.title]);
 
     return (
-        <div className="relative flex flex-col p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 animate-fade-in-down">
-            <img
-                src={survey.image_url || '/AceLogo.png'}
-                loading="lazy"
-                alt={survey.title}
-                // className="object-cover w-full h-64 rounded-md"
-                className="object-cover w-auto h-auto rounded-md"
-            />
+        <div className="relative flex flex-col p-6 transition-all duration-300 bg-white border border-gray-200 rounded-xl group hover:border-blue-500 hover:shadow-lg animate-fade-in-down">
+            <div className="relative overflow-hidden rounded-lg aspect-video bg-gray-50">
+                <img
+                    src={survey.image_url || '/AceLogo.png'}
+                    loading="lazy"
+                    alt={survey.title}
+                    className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/AceLogo.png';
+                    }}
+                />
+            </div>
 
-            <div className={`absolute top-6 right-6 text-xs py-1 px-2 rounded-full
+            <div className={`absolute top-8 right-8 text-xs font-medium py-1.5 px-3 rounded-full
                 ${isSurveyExpired(survey.expire_date)
-                    ? "bg-yellow-300 bg-opacity-50 text-yellow-600 border border-yellow-300"
+                    ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
                     : survey.status
-                        ? "bg-green-300 bg-opacity-40 text-green-500 border border-green-300"
-                        : "bg-red-300 bg-opacity-40 text-red-500 border border-red-300"
+                        ? "bg-green-100 text-green-700 border border-green-200"
+                        : "bg-red-100 text-red-700 border border-red-200"
                 }`}>
                 {isSurveyExpired(survey.expire_date)
                     ? "Expired"
@@ -90,64 +100,97 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
                         : "Closed"}
             </div>
 
-            <h4 className="mt-4 text-lg font-bold">{survey.title}</h4>
+            <h4 className="mt-6 text-lg font-bold text-gray-900 line-clamp-1">{survey.title}</h4>
 
-            <div className="relative flex-1 overflow-hidden truncate-ellipsis">
-                <div className="absolute inset-0 h-full overflow-hidden text-gray-500 pointer-events-none bg-gradient-to-t from-white to-transparent max-h-32">
-                    <div
-                        className="h-full overflow-hidden max-h-32"
-                        style={{
-                            WebkitLineClamp: 4,
-                            display: "-webkit-box",
-                            WebkitBoxOrient: "vertical",
-                        }}
-                    >
-                        {/* {survey.description} */}
-                    </div>
+            <div className="flex items-center mt-2 space-x-2">
+                <div className="flex items-center text-sm text-gray-500">
+                    <UsersIcon className="w-4 h-4 mr-1" />
+                    {totalResponses} Responses
+                </div>
+                <span className="text-gray-300">•</span>
+                <div className="text-sm text-gray-500">
+                    Created {new Date(survey.created_at).toLocaleDateString()}
                 </div>
             </div>
 
-            {/* 🔥 Chart */}
-            <div className="w-full h-40 mt-4">
+            <div className="w-full h-48 p-2 mt-4 rounded-lg bg-gray-50">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={graphData}>
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <RechartTooltip />
-                        <Line type="monotone" dataKey="response" stroke="#4CAF50" strokeWidth={2} />
+                        <XAxis
+                            dataKey="name"
+                            stroke="#9CA3AF"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <YAxis
+                            stroke="#9CA3AF"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <RechartTooltip
+                            contentStyle={{
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                padding: '8px 12px'
+                            }}
+                        />
+                        <Line
+                            type="monotone"
+                            dataKey="response"
+                            stroke="#4F46E5"
+                            strokeWidth={2}
+                            dot={{ fill: '#4F46E5', strokeWidth: 2 }}
+                            activeDot={{ r: 6, strokeWidth: 0 }}
+                        />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
 
-            {/* 🔧 Actions */}
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
                 <Link
                     to={`/surveys/${survey.id}`}
-                    className="flex px-4 py-3 m-2 text-white bg-blue-500 rounded-lg hover:text-white hover:bg-opacity-75"
+                    className="flex items-center px-4 py-2 text-sm font-medium text-white transition-colors duration-200 bg-indigo-600 rounded-lg hover:bg-indigo-700"
                 >
-                    <PencilIcon className="w-5 h-5 mr-2" />
-                    Edit
+                    <PencilIcon className="w-4 h-4 mr-2" />
+                    Edit Survey
                 </Link>
-                <div className="flex items-center gap-2">
-                    <Tooltip title="Share" placement="bottom" arrow TransitionComponent={Fade}>
-                        <button onClick={handleOpenShare} className="p-2 rounded-full hover:bg-blue-100 hover:text-blue-500">
+                <div className="flex items-center gap-3">
+                    <Tooltip title="Share Survey" placement="top" arrow TransitionComponent={Fade}>
+                        <button
+                            onClick={handleOpenShare}
+                            className="p-2 transition-colors duration-200 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                        >
                             <ArrowTopRightOnSquareIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
-                    <Tooltip title="Responses" placement="bottom" arrow TransitionComponent={Fade}>
-                        <button onClick={() => handleViewResponses(survey.id)} className="p-2 rounded-full hover:bg-green-100 hover:text-green-500">
+                    <Tooltip title="View Responses" placement="top" arrow TransitionComponent={Fade}>
+                        <button
+                            onClick={() => handleViewResponses(survey.id)}
+                            className="p-2 transition-colors duration-200 rounded-lg hover:bg-green-50 hover:text-green-600"
+                        >
                             <UsersIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
-                    <Tooltip title="Delete" placement="bottom" arrow TransitionComponent={Fade}>
-                        <button onClick={() => onDeleteClick(survey.id)} className="p-2 rounded-full hover:bg-red-100 hover:text-red-500">
+                    <Tooltip title="Delete Survey" placement="top" arrow TransitionComponent={Fade}>
+                        <button
+                            onClick={() => onDeleteClick(survey.id)}
+                            className="p-2 transition-colors duration-200 rounded-lg hover:bg-red-50 hover:text-red-600"
+                        >
                             <TrashIcon className="w-5 h-5" />
                         </button>
                     </Tooltip>
                 </div>
             </div>
 
-            <ShareSurveyPopup openSharePopup={openSharePopup} setOpenSharePopup={setOpenSharePopup} shareLink={shareLink} />
+            <ShareSurveyPopup
+                openSharePopup={openSharePopup}
+                setOpenSharePopup={setOpenSharePopup}
+                shareLink={shareLink}
+            />
         </div>
     );
 }

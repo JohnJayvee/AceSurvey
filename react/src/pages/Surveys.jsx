@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useStateContext } from "../contexts/ContextProvider";
 import SurveyListItem from "../components/SurveyListItem";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, DocumentIcon } from "@heroicons/react/24/outline";
 import axiosClient from "../axios";
 import PaginationLinks from "../components/PaginationLinks";
 import Breadcrumbs from "../components/Breadcrumbs";
@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import SearchBar from "../components/SearchBar";
+import { motion } from "framer-motion";
 
 export default function Surveys() {
     const { showToast } = useStateContext();
@@ -75,77 +76,139 @@ export default function Surveys() {
     ];
 
     return (
-        <div className="w-full mx-auto xl:w-11/12">
-            <div className="flex items-center justify-between mb-8">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="w-full mx-auto xl:w-11/12"
+        >
+            {/* Header Section */}
+            <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="flex flex-col gap-6 mb-8 md:flex-row md:items-center md:justify-between"
+            >
                 <div className="flex flex-col justify-center">
-                    <p className="text-2xl font-semibold">Survey List</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Survey List</h1>
                     <Breadcrumbs links={breadcrumbLinks} />
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="w-64"> {/* Fixed width for search bar */}
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                    <div className="w-full md:w-64">
                         <SearchBar
                             searchTerm={searchTerm}
                             onSearch={handleSearch}
+                            placeholder="Search surveys..."
                         />
                     </div>
 
                     <Link
                         to="/surveys/create"
-                        className="flex items-center p-2 text-indigo-500 transition-colors duration-200 border border-indigo-300 rounded-lg bg-indigo-50 hover:text-white hover:bg-indigo-300"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 hover:text-white focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                        <PlusCircleIcon className="w-6 h-6 mr-0 md:mr-2" />
-                        <span className="hidden md:block">Create new</span>
+                        <PlusCircleIcon className="w-5 h-5" />
+                        <span className="hidden md:inline-block">Create New Survey</span>
                     </Link>
                 </div>
-            </div>
+            </motion.div>
 
+            {/* Loading State */}
             {loading && (
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                >
                     {[...Array(8)].map((_, index) => (
-                        <div key={index} className="p-4 border border-gray-200 rounded-lg">
-                            <Skeleton height={150} className="mb-4" /> {/* Image placeholder */}
-                            <Skeleton height={24} className="mb-2" /> {/* Title */}
-                            <Skeleton height={16} count={3} className="mb-4" /> {/* Description */}
-                            <div className="flex items-center justify-between">
-                                <Skeleton height={36} width={80} /> {/* Edit button */}
-                                <div className="flex gap-2">
-                                    <Skeleton height={36} width={36} /> {/* Icon button 1 */}
-                                    <Skeleton height={36} width={36} /> {/* Icon button 2 */}
-                                    <Skeleton height={36} width={36} /> {/* Icon button 3 */}
+                        <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl"
+                        >
+                            <Skeleton height={200} className="object-cover w-full" />
+                            <div className="p-5">
+                                <Skeleton height={24} width="70%" className="mb-3" />
+                                <Skeleton height={16} count={2} className="mb-4" />
+                                <div className="flex items-center justify-between">
+                                    <Skeleton height={36} width={80} />
+                                    <div className="flex gap-2">
+                                        <Skeleton height={36} width={36} className="rounded-lg" />
+                                        <Skeleton height={36} width={36} className="rounded-lg" />
+                                        <Skeleton height={36} width={36} className="rounded-lg" />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
             )}
 
+            {/* Content */}
             {!loading && (
-                <div>
-                    {filteredSurveys.length === 0 && (
-                        <div className="py-8 text-center text-gray-500">
-                            {searchTerm
-                                ? "No surveys found matching your search"
-                                : "You don't have surveys created"}
-                        </div>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                >
+                    {filteredSurveys.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-xl"
+                        >
+                            <DocumentIcon className="w-16 h-16 text-gray-400" />
+                            <h3 className="mt-4 text-lg font-medium text-gray-900">
+                                {searchTerm ? "No surveys found" : "No surveys yet"}
+                            </h3>
+                            <p className="mt-1 text-sm text-gray-500">
+                                {searchTerm
+                                    ? "Try adjusting your search terms"
+                                    : "Get started by creating your first survey"}
+                            </p>
+                            {!searchTerm && (
+                                <Link
+                                    to="/surveys/create"
+                                    className="flex items-center gap-2 px-4 py-2 mt-4 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                    <PlusCircleIcon className="w-5 h-5" />
+                                    Create Survey
+                                </Link>
+                            )}
+                        </motion.div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {filteredSurveys.map((survey, index) => (
+                                    <motion.div
+                                        key={survey.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                    >
+                                        <SurveyListItem
+                                            survey={survey}
+                                            onDeleteClick={onDeleteClick}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </div>
+                            {filteredSurveys.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.3 }}
+                                    className="mt-8"
+                                >
+                                    <PaginationLinks
+                                        meta={meta}
+                                        onPageClick={onPageClick}
+                                    />
+                                </motion.div>
+                            )}
+                        </>
                     )}
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {filteredSurveys.map((survey) => (
-                            <SurveyListItem
-                                survey={survey}
-                                key={survey.id}
-                                onDeleteClick={onDeleteClick}
-                            />
-                        ))}
-                    </div>
-                    {filteredSurveys.length > 0 && (
-                        <PaginationLinks
-                            meta={meta}
-                            onPageClick={onPageClick}
-                        />
-                    )}
-                </div>
+                </motion.div>
             )}
-        </div>
+        </motion.div>
     );
 }

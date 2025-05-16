@@ -9,6 +9,7 @@ import "rsuite/dist/rsuite.min.css";
 import Bulb from "../components/Bulb";
 import logo from "/AceLogo.png"; // Update path according to your logo location
 import AnimatedBackground from "../components/AnimatedBackground";
+import { motion } from "framer-motion";
 
 export default function Login() {
     const { setCurrentUser, setUserToken } = useStateContext();
@@ -62,89 +63,132 @@ export default function Login() {
         }
     }
 
+    const inputClassName = "w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200";
+    const eyeIconClassName = "absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200";
+
     return (
         <div className="relative flex flex-col justify-between min-h-screen">
             <AnimatedBackground />
-            <div className="absolute z-10 top-10 right-10">
+            <motion.div
+                className="absolute z-10 top-10 right-10"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+            >
                 <Bulb />
-            </div>
-            <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto my-auto">
-                <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
-                    <div className="flex justify-center mb-6">
+            </motion.div>
+
+            <div className="relative z-10 flex flex-col items-center w-full max-w-lg px-4 mx-auto my-auto">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full p-8 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
+                >
+                    <motion.div
+                        initial={{ scale: 0.9 }}
+                        animate={{ scale: 1 }}
+                        className="flex justify-center mb-8"
+                    >
                         <img
                             src={logo}
                             loading="lazy"
                             alt="Logo"
-                            // className="w-auto h-16"
-                            className="w-auto h-36"
+                            className="w-auto h-32 transition-transform duration-300 hover:scale-105"
                         />
-                    </div>
-                    <form onSubmit={onSubmit} className="w-full">
-                        <h1 className="my-4 text-2xl font-semibold text-center">
-                            Login into your account
-                        </h1>
-                        {error && (
-                            <div
-                                className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-red-400 bg-red-100 rounded-md"
-                                dangerouslySetInnerHTML={{ __html: error }}
-                            ></div>
-                        )}
-                        <input
-                            type="text"
-                            placeholder="Login"
-                            value={login}
-                            onChange={(ev) => setLogin(ev.target.value)}
-                            className="p-3 my-3 form-control"
-                        />
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Password"
-                                value={password}
-                                onChange={(ev) => setPassword(ev.target.value)}
-                                className="w-full p-3 pr-10 my-3 form-control"
-                            />
-                            <span
-                                onClick={toggleShowPassword}
-                                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
-                            >
-                                {showPassword ? (
-                                    <FaEye className="w-5 h-5 mr-2 text-gray-500" />
-                                ) : (
-                                    <FaEyeSlash className="w-5 h-5 mr-2 text-gray-500" />
-                                )}
-                            </span>
+                    </motion.div>
+
+                    <form onSubmit={onSubmit} className="space-y-6">
+                        <div className="text-center">
+                            <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
+                            <p className="mt-2 text-sm text-gray-600">Login to your account to continue</p>
                         </div>
-                        <div className="flex items-center justify-between my-3">
-                            <div className="flex items-center">
+
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-4 text-sm text-red-600 rounded-lg bg-red-50"
+                                dangerouslySetInnerHTML={{ __html: error }}
+                            />
+                        )}
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block mb-2 text-sm font-medium text-gray-700">Username</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your username"
+                                    value={login}
+                                    onChange={(ev) => setLogin(ev.target.value)}
+                                    className={inputClassName}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block mb-2 text-sm font-medium text-gray-700">Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Enter your password"
+                                        value={password}
+                                        onChange={(ev) => setPassword(ev.target.value)}
+                                        className={inputClassName}
+                                    />
+                                    <div
+                                        onClick={toggleShowPassword}
+                                        className={eyeIconClassName}
+                                    >
+                                        {showPassword ? (
+                                            <FaEyeSlash className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                                        ) : (
+                                            <FaEye className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center">
                                 <input
                                     type="checkbox"
                                     checked={keepSignedIn}
                                     onChange={(ev) => setKeepSignedIn(ev.target.checked)}
-                                    className="form-checkbox"
+                                    className="w-4 h-4 text-blue-600 transition-colors border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-offset-0"
                                 />
-                                <label className="ml-2 text-sm text-gray-600">
-                                    Keep me signed in
-                                </label>
-                            </div>
+                                <span className="ml-2 text-sm text-gray-600">Keep me signed in</span>
+                            </label>
                             <Link
                                 to="/forgot-password"
-                                className="text-sm text-blue-500 hover:underline"
+                                className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
                             >
-                                Forgot your password?
+                                Forgot password?
                             </Link>
                         </div>
-                        <button
+
+                        <motion.button
                             type="submit"
                             disabled={loading}
-                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? "bg-blue-300" : "bg-blue-500"}`}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            className={`flex items-center justify-center w-full gap-2 px-6 py-3 font-medium text-white transition-all duration-200 rounded-lg ${loading
+                                ? "bg-blue-400 cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                }`}
                         >
-                            {loading ? <RsuiteLoader size="sm" /> : "Login"}
-                        </button>
+                            {loading ? (
+                                <div className="flex items-center gap-2">
+                                    <RsuiteLoader size="sm" />
+                                    <span>Signing in...</span>
+                                </div>
+                            ) : (
+                                "Sign in"
+                            )}
+                        </motion.button>
                     </form>
-                </div>
+                </motion.div>
             </div>
-            <Footer className="relative z-10" />
+
+            {/* <Footer className="relative z-10" /> */}
         </div>
     );
 }

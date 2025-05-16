@@ -6,7 +6,7 @@ import 'rsuite/dist/rsuite.min.css';
 import logo from '/AceLogo.png'; // Adjust path if needed
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import AnimatedBackground from "../components/AnimatedBackground";
-
+import { motion } from 'framer-motion';
 
 const ResetPassword = () => {
     const { token } = useParams();
@@ -60,91 +60,133 @@ const ResetPassword = () => {
     };
 
     return (
-        <div className="relative flex flex-col justify-between min-h-screen">
+        <div className="relative flex flex-col justify-between min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
             <AnimatedBackground />
-            <div className="flex flex-col items-center w-full max-w-lg mx-auto my-auto">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-10 flex flex-col items-center w-full max-w-lg p-4 mx-auto my-auto"
+            >
                 {message && (
-                    <div className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-green-400 bg-green-100 rounded-md">
-                        {message}
-                        {countdown !== null && countdown > 0 && (
-                            <span> Redirecting in {countdown} seconds...</span>
-                        )}
-                    </div>
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="w-full px-4 py-3 mb-4 text-sm font-medium text-green-700 bg-green-100 border border-green-200 rounded-lg"
+                    >
+                        <div className="flex items-center">
+                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            {message}
+                            {countdown !== null && countdown > 0 && (
+                                <span className="ml-1">Redirecting in {countdown} seconds...</span>
+                            )}
+                        </div>
+                    </motion.div>
                 )}
 
-                <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
-                    <div className="flex justify-center mb-6">
-                        <img src={logo} loading="lazy" alt="Logo" className="w-auto h-36" />
-                    </div>
-                    <form onSubmit={handleSubmit} className="w-full">
-                        <h1 className="my-4 text-2xl font-semibold text-center">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full p-8 bg-white shadow-lg rounded-xl backdrop-blur-sm"
+                >
+                    <motion.div
+                        initial={{ y: -20 }}
+                        animate={{ y: 0 }}
+                        className="flex justify-center mb-8"
+                    >
+                        <img src={logo} loading="lazy" alt="Logo" className="w-auto h-36 drop-shadow-md" />
+                    </motion.div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <h1 className="text-2xl font-bold text-center text-gray-900">
                             Reset Password
                         </h1>
+
                         {errors.length > 0 && (
-                            <div className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-red-400 bg-red-100 rounded-md">
-                                <ul className="text-left list-disc list-inside">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="px-4 py-3 text-sm font-medium text-red-700 bg-red-100 border border-red-200 rounded-lg"
+                            >
+                                <ul className="space-y-1 list-disc list-inside">
                                     {errors.map((err, index) => (
                                         <li key={index}>{err}</li>
                                     ))}
                                 </ul>
-                            </div>
+                            </motion.div>
                         )}
-                        <input
-                            type="text"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="p-3 my-3 form-control"
-                        />
-                        <div className="relative">
+
+                        <div className="space-y-4">
                             <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="New Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full p-3 my-3 form-control"
+                                type="text"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             />
-                            <span
-                                onClick={toggleShowPassword}
-                                className="absolute text-gray-500 transform -translate-y-1/2 cursor-pointer top-1/2 right-3"
-                            >
-                                {showPassword ? (
-                                    <FaEye className="w-5 h-5" />
-                                ) : (
-                                    <FaEyeSlash className="w-5 h-5" />
-                                )}
-                            </span>
+
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="New Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={toggleShowPassword}
+                                    className="absolute text-gray-400 transition-colors -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+                                >
+                                    {showPassword ? (
+                                        <FaEye className="w-5 h-5" />
+                                    ) : (
+                                        <FaEyeSlash className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
+
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    placeholder="Confirm New Password"
+                                    value={passwordConfirmation}
+                                    onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                    className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={toggleShowConfirmPassword}
+                                    className="absolute text-gray-400 transition-colors -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+                                >
+                                    {showConfirmPassword ? (
+                                        <FaEye className="w-5 h-5" />
+                                    ) : (
+                                        <FaEyeSlash className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
-                        <div className="relative">
-                            <input
-                                type={showConfirmPassword ? "text" : "password"}
-                                placeholder="Confirm New Password"
-                                value={passwordConfirmation}
-                                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                                className="w-full p-3 my-3 form-control"
-                            />
-                            <span
-                                onClick={toggleShowConfirmPassword}
-                                className="absolute text-gray-500 transform -translate-y-1/2 cursor-pointer top-1/2 right-3"
-                            >
-                                {showConfirmPassword ? (
-                                    <FaEye className="w-5 h-5" />
-                                ) : (
-                                    <FaEyeSlash className="w-5 h-5" />
-                                )}
-                            </span>
-                        </div>
-                        <button
+
+                        <motion.button
                             type="submit"
                             disabled={loading}
-                            className={`w-full p-4 font-semibold cursor-pointer text-white text-center rounded-md mt-2 ${loading ? 'bg-blue-300' : 'bg-blue-500'
-                                }`}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            className={`
+                                w-full px-6 py-3 text-sm font-medium text-white transition-all duration-200 rounded-lg
+                                ${loading
+                                    ? 'bg-blue-400 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                                }
+                            `}
                         >
                             {loading ? <RsuiteLoader size="sm" /> : 'Reset Password'}
-                        </button>
+                        </motion.button>
                     </form>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
         </div>
     );
 };

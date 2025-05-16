@@ -8,7 +8,8 @@ import UserProfilePopup from "./UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
 import logo from "/AceLogo.png"; // Update path according to your logo location
-
+import { motion } from "framer-motion";
+import { HomeIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 
 export default function DefaultLayout() {
     const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
@@ -19,14 +20,12 @@ export default function DefaultLayout() {
     const hasFetchedRef = useRef(false);
 
     useEffect(() => {
-        // if (!userToken || hasFetchedRef.current) return;
         if (hasFetchedRef.current) return; // skip if already fetched
         hasFetchedRef.current = true;
 
         axiosClient.get("/me")
             .then(({ data }) => {
                 setCurrentUser(data);
-                // hasFetchedRef.current = true;
             })
             .catch((error) => {
                 console.error("Error fetching user data:", error);
@@ -75,59 +74,102 @@ export default function DefaultLayout() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <div className="flex items-center justify-between px-8 py-4 bg-white border-gray-200 border-b-1">
-                <div className="flex gap-4">
-                    <NavLink
-                        to="/dashboard"
-                        className={({ isActive }) =>
-                            `p-2 rounded-md cursor-pointer ${isActive ? "bg-primary text-white" : "hover:bg-gray-100"}`
-                        }
-                        style={{ textDecoration: "none" }}
-                    >
-                        Dashboard
-                    </NavLink>
-                    <NavLink
-                        to="/surveys"
-                        className={({ isActive }) =>
-                            `p-2 rounded-md cursor-pointer ${isActive ? "bg-primary text-white" : "hover:bg-gray-100"}`
-                        }
-                        style={{ textDecoration: "none" }}
-                    >
-                        Surveys
-                    </NavLink>
-                </div>
-                <div className="flex gap-4">
-                    <p className="self-center hidden font-semibold text-center text-slate-500 md:block">
-                        {currentUser.name}
-                    </p>
-                    {/* <FaUserCircle
-                        size={48}
-                        className="self-center p-2 text-gray-300 rounded-full cursor-pointer hover:bg-gray-100"
-                        onClick={toggleUserProfilePopup}
+            <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shadow-sm backdrop-blur-lg bg-opacity-90"
+            >
+                <div className="flex items-center gap-2">
+                    {/* <img
+                        src={logo}
+                        alt="Ace Survey Logo"
+                        className="w-auto h-10"
                     /> */}
-                    <img src={logo} alt="" loading="lazy" className="self-center w-auto h-12 rounded-full cursor-pointer" onClick={toggleUserProfilePopup} />
-
+                    <div className="items-center hidden gap-1 md:flex">
+                        <NavLink
+                            to="/dashboard"
+                            className={({ isActive }) =>
+                                `flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg
+                                ${isActive
+                                    ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
+                            }
+                        >
+                            <HomeIcon className="w-5 h-5" />
+                            <span>Dashboard</span>
+                        </NavLink>
+                        <NavLink
+                            to="/surveys"
+                            className={({ isActive }) =>
+                                `flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg
+                                ${isActive
+                                    ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
+                            }
+                        >
+                            <ClipboardDocumentListIcon className="w-5 h-5" />
+                            <span>Surveys</span>
+                        </NavLink>
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex-grow p-4 bg-gray-100 md:p-6">
+                <div className="flex items-center gap-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-3"
+                    >
+                        <div className="items-center hidden gap-3 px-4 py-2 text-sm text-gray-600 rounded-lg md:flex bg-gray-50">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="font-medium">{currentUser.name}</span>
+                        </div>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="relative"
+                            onClick={toggleUserProfilePopup}
+                        >
+                            <img
+                                src={currentUser.avatar || logo}
+                                alt="Profile"
+                                className="w-10 h-10 transition-all duration-200 rounded-full ring-2 ring-gray-100 hover:ring-blue-200"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = logo;
+                                }}
+                            />
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                        </motion.button>
+                    </motion.div>
+                </div>
+            </motion.div>
+
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex-grow p-4 bg-gradient-to-br from-gray-50 to-gray-100 md:p-6"
+            >
                 <Outlet />
-            </div>
+            </motion.div>
 
             <Toast />
 
             {isUserProfilePopupOpen && (
                 <BasePopup
-                    id="simple-popper"
+                    id="user-profile-popup"
                     open={isUserProfilePopupOpen}
                     anchor={anchor}
                     placement={placement}
-                    offset={4}
+                    offset={8}
                     onClose={handleClose}
                 >
-                    <div className="action-popup">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="action-popup"
+                    >
                         <UserProfilePopup onLogout={onLogout} />
-                    </div>
+                    </motion.div>
                 </BasePopup>
             )}
         </div>

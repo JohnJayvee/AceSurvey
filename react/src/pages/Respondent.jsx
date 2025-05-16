@@ -7,6 +7,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
+import { motion } from "framer-motion";
 
 export default function Respondent() {
     const { surveyId, responseId } = useParams();
@@ -36,38 +37,84 @@ export default function Respondent() {
     }, [surveyId, responseId]);
 
     if (loading) return (
-        <div className="relative w-full min-h-screen">
-            <div className="w-11/12 mx-auto md:w-3/4 xl:w-1/2">
-                <div className="flex justify-between w-full px-4 mb-4 bg-white rounded-lg">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="relative w-full min-h-screen bg-gray-50"
+        >
+            <div className="w-11/12 py-6 mx-auto space-y-6 md:w-3/4 xl:w-1/2">
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="flex justify-between w-full px-6 py-4 bg-white shadow-sm rounded-xl"
+                >
                     <div className="py-2">
                         <Skeleton circle width={40} height={40} />
                     </div>
-                </div>
-                <div className="flex flex-col p-4 mb-4 bg-white border border-gray-200 rounded-lg md:flex-row">
-                    <div className="w-full mr-4 md:w-1/2">
-                        <Skeleton height={320} />
+                </motion.div>
+
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="flex flex-col gap-6 p-6 bg-white border border-gray-200 shadow-sm rounded-xl md:flex-row"
+                >
+                    <div className="w-full md:w-1/2">
+                        <Skeleton height={320} className="rounded-lg" />
                     </div>
-                    <div className="w-full lg:w-1/2">
-                        <Skeleton height={40} width="80%" className="my-3" />
+                    <div className="w-full space-y-4 lg:w-1/2">
+                        <Skeleton height={48} width="80%" />
                         <Skeleton count={2} />
-                        <Skeleton height={100} className="mt-2" />
+                        <Skeleton height={100} />
                     </div>
-                </div>
-                <div className="w-full">
+                </motion.div>
+
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="w-full space-y-6"
+                >
                     {[1, 2, 3].map((_, index) => (
-                        <div key={index} className="p-4 mb-4 bg-white border border-gray-200 rounded-lg">
+                        <motion.div
+                            key={index}
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl"
+                        >
                             <Skeleton height={24} width="60%" className="mb-4" />
                             <Skeleton height={40} />
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 
-    if (error) return <div>Error: {error}</div>;
-    if (!responseDetails || !responseDetails.questions)
-        return <div>No data available</div>;
+    if (error) return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center min-h-screen p-6 bg-gray-50"
+        >
+            <div className="p-6 text-red-600 bg-white shadow-sm rounded-xl">
+                Error: {error}
+            </div>
+        </motion.div>
+    );
+
+    if (!responseDetails || !responseDetails.questions) return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center min-h-screen p-6 bg-gray-50"
+        >
+            <div className="p-6 text-gray-600 bg-white shadow-sm rounded-xl">
+                No data available
+            </div>
+        </motion.div>
+    );
 
     // Ensure answers are included in responseDetails
     const answers = responseDetails.questions.map((question) => ({
@@ -80,36 +127,42 @@ export default function Respondent() {
     }
 
     return (
-        <div className="relative w-full min-h-screen">
-            <div className="w-11/12 mx-auto md:w-3/4 xl:w-1/2">
-                <div
-                    className="flex justify-between w-full px-4 mb-4 bg-white rounded-lg animate-fade-in-down"
-                    style={{ animationDelay: "0.1s" }}
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="relative w-full min-h-screen bg-gray-50"
+        >
+            <div className="w-11/12 py-6 mx-auto space-y-6 md:w-3/4 xl:w-1/2">
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="flex justify-between w-full px-6 py-4 bg-white shadow-sm rounded-xl"
                 >
                     <div className="py-2">
-                        <Tooltip
-                            title="Go Back"
-                            placement="bottom"
-                            TransitionComponent={Fade}
-                        >
-                            <div
-                                className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
+                        <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="p-4 transition-colors rounded-full cursor-pointer hover:bg-gray-100"
                                 onClick={handleGoBack}
                             >
                                 <FaArrowLeft className="text-gray-700" />
-                            </div>
+                            </motion.div>
                         </Tooltip>
                     </div>
-                </div>
-                <div
-                    className="flex flex-col p-4 mb-4 bg-white border border-gray-200 rounded-lg md:flex-row animate-fade-in-down"
-                    style={{ animationDelay: "0.2s" }}
+                </motion.div>
+
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="flex flex-col gap-6 p-6 bg-white border border-gray-200 shadow-sm rounded-xl md:flex-row"
                 >
-                    <div className="w-full mr-4 md:w-1/2">
+                    <div className="w-full md:w-1/2">
                         <img
                             src={responseDetails.image_url || '/AceLogo.png'}
                             loading="lazy"
-                            className="object-cover w-full rounded-md h-80"
+                            className="object-contain w-full rounded-md h-80 bg-gray-50"
                             alt={responseDetails.title}
                         />
                     </div>
@@ -125,11 +178,13 @@ export default function Respondent() {
                             {responseDetails.description}
                         </p>
                     </div>
-                </div>
+                </motion.div>
 
-                <div
-                    className="w-full animate-fade-in-down"
-                    style={{ animationDelay: "0.3s" }}
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="w-full space-y-6"
                 >
                     {responseDetails.questions.map((q, index) => (
                         <RespondentAnswerView
@@ -143,8 +198,8 @@ export default function Respondent() {
                             index={index}
                         />
                     ))}
-                </div>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 }

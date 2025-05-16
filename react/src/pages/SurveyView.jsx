@@ -17,6 +17,7 @@ import ShareSurveyPopup from "../components/ShareSurveyPopup.jsx";
 import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
+import { motion } from "framer-motion";
 
 export default function SurveyView() {
     const { showToast } = useStateContext();
@@ -85,12 +86,10 @@ export default function SurveyView() {
             }
         }).catch((err) => {
             if (err && err.response) {
-                // If there are multiple errors, loop through and display them
                 if (err.response.data.errors) {
                     const allErrors = Object.values(err.response.data.errors).flat();
-                    setError(allErrors.join('\n')); // Join all error messages with a space
+                    setError(allErrors.join('\n'));
                 } else {
-                    // If there's only a general message, show it
                     setError(err.response.data.message);
                 }
             }
@@ -143,325 +142,308 @@ export default function SurveyView() {
     };
 
     return (
-        <div className="w-full min-h-screen ">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {loading && <Loader />}
             {!loading && (
-                <div>
-                    <div className="w-full mx-auto mb-4 text-2xl font-semibold lg:w-9/12 xl:w-8/12 ">
-                        {!id ? "Create new Survey" : "Edit Survey"}
-                    </div>
-                    <div
-                        className="flex justify-between w-full px-4 mx-auto mb-4 bg-white rounded-lg lg:9/12 xl:w-8/12 animate-fade-in-down "
-                        style={{ animationDelay: "0.1s" }}
+                <div className="px-4 py-8 mx-auto max-w-7xl">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8"
                     >
-                        <div className="py-2">
-                            <Tooltip
-                                title="Go Back"
-                                placement="bottom"
-                                TransitionComponent={Fade}
-                            >
-                                <div
-                                    className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
+                        <h1 className="text-3xl font-bold text-gray-900">
+                            {!id ? "Create New Survey" : "Edit Survey"}
+                        </h1>
+                        <p className="mt-2 text-sm text-gray-600">
+                            Fill in the information below to {id ? "update" : "create"} your survey.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="sticky top-0 z-10 flex justify-between p-4 mb-6 bg-white border border-gray-100 shadow-sm rounded-xl backdrop-blur-xl bg-opacity-90"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
+                                <button
                                     onClick={handleGoBack}
+                                    className="p-2 transition-all duration-200 rounded-lg hover:bg-gray-100 active:bg-gray-200"
                                 >
-                                    <FaArrowLeft className="text-gray-700" />
-                                </div>
+                                    <FaArrowLeft className="w-5 h-5 text-gray-700" />
+                                </button>
                             </Tooltip>
                         </div>
+
                         {id && (
                             <div className="flex items-center gap-2">
-                                <Tooltip
-                                    title="Share"
-                                    placement="bottom"
-                                    TransitionComponent={Fade}
-                                >
+                                <Tooltip title="Share Survey" placement="bottom" TransitionComponent={Fade}>
                                     <button
                                         onClick={handleOpenShare}
-                                        className="flex items-center p-4 rounded-full cursor-pointer hover:bg-gray-100"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 transition-all duration-200 rounded-lg bg-blue-50 hover:bg-blue-100"
                                     >
-                                        <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-800" />
+                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                        Share
                                     </button>
                                 </Tooltip>
-                                <Tooltip
-                                    title="Responses"
-                                    placement="bottom"
-                                    TransitionComponent={Fade}
-                                >
+
+                                <Tooltip title="View Responses" placement="bottom" TransitionComponent={Fade}>
                                     <button
-                                        onClick={() =>
-                                            handleViewResponses(survey.id)
-                                        }
-                                        className="flex items-center p-4 rounded-full cursor-pointer hover:bg-gray-100"
+                                        onClick={() => handleViewResponses(survey.id)}
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 transition-all duration-200 rounded-lg bg-green-50 hover:bg-green-100"
                                     >
-                                        <UsersIcon className="w-5 h-5 text-gray-800" />
+                                        <UsersIcon className="w-4 h-4" />
+                                        Responses
                                     </button>
                                 </Tooltip>
-                                <Tooltip
-                                    title="Preview"
-                                    placement="bottom"
-                                    TransitionComponent={Fade}
-                                >
+
+                                <Tooltip title="Preview Survey" placement="bottom" TransitionComponent={Fade}>
                                     <a
                                         href={`/survey/public/${survey.slug}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 transition-all duration-200 rounded-lg bg-purple-50 hover:bg-purple-100"
                                     >
-                                        <button className="flex items-center p-4 rounded-full cursor-pointer hover:bg-gray-100">
-                                            <EyeIcon className="w-5 h-5 text-gray-800" />
-                                        </button>
+                                        <EyeIcon className="w-4 h-4" />
+                                        Preview
                                     </a>
                                 </Tooltip>
-                                <Tooltip
-                                    title="Delete"
-                                    placement="bottom"
-                                    TransitionComponent={Fade}
-                                >
+
+                                <Tooltip title="Delete Survey" placement="bottom" TransitionComponent={Fade}>
                                     <button
-                                        onClick={(ev) =>
-                                            onDeleteClick(survey.id)
-                                        }
-                                        className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
+                                        onClick={(ev) => onDeleteClick(survey.id)}
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 transition-all duration-200 rounded-lg bg-red-50 hover:bg-red-100"
                                     >
-                                        <TrashIcon className="w-5 h-5 text-gray-800 " />
+                                        <TrashIcon className="w-4 h-4" />
+                                        Delete
                                     </button>
                                 </Tooltip>
                             </div>
                         )}
-                    </div>
-                    <div className="w-full mx-auto lg:9/12 xl:w-8/12 ">
-                        {error && (
-                            <div className="p-3 my-4 text-red-500 bg-red-100 rounded-md" style={{ whiteSpace: 'pre-line' }}>
+                    </motion.div>
+
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 mb-6 text-sm text-red-600 rounded-lg bg-red-50"
+                            style={{ whiteSpace: 'pre-line' }}
+                        >
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
                                 {error}
                             </div>
-                        )}
-                        <form action="#" method="POST" onSubmit={onSubmit}>
-                            <div>
-                                <div
-                                    className="flex flex-col w-full p-4 space-y-6 bg-white border border-gray-200 rounded-lg lg:flex-row animate-fade-in-down "
-                                    style={{ animationDelay: "0.2s" }}
-                                >
-                                    <div className="w-full lg:w-1/2">
-                                        <div className="flex items-center mt-1">
-                                            {survey.image_url && (
+                        </motion.div>
+                    )}
+
+                    <form onSubmit={onSubmit} className="space-y-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="overflow-hidden bg-white shadow-sm rounded-xl"
+                        >
+                            <div className="p-6 space-y-6 lg:p-8">
+                                <div className="grid gap-8 lg:grid-cols-2">
+                                    <div className="space-y-4">
+                                        <div className="overflow-hidden rounded-lg aspect-video bg-gray-50">
+                                            {survey.image_url ? (
                                                 <img
                                                     src={survey.image_url}
-                                                    loading="lazy"
-                                                    alt=""
-                                                    className="object-cover w-full h-full"
+                                                    alt="Survey cover"
+                                                    className="object-cover w-full h-full transition-all duration-300 hover:scale-105"
                                                 />
-                                            )}
-                                            {/* {!survey.image_url && (
-                                                <span className="flex items-center justify-center w-full h-64 overflow-hidden text-gray-400 bg-gray-100">
-                                                    <PhotoIcon className="w-8 h-8" />
-                                                </span>
-                                            )} */}
-                                            {!survey.image_url && (
-                                                <span className="flex items-center justify-center w-full h-64 overflow-hidden text-gray-400 bg-gray-50">
+                                            ) : (
+                                                <div className="flex items-center justify-center w-full h-full bg-gray-50">
                                                     <img
                                                         src="/default-survey-image.jpg"
-                                                        loading="lazy"
                                                         alt="Default Survey"
-                                                        // className="object-cover w-full h-full"
-                                                        className="object-cover w-auto h-full"
+                                                        className="object-cover w-auto h-full transition-all duration-300 hover:scale-105"
                                                         onError={(e) => {
                                                             e.target.onerror = null;
-                                                            e.target.src = "/AceLogo.png"; // Fallback if image fails to load
+                                                            e.target.src = "/AceLogo.png";
                                                         }}
                                                     />
-                                                </span>
+                                                </div>
                                             )}
                                         </div>
-                                        <button
-                                            type="button"
-                                            className="relative w-full px-3 py-2 mt-4 text-sm font-medium leading-4 text-white bg-blue-500 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                        >
+                                        <div className="relative group">
                                             <input
                                                 type="file"
                                                 accept="image/*"
-                                                className="absolute top-0 bottom-0 left-0 right-0 opacity-0 cursor-pointer"
                                                 onChange={onImageChoose}
+                                                className="absolute inset-0 z-50 w-full h-full opacity-0 cursor-pointer"
                                             />
-                                            Choose an Image
-                                        </button>
+                                            <button
+                                                type="button"
+                                                className="relative flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                            >
+                                                <PhotoIcon className="w-5 h-5" />
+                                                Choose Image
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div className="w-full px-2 lg:px-10">
-                                        {/*Title*/}
-                                        <div className="mb-4">
-                                            <label
-                                                htmlFor="title"
-                                                className="text-base font-semibold "
-                                            >
-                                                Survey Title
+                                    <div className="space-y-6">
+                                        {/* Survey Title Input */}
+                                        <div className="relative p-4 group">
+                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                                <span>Survey Title</span>
+                                                <span className="ml-1 text-red-500">*</span>
                                             </label>
-                                            <input
-                                                type="text"
-                                                name="title"
-                                                id="title"
-                                                value={survey.title}
-                                                onChange={(ev) =>
-                                                    setSurvey({
-                                                        ...survey,
-                                                        title: ev.target.value,
-                                                    })
-                                                }
-                                                placeholder="Survey Title"
-                                                className="w-full p-2 mt-2 text-sm border border-gray-200 rounded-md form-control"
-                                            />
-                                        </div>
-
-                                        {/*Description*/}
-                                        <div className="mb-4">
-                                            <label
-                                                htmlFor="description"
-                                                className="text-base font-semibold "
-                                            >
-                                                Description
-                                            </label>
-                                            <textarea
-                                                name="description"
-                                                id="description"
-                                                value={survey.description || ""}
-                                                onChange={(ev) =>
-                                                    setSurvey({
-                                                        ...survey,
-                                                        description:
-                                                            ev.target.value,
-                                                    })
-                                                }
-                                                placeholder="Describe your survey"
-                                                className="w-full p-2 mt-2 text-sm border border-gray-200 rounded-md form-control h-28"
-                                            ></textarea>
-                                        </div>
-
-                                        {/*Expire Date*/}
-                                        <div className="mb-4">
-                                            <label
-                                                htmlFor="expire_date"
-                                                className="text-base font-semibold "
-                                            >
-                                                Expire Date
-                                            </label>
-                                            <input
-                                                type="date"
-                                                name="expire_date"
-                                                id="expire_date"
-                                                value={survey.expire_date}
-                                                onChange={(ev) =>
-                                                    setSurvey({
-                                                        ...survey,
-                                                        expire_date:
-                                                            ev.target.value,
-                                                    })
-                                                }
-                                                className="w-full p-2 mt-2 text-sm border border-gray-200 rounded-md form-control"
-                                            />
-                                            {isSurveyExpired(
-                                                survey.expire_date
-                                            ) && (
-                                                    <p className="mt-2 text-sm text-red-500">
-                                                        This survey has already
-                                                        expired and is now closed to
-                                                        public access.
-                                                    </p>
-                                                )}
-                                        </div>
-                                        {/* Active */}
-                                        <div className="w-full">
-                                            <label
-                                                htmlFor="status"
-                                                className="text-base font-semibold"
-                                            >
-                                                Status
-                                            </label>
-                                            <div className="flex items-center self-center mt-2">
+                                            <div className="relative">
                                                 <input
-                                                    id="status"
-                                                    name="status"
-                                                    type="checkbox"
-                                                    checked={
-                                                        survey.status &&
-                                                        !isSurveyExpired(
-                                                            survey.expire_date
-                                                        )
-                                                    } // Ensure checkbox is checked only if status is true and survey is not expired
-                                                    onChange={(ev) => {
-                                                        const isChecked =
-                                                            ev.target.checked;
-                                                        const isExpired =
-                                                            isSurveyExpired(
-                                                                survey.expire_date
-                                                            );
-
-                                                        setSurvey({
-                                                            ...survey,
-                                                            status:
-                                                                isChecked &&
-                                                                !isExpired,
-                                                        });
-
-                                                        // Automatically set status to false if survey is expired
-                                                        if (
-                                                            isChecked &&
-                                                            isExpired
-                                                        ) {
-                                                            setSurvey(
-                                                                (
-                                                                    prevSurvey
-                                                                ) => ({
-                                                                    ...prevSurvey,
-                                                                    status: false,
-                                                                })
-                                                            );
-                                                        }
-                                                    }}
-                                                    className="w-4 h-4 border-gray-300 rounded cursor-pointer"
+                                                    type="text"
+                                                    value={survey.title}
+                                                    onChange={(ev) => setSurvey({ ...survey, title: ev.target.value })}
+                                                    className="w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                    placeholder="Enter survey title"
                                                 />
-                                                <div className="w-full ml-2 text-sm">
-                                                    <p
-                                                        className={
-                                                            survey.status &&
-                                                                !isSurveyExpired(
-                                                                    survey.expire_date
-                                                                )
-                                                                ? "text-gray-500 p-2"
-                                                                : "bg-red-50 text-red-500 p-2 rounded"
-                                                        }
-                                                    >
-                                                        {survey.status &&
-                                                            !isSurveyExpired(
-                                                                survey.expire_date
-                                                            )
-                                                            ? "Accepting responses"
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Survey Description Input */}
+                                        <div className="relative p-4 group">
+                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                                <span>Description</span>
+                                                <span className="ml-1 text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <textarea
+                                                    value={survey.description || ""}
+                                                    onChange={(ev) => setSurvey({ ...survey, description: ev.target.value })}
+                                                    rows={4}
+                                                    className="w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                    placeholder="Describe your survey"
+                                                />
+                                                <div className="absolute pointer-events-none top-3 right-3">
+                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <p className="mt-2 text-sm text-gray-500">
+                                                Provide a clear description of your survey's purpose and objectives
+                                            </p>
+                                        </div>
+
+                                        {/* Expire Date Input */}
+                                        <div className="relative p-4 group">
+                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                                <span>Expire Date</span>
+                                                <span className="ml-1 text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="date"
+                                                    value={survey.expire_date}
+                                                    onChange={(ev) => setSurvey({ ...survey, expire_date: ev.target.value })}
+                                                    className="w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    style={{ colorScheme: 'light' }}
+                                                />
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            {isSurveyExpired(survey.expire_date) && (
+                                                <div className="flex items-center gap-2 mt-2 text-sm text-red-600">
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>This survey has expired and is closed to responses</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Status Toggle */}
+                                        <div className="relative p-4 transition-all duration-200 bg-white border border-gray-100 rounded-lg hover:border-blue-200">
+                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                                <span>Survey Status</span>
+                                            </label>
+                                            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {survey.status && !isSurveyExpired(survey.expire_date)
+                                                            ? "Currently accepting responses"
                                                             : "Not accepting responses"}
                                                     </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        Toggle to enable or disable survey responses
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <label className="relative inline-flex items-center cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={survey.status && !isSurveyExpired(survey.expire_date)}
+                                                            onChange={(ev) => {
+                                                                const isChecked = ev.target.checked;
+                                                                const isExpired = isSurveyExpired(survey.expire_date);
+                                                                setSurvey({
+                                                                    ...survey,
+                                                                    status: isChecked && !isExpired,
+                                                                });
+                                                            }}
+                                                            className="sr-only peer"
+                                                            disabled={isSurveyExpired(survey.expire_date)}
+                                                        />
+                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer
+                                                            peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600
+                                                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border
+                                                            after:rounded-full after:h-5 after:w-5 after:transition-all peer-disabled:bg-gray-100
+                                                            peer-disabled:after:bg-gray-300">
+                                                        </div>
+                                                        <span className="ml-3 text-sm font-medium text-gray-700 peer-checked:text-blue-600 peer-disabled:text-gray-400">
+                                                            {survey.status && !isSurveyExpired(survey.expire_date) ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/*Questions */}
-                                <div
-                                    className="animate-fade-in-down "
-                                    style={{ animationDelay: "0.3s" }}
-                                >
-                                    <SurveyQuestions
-                                        questions={survey.questions}
-                                        onQuestionsUpdate={onQuestionsUpdate}
-                                    />
-                                </div>
-                                <div className="py-3 text-right">
-                                    <TButton>Save</TButton>
-                                </div>
                             </div>
-                        </form>
-                        <ShareSurveyPopup
-                            openSharePopup={openSharePopup}
-                            setOpenSharePopup={setOpenSharePopup}
-                            shareLink={shareLink}
-                        />
-                    </div>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-6 bg-white shadow-sm rounded-xl"
+                        >
+                            <SurveyQuestions
+                                questions={survey.questions}
+                                onQuestionsUpdate={onQuestionsUpdate}
+                            />
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex justify-end"
+                        >
+                            <button
+                                type="submit"
+                                className="px-6 py-2 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                {id ? "Update Survey" : "Create Survey"}
+                            </button>
+                        </motion.div>
+                    </form>
+
+                    <ShareSurveyPopup
+                        openSharePopup={openSharePopup}
+                        setOpenSharePopup={setOpenSharePopup}
+                        shareLink={shareLink}
+                    />
                 </div>
             )}
         </div>

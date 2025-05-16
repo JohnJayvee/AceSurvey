@@ -15,11 +15,18 @@
     /* Fade-in effect for logo */
 }
 
-/* Logo styles */
+.loading-logo-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 .loading-logo {
-    width: 150px;
-    /* Adjust to fit your logo size */
-    /* You can adjust the logo size if needed */
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    animation: bounce 2s infinite;
 }
 
 /* Fade-in effect */
@@ -32,5 +39,60 @@
     100% {
         opacity: 1;
         /* Fade to full opacity */
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+        transform: translateY(-20px);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+}
+
+/* Add shimmer effect */
+.loading-logo-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.5),
+            transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-150%);
+    }
+
+    50% {
+        transform: translateX(150%);
+    }
+
+    100% {
+        transform: translateX(150%);
     }
 }

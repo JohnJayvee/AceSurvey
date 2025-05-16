@@ -13,8 +13,10 @@ import { MdOutlineInfo } from "react-icons/md";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { motion } from "framer-motion";
+import { HiDownload } from "react-icons/hi";
 
-const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF9800', '#F44336'];
+const COLORS = ['#22C55E', '#3B82F6', '#EAB308', '#F97316', '#EF4444'];
 const RADIAN = Math.PI / 180;
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -292,61 +294,77 @@ export default function SurveyResponse() {
     }
 
     return (
-        <div className="w-full mx-auto lg:w-9/12 xl:w-8/12">
-            <div className="w-full mb-4 text-2xl font-semibold">
-                {survey.title} survey responses
-            </div>
-            <div
-                className="flex items-center justify-between w-full px-4 mb-4 bg-white rounded-lg animate-fade-in-down"
-                style={{ animationDelay: "0.1s" }}
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="w-full mx-auto lg:w-9/12 xl:w-8/12"
+        >
+            <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="flex items-center justify-between w-full mb-6"
             >
-                <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
-                    <div
-                        className="p-4 rounded-full cursor-pointer hover:bg-gray-100"
+                <h1 className="text-2xl font-bold text-gray-900">
+                    {survey.title} Survey Responses
+                </h1>
+            </motion.div>
+
+            <div className="flex items-center justify-between w-full px-4 py-3 mb-6 bg-white shadow-sm rounded-xl">
+                <Tooltip title="Go Back" placement="right" TransitionComponent={Fade}>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleGoBack}
+                        className="p-2.5 text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
                     >
-                        <FaArrowLeft className="text-gray-700" />
-                    </div>
+                        <FaArrowLeft className="w-5 h-5" />
+                    </motion.button>
                 </Tooltip>
-                <button
+
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={downloadCSV}
-                    className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
+                    className="flex items-center gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 bg-green-600 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
-                    Download Response
-                </button>
+                    <HiDownload className="w-5 h-5" />
+                    <span>Download Responses</span>
+                </motion.button>
             </div>
 
-            <div className="flex flex-col w-full gap-4">
-                <div
-                    className="flex w-full bg-white rounded-lg bg-gradient-to-r from-blue-400 to-blue-800 animate-fade-in-down"
-                    style={{ animationDelay: "0.2s" }}
+            <div className="grid gap-6">
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="p-6 bg-white shadow-sm rounded-xl bg-gradient-to-r from-blue-600 to-blue-800"
                 >
-                    <div className="w-full ml-4 text-white md:ml-8 mt-14">
-                        <div className="flex gap-2">
-                            <p className="text-3xl font-semibold md:text-5xl">
+                    <div className="flex items-center justify-between">
+                        <div className="text-white">
+                            <p className="text-4xl font-bold md:text-5xl">
                                 {responseCount}
                             </p>
+                            <p className="mt-2 text-blue-100">
+                                Total Responses
+                            </p>
                         </div>
-                        <p className="text-sm md:text-base">
-                            Total responses in this survey
-                        </p>
+                        {survey.image_url && (
+                            <img
+                                src={survey.image_url}
+                                loading="lazy"
+                                alt={survey.title}
+                                className="object-cover w-32 h-32 rounded-lg shadow-lg md:w-40 md:h-40"
+                            />
+                        )}
                     </div>
-                    <Divider />
-                    {survey.image_url && (
-                        <img
-                            src={survey.image_url}
-                            loading="lazy"
-                            alt={survey.title}
-                            className="object-cover w-1/2 h-40 mt-4 mr-4 rounded-t-md"
-                        />
-                    )}
-                </div>
+                </motion.div>
 
-                <div
-                    className="w-full p-4 bg-white rounded-lg animate-fade-in-down"
-                    style={{ animationDelay: "0.25s" }}
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="p-6 bg-white shadow-sm rounded-xl"
                 >
-                    <p className="mb-4 font-semibold">Rating Distribution</p>
+                    <h2 className="mb-6 text-lg font-semibold text-gray-900">Rating Distribution</h2>
                     <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -357,6 +375,8 @@ export default function SurveyResponse() {
                                     labelLine={false}
                                     label={renderCustomizedLabel}
                                     outerRadius={120}
+                                    innerRadius={60}  // Add this for donut style
+                                    paddingAngle={5}  // Add space between segments
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
@@ -364,34 +384,70 @@ export default function SurveyResponse() {
                                         <Cell
                                             key={`cell-${index}`}
                                             fill={COLORS[index % COLORS.length]}
+                                            stroke="none"  // Remove cell borders
+                                            className="transition-all duration-300 hover:opacity-80"
                                         />
                                     ))}
                                 </Pie>
-                                <RechartsTooltip />
-                                <Legend />
+                                <RechartsTooltip
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                        padding: '12px'
+                                    }}
+                                />
+                                <Legend
+                                    verticalAlign="bottom"
+                                    height={36}
+                                    formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </motion.div>
 
-                <div
-                    className="w-full h-full p-4 bg-white rounded-lg animate-fade-in-down"
-                    style={{ animationDelay: "0.3s" }}
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="p-6 bg-white shadow-sm rounded-xl"
                 >
-                    <input
-                        type="text"
-                        placeholder="Search responses"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 mb-4 border rounded-lg"
-                    />
+                    <div className="mb-6">
+                        <input
+                            type="text"
+                            placeholder="Search responses..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full px-4 py-2.5 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200"
+                        />
+                    </div>
                     <DataGrid
                         sx={{
+                            border: 'none',
+                            '& .MuiDataGrid-cell': {
+                                borderColor: '#f1f5f9',
+                            },
+                            '& .MuiDataGrid-columnHeaders': {
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '8px',
+                            },
+                            '& .MuiDataGrid-footerContainer': {
+                                padding: '1rem',
+                                borderTop: '1px solid #f1f5f9',
+                            },
+                            '& .MuiTablePagination-root': {
+                                marginRight: '1rem',
+                            },
+                            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                                margin: 0,
+                            },
                             [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
-                                outline: "none",
+                                outline: 'none',
                             },
                             [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]: {
-                                outline: "none",
+                                outline: 'none',
                             },
                         }}
                         initialState={{
@@ -401,9 +457,10 @@ export default function SurveyResponse() {
                         columns={columns}
                         pageSizeOptions={[10, 20, 50, 100]}
                         getRowId={(row) => row.id}
+                        className="pb-4" // Add bottom padding to ensure visibility
                     />
-                </div>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 }
