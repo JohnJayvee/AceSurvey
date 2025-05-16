@@ -12,14 +12,62 @@ import { Link, useNavigate } from "react-router-dom";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartTooltip } from "recharts";
 import axios from "../axios";
 
+// Create analytics cache (outside component to be shared across all instances)
+let analyticsCache = null;
+let isAnalyticsFetching = false;
+let analyticsListeners = [];
+
+// Custom hook to share analytics data across components
+function useSharedAnalytics() {
+    const [analytics, setAnalytics] = useState(null);
+
+    useEffect(() => {
+        // If data is already cached, use it immediately
+        if (analyticsCache) {
+            setAnalytics(analyticsCache);
+            return;
+        }
+
+        // Add this component as a listener for analytics updates
+        const listener = (data) => {
+            setAnalytics(data);
+        };
+        analyticsListeners.push(listener);
+
+        // Only fetch if not already fetching
+        if (!isAnalyticsFetching) {
+            isAnalyticsFetching = true;
+
+            axios.get("/survey-analytics")
+                .then(res => {
+                    analyticsCache = res.data.analytics.surveyStats;
+                    // Update all listening components
+                    analyticsListeners.forEach(listener => listener(analyticsCache));
+                })
+                .catch(error => {
+                    console.error("Error fetching analytics:", error);
+                    isAnalyticsFetching = false;
+                });
+        }
+
+        // Cleanup listener on unmount
+        return () => {
+            analyticsListeners = analyticsListeners.filter(l => l !== listener);
+        };
+    }, []);
+
+    return analytics;
+}
+
 export default function SurveyListItem({ survey, onDeleteClick }) {
     const [openSharePopup, setOpenSharePopup] = useState(false);
     const [shareLink, setShareLink] = useState("");
     const [graphData, setGraphData] = useState([]);
     const [totalResponses, setTotalResponses] = useState(0);
-
     const navigate = useNavigate();
-    const hasFetched = useRef(false); // 🛡️ Prevents double-fetching
+
+    // Use shared analytics hook instead of individual fetching
+    const analyticsData = useSharedAnalytics();
 
     const isSurveyExpired = (expireDate) => {
         const today = new Date().setHours(0, 0, 0, 0);
@@ -36,40 +84,29 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
         navigate(`/surveys/${surveyId}/responses`);
     };
 
+    // Process analytics data when it becomes available
     useEffect(() => {
-        if (hasFetched.current) return; // ⛔ Skip if already fetched
-        hasFetched.current = true;
+        if (!analyticsData) return;
 
-        const fetchAnalytics = async () => {
-            try {
-                const res = await axios.get("/survey-analytics");
-                const allStats = res.data.analytics.surveyStats;
+        const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+            name: new Date(0, i).toLocaleString("default", { month: "short" }),
+            response: 0,
+        }));
 
-                const monthlyData = Array.from({ length: 12 }, (_, i) => ({
-                    name: new Date(0, i).toLocaleString("default", { month: "short" }),
-                    response: 0,
-                }));
+        let total = 0;
 
-                let total = 0; // Track total responses
+        analyticsData
+            .filter(item => item.title === survey.title)
+            .forEach(item => {
+                const date = new Date(item.created_at);
+                const monthIndex = date.getMonth();
+                monthlyData[monthIndex].response += item.answers;
+                total += item.answers;
+            });
 
-                allStats
-                    .filter(item => item.title === survey.title)
-                    .forEach(item => {
-                        const date = new Date(item.created_at);
-                        const monthIndex = date.getMonth();
-                        monthlyData[monthIndex].response += item.answers;
-                        total += item.answers; // Add to total
-                    });
-
-                setGraphData(monthlyData);
-                setTotalResponses(total); // Update total responses
-            } catch (error) {
-                console.error("Error fetching analytics:", error);
-            }
-        };
-
-        fetchAnalytics();
-    }, [survey.title]);
+        setGraphData(monthlyData);
+        setTotalResponses(total);
+    }, [analyticsData, survey.title]);
 
     return (
         <div className="relative flex flex-col p-6 transition-all duration-300 bg-white border border-gray-200 rounded-xl group hover:border-blue-500 hover:shadow-lg animate-fade-in-down">
