@@ -30,7 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/total-department-ratings/{surveyAnswerId}', [SurveyController::class, 'totalDepartmentRatings'])->name('totalDepartmentRatings');
 
 
-});
-Route::get('/botSurvey', [DashboardController::class, 'botSurvey']);
-Route::get('/topSurvey', [DashboardController::class, 'topSurvey']);
 
+
+
+    Route::get('/topSurvey', [SurveyController::class, 'topSurvey']);
+    Route::get('/botSurvey', [SurveyController::class, 'botSurvey']);
+});
