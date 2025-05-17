@@ -1,7 +1,13 @@
 import React, { useEffect, Suspense } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Navigate } from "react-router-dom";
 import "./App.css";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
+import { useStateContext } from "./contexts/ContextProvider"; // Add this import
+
+// Import the custom loading spinner with animation
+import Loading from './components/Loading';
+
+// Lazy load components
 const GuestLayout = React.lazy(() => import("./components/GuestLayout"));
 const Login = React.lazy(() => import("./pages/Login"));
 const Signup = React.lazy(() => import("./pages/Signup"));
@@ -15,8 +21,11 @@ const Respondent = React.lazy(() => import("./pages/Respondent"));
 const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 
-// Import the custom loading spinner with animation
-import Loading from './components/Loading';
+// Add this component to handle intelligent redirects
+const SmartRedirect = () => {
+    const { token } = useStateContext();
+    return token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
+};
 
 const capitalizeFirstLetter = (string) => {
     return string.replace(/\b\w/g, char => char.toUpperCase());
@@ -75,7 +84,7 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "/",
-                element: <Navigate to="/dashboard" />,
+                element: <SmartRedirect />, // Replace simple Navigate with smart component
             },
             {
                 path: "/dashboard",
