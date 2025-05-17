@@ -341,45 +341,107 @@ export const ContextProvider = ({ children }) => {
         };
     }, []); // Remove currentUser from dependencies
 
-    // Add this function to detect browser close
+    // Replace your current beforeunload handler with this implementation
+
+    useEffect(() => {
+        // When the tab visibility changes to visible (tab is focused)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // Check for session login expiration
+                const sessionToken = sessionStorage.getItem('TOKEN');
+                const permanentToken = localStorage.getItem('TOKEN');
+
+                // If we have a session token but no permanent token, check browser restart
+                if (sessionToken && !permanentToken) {
+                    // Get browser session ID from storage
+                    const storedSessionId = localStorage.getItem('BROWSER_SESSION_ID');
+                    const currentSessionId = sessionStorage.getItem('SESSION_ID');
+
+                    // If session IDs don't match, browser was closed and reopened
+                    if (storedSessionId !== currentSessionId) {
+                        console.log('Browser was closed and reopened - logging out session user');
+                        // Clear session auth
+                        sessionStorage.removeItem('TOKEN');
+                        sessionStorage.removeItem('CURRENT_USER');
+                        localStorage.removeItem('SHARED_TOKEN');
+                        localStorage.removeItem('SHARED_CURRENT_USER');
+                        _setUserToken('');
+                        setCurrentUser({});
+                    }
+                }
+            }
+        };
+
+        // Generate a unique session ID when the page loads
+        const sessionId = Math.random().toString(36).substring(2, 15);
+        sessionStorage.setItem('SESSION_ID', sessionId);
+
+        // Store this ID in localStorage to compare across page loads
+        localStorage.setItem('BROWSER_SESSION_ID', sessionId);
+
+        // Listen for tab visibility changes
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
+    // Add this effect to handle page refresh
     useEffect(() => {
         const handleBeforeUnload = () => {
-            // If this is a session-only login (not kept signed in)
-            if (!localStorage.getItem("TOKEN") && sessionStorage.getItem("TOKEN")) {
-                // Add timestamp to detect if browser was actually closed
-                localStorage.setItem("AUTH_CLOSING_TIMESTAMP", Date.now().toString());
+            // Only for non-persistent logins
+            if (!localStorage.getItem('TOKEN') && sessionStorage.getItem('TOKEN')) {
+                const token = sessionStorage.getItem('TOKEN');
+                const user = sessionStorage.getItem('CURRENT_USER');
+                const sessionId = sessionStorage.getItem('SESSION_ID');
+
+                // Save these for page refreshes only
+                localStorage.setItem('REFRESH_TOKEN', token);
+                localStorage.setItem('REFRESH_USER', user);
+                localStorage.setItem('REFRESH_SESSION_ID', sessionId);
+                localStorage.setItem('REFRESH_TIMESTAMP', Date.now().toString());
             }
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
 
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, []);
+        // On page load, check if we're refreshing
+        const handlePageRefresh = () => {
+            const refreshToken = localStorage.getItem('REFRESH_TOKEN');
+            const refreshSessionId = localStorage.getItem('REFRESH_SESSION_ID');
+            const currentSessionId = sessionStorage.getItem('SESSION_ID');
 
-    // Add initialization check for browser restarts
-    useEffect(() => {
-        const checkBrowserRestart = () => {
-            const closingTimestamp = localStorage.getItem("AUTH_CLOSING_TIMESTAMP");
-            if (closingTimestamp) {
-                // Clear temporary auth data on browser restart
-                localStorage.removeItem("SHARED_TOKEN");
-                localStorage.removeItem("SHARED_CURRENT_USER");
-                localStorage.removeItem("AUTH_CLOSING_TIMESTAMP");
+            if (refreshToken && refreshSessionId) {
+                // Compare session IDs to detect refresh vs restart
+                // If they're different, the sessionStorage was cleared (browser closed)
+                if (refreshSessionId === currentSessionId) {
+                    console.log('Page refresh detected - restoring session');
+                    // This was just a refresh, restore the auth
+                    sessionStorage.setItem('TOKEN', refreshToken);
 
-                // If there's no persistent token, clear everything
-                if (!localStorage.getItem("TOKEN")) {
-                    sessionStorage.removeItem("TOKEN");
-                    sessionStorage.removeItem("CURRENT_USER");
-                    _setUserToken("");
-                    setCurrentUser({});
+                    const user = localStorage.getItem('REFRESH_USER');
+                    if (user) {
+                        sessionStorage.setItem('CURRENT_USER', user);
+                        setCurrentUser(JSON.parse(user));
+                    }
+                    _setUserToken(refreshToken);
                 }
+
+                // Clean up refresh data
+                localStorage.removeItem('REFRESH_TOKEN');
+                localStorage.removeItem('REFRESH_USER');
+                localStorage.removeItem('REFRESH_SESSION_ID');
+                localStorage.removeItem('REFRESH_TIMESTAMP');
             }
         };
 
-        // Run on component mount
-        checkBrowserRestart();
+        // Run on mount
+        handlePageRefresh();
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
     }, []);
 
     // Update the provider value to include the logout function
