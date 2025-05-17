@@ -581,8 +581,8 @@ class SurveyController extends Controller
                 ->pluck('slug')
                 ->toArray();
 
-            // Generate full URLs with dynamic base URL
-            $baseUrl = url('/survey');
+            // Use hardcoded base URL instead of dynamic one
+            $baseUrl = 'https://white-emu-581912.hostingersite.com/survey';
             $fullUrls = array_map(function ($slug) use ($baseUrl) {
                 return $baseUrl . '/' . $slug;
             }, $slugs);
