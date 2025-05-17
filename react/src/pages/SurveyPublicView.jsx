@@ -8,6 +8,7 @@ import { InformationCircleIcon, CheckCircleIcon, ExclamationTriangleIcon } from 
 import AnimatedBackground from "../components/AnimatedBackground";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
+import ErrorMessage from "../components/ErrorMessage";
 
 const isFetching = {}; // Keep this but use it properly
 const cache = {};
@@ -292,34 +293,12 @@ export default function SurveyPublicView() {
                                     ))}
                                 </div>
                                 {submissionError && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="p-4 mb-4 border border-red-200 shadow-sm bg-red-50 rounded-xl"
-                                    >
-                                        <div className="flex">
-                                            <div className="flex-shrink-0">
-                                                <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
-                                            </div>
-                                            <div className="ml-3">
-                                                <h3 className="text-sm font-medium text-red-800">
-                                                    Submission Error
-                                                </h3>
-                                                <p className="mt-2 text-sm text-red-700">
-                                                    {submissionError}
-                                                </p>
-                                                <div className="mt-4">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setSubmissionError(null)}
-                                                        className="px-3 py-1.5 text-xs font-medium text-red-800 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                                    >
-                                                        Dismiss
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.div>
+                                    <div className="mb-4">
+                                        <ErrorMessage
+                                            error={submissionError}
+                                            onClear={() => setSubmissionError(null)}
+                                        />
+                                    </div>
                                 )}
                                 <motion.div
                                     initial={{ opacity: 0 }}

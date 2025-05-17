@@ -19,6 +19,7 @@ import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
+import ErrorMessage from "../components/ErrorMessage"; // Add this import
 
 const cache = {};
 const isFetching = {};
@@ -50,6 +51,11 @@ export default function SurveyView() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    // Add clear error function
+    const clearError = () => {
+        setError("");
+    };
 
     // Debounce file reader operation
     const onImageChoose = debounce((ev) => {
@@ -290,22 +296,6 @@ export default function SurveyView() {
                         )}
                     </motion.div>
 
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="p-4 mb-6 text-sm text-red-600 rounded-lg bg-red-50"
-                            style={{ whiteSpace: 'pre-line' }}
-                        >
-                            <div className="flex items-center gap-2">
-                                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
-                                {error}
-                            </div>
-                        </motion.div>
-                    )}
-
                     <form onSubmit={onSubmit} className="space-y-6">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -482,6 +472,11 @@ export default function SurveyView() {
                             </div>
                         </motion.div>
 
+                        {/* Place ErrorMessage here, after the first card */}
+                        {error && <div className="my-4">
+                            <ErrorMessage error={error} onClear={clearError} />
+                        </div>}
+
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -492,6 +487,9 @@ export default function SurveyView() {
                                 onQuestionsUpdate={onQuestionsUpdate}
                             />
                         </motion.div>
+
+                        {/* Remove this duplicate ErrorMessage */}
+                        {/* {error && <ErrorMessage error={error} onClear={clearError} />} */}
 
                         <motion.div
                             initial={{ opacity: 0 }}

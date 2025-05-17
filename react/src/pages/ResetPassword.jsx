@@ -7,6 +7,7 @@ import logo from '/AceLogo.png'; // Adjust path if needed
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { motion } from 'framer-motion';
+import ErrorMessage from "../components/ErrorMessage"; // Add this import
 
 const ResetPassword = () => {
     const { token } = useParams();
@@ -14,7 +15,7 @@ const ResetPassword = () => {
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [message, setMessage] = useState('');
-    const [errors, setErrors] = useState([]);
+    const [errorMessage, setErrorMessage] = useState(''); // Changed from errors array to errorMessage string
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +23,11 @@ const ResetPassword = () => {
 
     const toggleShowPassword = () => setShowPassword(!showPassword);
     const toggleShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
+
+    // Add a function to clear error messages
+    const clearErrorMessage = () => {
+        setErrorMessage('');
+    };
 
     useEffect(() => {
         if (countdown !== null && countdown > 0) {
@@ -35,7 +41,7 @@ const ResetPassword = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage('');
-        setErrors([]);
+        setErrorMessage('');
         setLoading(true);
 
         try {
@@ -49,10 +55,14 @@ const ResetPassword = () => {
             setCountdown(5);
         } catch (error) {
             if (error.response && error.response.data.errors) {
+                // Convert error array to HTML format for ErrorMessage component
                 const allErrors = Object.values(error.response.data.errors).flat();
-                setErrors(allErrors);
+                const errorHTML = allErrors.map(err => `<li>${err}</li>`).join('');
+                setErrorMessage(`<ul class="list-disc pl-5">${errorHTML}</ul>`);
             } else if (error.response && error.response.data.message) {
-                setErrors([error.response.data.message]);
+                setErrorMessage(error.response.data.message);
+            } else {
+                setErrorMessage('An unexpected error occurred. Please try again.');
             }
         } finally {
             setLoading(false);
@@ -103,18 +113,9 @@ const ResetPassword = () => {
                             Reset Password
                         </h1>
 
-                        {errors.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="px-4 py-3 text-sm font-medium text-red-700 bg-red-100 border border-red-200 rounded-lg"
-                            >
-                                <ul className="space-y-1 list-disc list-inside">
-                                    {errors.map((err, index) => (
-                                        <li key={index}>{err}</li>
-                                    ))}
-                                </ul>
-                            </motion.div>
+                        {/* Replace the error list with ErrorMessage component */}
+                        {errorMessage && (
+                            <ErrorMessage error={errorMessage} onClear={clearErrorMessage} />
                         )}
 
                         <div className="space-y-4">

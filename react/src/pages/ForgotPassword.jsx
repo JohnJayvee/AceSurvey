@@ -6,6 +6,7 @@ import 'rsuite/dist/rsuite.min.css';
 import logo from "/AceLogo.png"; // Update path according to your logo location
 import AnimatedBackground from "../components/AnimatedBackground";
 import { motion } from "framer-motion";
+import ErrorMessage from "../components/ErrorMessage"; // Add this import
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
@@ -14,6 +15,12 @@ const ForgotPassword = () => {
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(5);
     const navigate = useNavigate();
+
+    // Add a function to clear error messages
+    const clearErrorMessage = () => {
+        setMessage('');
+        setIsError(false);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -33,7 +40,7 @@ const ForgotPassword = () => {
         }
     };
 
-    // Countdown & redirect effect
+    // Countdown & redirect effect remains the same
     useEffect(() => {
         if (message && !isError) {
             const timer = setInterval(() => {
@@ -80,21 +87,24 @@ const ForgotPassword = () => {
                         </p>
                     </div>
 
-                    {message && (
+                    {/* Add margin-top to create space */}
+                    <div className="mt-6">
+                        {isError && message && (
+                            <ErrorMessage error={message} onClear={clearErrorMessage} />
+                        )}
+                    </div>
+
+                    {/* Keep the success message as is */}
+                    {message && !isError && (
                         <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`p-4 mt-6 text-sm font-medium text-center rounded-lg ${isError
-                                ? 'bg-red-50 text-red-600'
-                                : 'bg-green-50 text-green-600'
-                                }`}
+                            className="p-4 mt-6 text-sm font-medium text-center text-green-600 rounded-lg bg-green-50"
                         >
                             {message}
-                            {!isError && (
-                                <p className="mt-1 text-xs text-gray-600">
-                                    Redirecting to login in {countdown} second{countdown !== 1 && 's'}...
-                                </p>
-                            )}
+                            <p className="mt-1 text-xs text-gray-600">
+                                Redirecting to login in {countdown} second{countdown !== 1 && 's'}...
+                            </p>
                         </motion.div>
                     )}
 

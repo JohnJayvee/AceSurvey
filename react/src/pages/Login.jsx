@@ -10,6 +10,7 @@ import Bulb from "../components/Bulb";
 import logo from "/AceLogo.png"; // Update path according to your logo location
 import AnimatedBackground from "../components/AnimatedBackground";
 import { motion } from "framer-motion";
+import ErrorMessage from "../components/ErrorMessage";
 
 export default function Login() {
     const { setCurrentUser, setUserToken } = useStateContext();
@@ -102,14 +103,7 @@ export default function Login() {
                             <p className="mt-2 text-sm text-gray-600">Login to your account to continue</p>
                         </div>
 
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="p-4 text-sm text-red-600 rounded-lg bg-red-50"
-                                dangerouslySetInnerHTML={{ __html: error }}
-                            />
-                        )}
+                        <ErrorMessage error={error} onClear={() => setError("")} />
 
                         <div className="space-y-4">
                             <div>
