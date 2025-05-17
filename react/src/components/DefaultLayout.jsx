@@ -7,8 +7,13 @@ import UserProfilePopup from "./UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
 import logo from "/AceLogo.png"; // Update path according to your logo location
-import { motion } from "framer-motion";
-import { HomeIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    HomeIcon,
+    ClipboardDocumentListIcon,
+    Bars3Icon,
+    XMarkIcon
+} from "@heroicons/react/24/outline";
 
 // Add a cache object at the top level
 const cache = {};
@@ -16,11 +21,22 @@ const cache = {};
 export default function DefaultLayout() {
     const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
     const [isUserProfilePopupOpen, setIsUserProfilePopupOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [anchor, setAnchor] = useState(null);
     const [placement, setPlacement] = useState("bottom-end");
 
     // Use a ref to prevent duplicate fetches
     const hasFetchedRef = useRef(false);
+
+    // Toggle mobile menu
+    const toggleMobileMenu = () => {
+        setIsMobileMenuOpen(!isMobileMenuOpen);
+    };
+
+    // Close mobile menu when navigation occurs
+    const closeMobileMenu = () => {
+        setIsMobileMenuOpen(false);
+    };
 
     useEffect(() => {
         // First check if we have cached user data
@@ -103,6 +119,18 @@ export default function DefaultLayout() {
                 className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shadow-sm backdrop-blur-lg bg-opacity-90"
             >
                 <div className="flex items-center gap-2">
+                    {/* Mobile hamburger menu button */}
+                    <button
+                        className="p-2 mr-2 text-gray-600 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none"
+                        onClick={toggleMobileMenu}
+                    >
+                        {isMobileMenuOpen ? (
+                            <XMarkIcon className="w-6 h-6" />
+                        ) : (
+                            <Bars3Icon className="w-6 h-6" />
+                        )}
+                    </button>
+
                     {/* <img
                         src={logo}
                         alt="Ace Survey Logo"
@@ -166,6 +194,62 @@ export default function DefaultLayout() {
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Mobile Menu Overlay */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ x: -300, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -300, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 z-40 flex flex-col w-3/4 h-full max-w-xs pt-16 pb-4 overflow-y-auto bg-white shadow-xl md:hidden"
+                    >
+                        <div className="flex flex-col gap-1 px-3">
+                            <NavLink
+                                to="/dashboard"
+                                onClick={closeMobileMenu}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg
+                                    ${isActive
+                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
+                                }
+                            >
+                                <HomeIcon className="w-5 h-5" />
+                                <span>Dashboard</span>
+                            </NavLink>
+                            <NavLink
+                                to="/surveys"
+                                onClick={closeMobileMenu}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg
+                                    ${isActive
+                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
+                                }
+                            >
+                                <ClipboardDocumentListIcon className="w-5 h-5" />
+                                <span>Surveys</span>
+                            </NavLink>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Backdrop for mobile menu */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.5 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 z-30 bg-black md:hidden"
+                        onClick={closeMobileMenu}
+                    />
+                )}
+            </AnimatePresence>
 
             <motion.div
                 initial={{ opacity: 0 }}
