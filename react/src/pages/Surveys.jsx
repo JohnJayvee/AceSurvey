@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useStateContext } from "../contexts/ContextProvider";
 import SurveyListItem from "../components/SurveyListItem";
-import { PlusCircleIcon, DocumentIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, DocumentIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import axiosClient from "../axios";
 import PaginationLinks from "../components/PaginationLinks";
 import Breadcrumbs from "../components/Breadcrumbs";
@@ -18,14 +18,25 @@ export default function Surveys() {
     const [meta, setMeta] = useState({});
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [surveyToDelete, setSurveyToDelete] = useState(null);
 
     const onDeleteClick = (id) => {
-        if (window.confirm("Are you sure you want to delete this survey?")) {
-            axiosClient.delete(`/survey/${id}`).then(() => {
-                getSurveys();
-                showToast("The survey was deleted");
-            });
-        }
+        setSurveyToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        axiosClient.delete(`/survey/${surveyToDelete}`).then(() => {
+            getSurveys();
+            showToast("The survey was deleted");
+            setShowDeleteModal(false);
+        });
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteModal(false);
+        setSurveyToDelete(null);
     };
 
     const onPageClick = (link) => {
@@ -208,6 +219,41 @@ export default function Surveys() {
                         </>
                     )}
                 </motion.div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl"
+                    >
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                            <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
+                        </div>
+                        <h3 className="mb-2 text-lg font-medium text-center text-gray-900">
+                            Delete Survey
+                        </h3>
+                        <p className="mb-6 text-sm text-center text-gray-500">
+                            Are you sure you want to delete this survey? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-center gap-3">
+                            <button
+                                onClick={cancelDelete}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            >
+                                Yes, delete
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
             )}
         </motion.div>
     );

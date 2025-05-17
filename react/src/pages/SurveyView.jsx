@@ -6,6 +6,7 @@ import {
     PhotoIcon,
     TrashIcon,
     UsersIcon,
+    ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import TButton from "../components/core/TButton";
 import axiosClient from "../axios.js";
@@ -51,6 +52,8 @@ export default function SurveyView() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [surveyToDelete, setSurveyToDelete] = useState(null);
 
     // Add clear error function
     const clearError = () => {
@@ -119,20 +122,35 @@ export default function SurveyView() {
         handleSubmit(ev);
     };
 
-    // Debounce delete operation
+    // Updated delete functions
+    const onDeleteClick = (id) => {
+        setSurveyToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        axiosClient.delete(`/survey/${surveyToDelete}`)
+            .then(() => {
+                setSurvey();
+                navigate("/surveys");
+                showToast("The survey was deleted");
+                setShowDeleteModal(false);
+            })
+            .catch(error => {
+                console.error("Error deleting survey:", error);
+                showToast("Failed to delete the survey");
+                setShowDeleteModal(false);
+            });
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteModal(false);
+        setSurveyToDelete(null);
+    };
+
+    // Replace the debounced handleDeleteClick with onDeleteClick
     const handleDeleteClick = debounce((id) => {
-        if (window.confirm("Are you sure you want to delete this survey?")) {
-            axiosClient.delete(`/survey/${id}`)
-                .then(() => {
-                    setSurvey();
-                    navigate("/surveys");
-                    showToast("The survey was deleted");
-                })
-                .catch(error => {
-                    console.error("Error deleting survey:", error);
-                    showToast("Failed to delete the survey");
-                });
-        }
+        onDeleteClick(id);
     }, 300);
 
     function onQuestionsUpdate(questions) {
@@ -504,6 +522,41 @@ export default function SurveyView() {
                             </button>
                         </motion.div>
                     </form>
+
+                    {/* Add the delete confirmation modal */}
+                    {showDeleteModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl"
+                            >
+                                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                                    <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
+                                </div>
+                                <h3 className="mb-2 text-lg font-medium text-center text-gray-900">
+                                    Delete Survey
+                                </h3>
+                                <p className="mb-6 text-sm text-center text-gray-500">
+                                    Are you sure you want to delete this survey? This action cannot be undone.
+                                </p>
+                                <div className="flex justify-center gap-3">
+                                    <button
+                                        onClick={cancelDelete}
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDelete}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                    >
+                                        Yes, delete
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
 
                     <ShareSurveyPopup
                         openSharePopup={openSharePopup}
