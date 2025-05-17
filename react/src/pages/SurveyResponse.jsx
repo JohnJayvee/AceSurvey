@@ -482,18 +482,33 @@ export default function SurveyResponse() {
                                     ))}
                                 </Pie>
                                 <RechartsTooltip
-                                    contentStyle={{
-                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                        padding: '12px'
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0];
+                                            return (
+                                                <div style={{
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                                    padding: '12px'
+                                                }}>
+                                                    <p style={{
+                                                        color: data.payload.fill || data.color,
+                                                        fontWeight: 'bold',
+                                                        fontSize: '15px'
+                                                    }}>
+                                                        {data.name} : {data.value} responses
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
                                     }}
-                                />
-                                <Legend
-                                    verticalAlign="bottom"
-                                    height={36}
-                                    formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
+                                    wrapperStyle={{
+                                        zIndex: 1000,
+                                        filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+                                    }}
                                 />
                             </PieChart>
                         </ResponsiveContainer>

@@ -751,14 +751,34 @@ export default function Dashboard() {
                                             ))}
                                         </Pie>
                                         <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                border: 'none',
-                                                borderRadius: '8px',
-                                                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                                                padding: '8px 12px'
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                    const data = payload[0];
+                                                    return (
+                                                        <div style={{
+                                                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                            border: 'none',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15)',
+                                                            padding: '10px 14px',
+                                                            maxWidth: '300px'
+                                                        }}>
+                                                            <p style={{
+                                                                color: data.payload.fill || data.color,
+                                                                fontWeight: 'bold',
+                                                                fontSize: '15px'
+                                                            }}>
+                                                                {data.name} : {data.value} responses
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
                                             }}
-                                            formatter={(value, name) => [`${value} responses`, name]}
+                                            wrapperStyle={{
+                                                zIndex: 1000,
+                                                filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+                                            }}
                                         />
                                         <Legend
                                             verticalAlign="bottom"
