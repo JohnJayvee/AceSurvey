@@ -582,7 +582,7 @@ class SurveyController extends Controller
                 ->toArray();
 
             // Use hardcoded base URL instead of dynamic one
-            $baseUrl = 'https://white-emu-581912.hostingersite.com/survey';
+            $baseUrl = 'http://white-raccoon-508494.hostingersite.com/survey';
             $fullUrls = array_map(function ($slug) use ($baseUrl) {
                 return $baseUrl . '/' . $slug;
             }, $slugs);
