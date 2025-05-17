@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../axios.js";
 import Loader from "../components/Loader";
@@ -15,6 +15,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { motion } from "framer-motion";
 import { HiDownload } from "react-icons/hi";
+import { debounce } from 'lodash';
 
 const COLORS = ['#22C55E', '#3B82F6', '#EAB308', '#F97316', '#EF4444'];
 const RADIAN = Math.PI / 180;
@@ -38,6 +39,11 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
     );
 };
 
+// Your existing variables
+const cache = {};
+const ongoingRequests = {};
+const isFetching = {};
+
 export default function SurveyResponse() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -46,65 +52,145 @@ export default function SurveyResponse() {
     const [responseCount, setResponseCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [searchQuery, setSearchQuery] = useState("");
     const [ratingsData, setRatingsData] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    // Add a ref to track if this component instance has started fetching
+    const hasInitiatedFetchRef = useRef(false);
 
     useEffect(() => {
-        const fetchSurveyData = async () => {
-            try {
-                setLoading(true);
-                const [surveyResponse, responsesResponse, countResponse, ratingsResponse] =
-                    await Promise.all([
-                        axiosClient.get(`/survey/${id}`),
-                        axiosClient.get(`/survey/${id}/responses`),
-                        axiosClient.get(`/survey/${id}/responses/count`),
-                        axiosClient.get(`/total-department-ratings/${id}`)
-                    ]);
-                setSurvey(surveyResponse.data.data);
-                setResponses(responsesResponse.data);
-                setResponseCount(countResponse.data.count);
+        // Reset component-level flag when ID changes
+        hasInitiatedFetchRef.current = false;
 
-                // Default data with zeros (without number prefixes)
-                const defaultData = [
-                    { name: 'Very Satisfied', value: 0, rating: '5' },
-                    { name: 'Satisfied', value: 0, rating: '4' },
-                    { name: 'Undecided', value: 0, rating: '3' },
-                    { name: 'Unsatisfied', value: 0, rating: '2' },
-                    { name: 'Very Unsatisfied', value: 0, rating: '1' }
-                ];
+        let isMounted = true;
+        const controller = new AbortController();
 
-                const ratings = ratingsResponse.data.ratings;
+        console.log("Effect triggered for survey ID:", id);
 
-                // Update values if ratings exist
-                if (ratings && Object.keys(ratings).length > 0) {
-                    Object.entries(ratings).forEach(([rating, data]) => {
-                        const index = defaultData.findIndex(item => item.rating === rating);
-                        if (index !== -1) {
-                            defaultData[index].value = data.count;
-                        }
-                    });
+        // Use cache if available (this part is fine)
+        if (cache[id]) {
+            console.log("Using cached data for survey ID:", id);
+            setSurvey(cache[id].survey);
+            setResponses(cache[id].responses);
+            setResponseCount(cache[id].responseCount);
+            setRatingsData(cache[id].ratingsData);
+            setLoading(false);
+            return;
+        }
+
+        // Here's the key change - generate unique request keys
+        const requestKeys = [
+            `/survey/${id}`,
+            `/survey/${id}/responses`,
+            `/survey/${id}/responses/count`,
+            `/total-department-ratings/${id}`
+        ];
+
+        // Check if ANY of these requests are already in progress
+        const isAnyRequestInProgress = requestKeys.some(key => isFetching[key]);
+
+        // Skip if this component already started requests OR any request is in progress
+        if (hasInitiatedFetchRef.current || isAnyRequestInProgress) {
+            console.log("Skipping duplicate fetch for survey ID:", id);
+            return;
+        }
+
+        hasInitiatedFetchRef.current = true;
+        setLoading(true);
+        setError(null);
+
+        console.log("Starting API requests for survey ID:", id);
+
+        // Mark all URLs as being fetched
+        requestKeys.forEach(key => {
+            isFetching[key] = true;
+        });
+
+        // Simpler approach - just use Promise.all directly
+        Promise.all([
+            axiosClient.get(`/survey/${id}`, { signal: controller.signal }),
+            axiosClient.get(`/survey/${id}/responses`, { signal: controller.signal }),
+            axiosClient.get(`/survey/${id}/responses/count`, { signal: controller.signal }),
+            axiosClient.get(`/total-department-ratings/${id}`, { signal: controller.signal })
+        ]).then(([surveyRes, responsesRes, countRes, ratingsRes]) => {
+            console.log("All API requests completed successfully");
+
+            // Clear fetching flags
+            requestKeys.forEach(key => {
+                isFetching[key] = false;
+            });
+
+            if (!isMounted) {
+                console.log("Component unmounted, not updating state");
+                return;
+            }
+
+            const surveyData = surveyRes.data.data;
+            const responsesData = responsesRes.data;
+            const countData = countRes.data.count;
+
+            // Process ratings data
+            const defaultData = [
+                { name: 'Very Satisfied', value: 0, rating: '5' },
+                { name: 'Satisfied', value: 0, rating: '4' },
+                { name: 'Undecided', value: 0, rating: '3' },
+                { name: 'Unsatisfied', value: 0, rating: '2' },
+                { name: 'Very Unsatisfied', value: 0, rating: '1' }
+            ];
+
+            const ratings = ratingsRes.data.ratings;
+            if (ratings && Object.keys(ratings).length > 0) {
+                Object.entries(ratings).forEach(([rating, data]) => {
+                    const index = defaultData.findIndex(item => item.rating === rating);
+                    if (index !== -1) {
+                        defaultData[index].value = data.count;
+                    }
+                });
+            }
+
+            // Cache the results
+            cache[id] = {
+                survey: surveyData,
+                responses: responsesData,
+                responseCount: countData,
+                ratingsData: defaultData
+            };
+
+            console.log("Setting states with API response data");
+            setSurvey(surveyData);
+            setResponses(responsesData);
+            setResponseCount(countData);
+            setRatingsData(defaultData);
+            setLoading(false);
+        }).catch(error => {
+            // Clear fetching flags on error too
+            requestKeys.forEach(key => {
+                isFetching[key] = false;
+            });
+
+            console.log("API error:", error.name, error.message);
+
+            // Always set loading to false on error, regardless of error type
+            if (isMounted) {
+                if (error.name !== 'AbortError' && error.name !== 'CanceledError' && error.message !== 'canceled') {
+                    setError(error.message || "Failed to load data");
+                } else {
+                    console.log("Request was aborted/canceled");
                 }
-
-                setRatingsData(defaultData);
-            } catch (error) {
-                setError(error.message);
-                // Set default zero data on error
-                setRatingsData([
-                    { name: 'Very Satisfied', value: 0, rating: '5' },
-                    { name: 'Satisfied', value: 0, rating: '4' },
-                    { name: 'Undecided', value: 0, rating: '3' },
-                    { name: 'Unsatisfied', value: 0, rating: '2' },
-                    { name: 'Very Unsatisfied', value: 0, rating: '1' }
-                ]);
-                console.error('Error fetching data:', error);
-            } finally {
                 setLoading(false);
             }
-        };
+        });
 
-        if (id) {
-            fetchSurveyData();
-        }
+        return () => {
+            console.log("Cleanup function called");
+            isMounted = false;
+            controller.abort();
+
+            // Clean up fetching flags in cleanup function too
+            requestKeys.forEach(key => {
+                isFetching[key] = false;
+            });
+        };
     }, [id]);
 
     const handleGoBack = () => navigate(-1);
@@ -113,7 +199,8 @@ export default function SurveyResponse() {
         navigate(`/surveys/${surveyId}/responses/${responseId}`);
     };
 
-    const downloadCSV = () => {
+    // Debounce the download function to prevent multiple calls on rapid clicks
+    const debouncedDownloadCSV = debounce(() => {
         if (!responses.data.length || !survey.questions) return;
 
         const allQuestions = survey.questions.map(q => q.question);
@@ -167,6 +254,11 @@ export default function SurveyResponse() {
         a.download = `${survey.title}_responses.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
+    }, 300);
+
+    // Replace your regular download function with the debounced one
+    const downloadCSV = () => {
+        debouncedDownloadCSV();
     };
 
     const columns = [
@@ -375,8 +467,8 @@ export default function SurveyResponse() {
                                     labelLine={false}
                                     label={renderCustomizedLabel}
                                     outerRadius={120}
-                                    innerRadius={60}  // Add this for donut style
-                                    paddingAngle={5}  // Add space between segments
+                                    innerRadius={60}
+                                    paddingAngle={5}
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
@@ -384,7 +476,7 @@ export default function SurveyResponse() {
                                         <Cell
                                             key={`cell-${index}`}
                                             fill={COLORS[index % COLORS.length]}
-                                            stroke="none"  // Remove cell borders
+                                            stroke="none"
                                             className="transition-all duration-300 hover:opacity-80"
                                         />
                                     ))}
@@ -457,7 +549,7 @@ export default function SurveyResponse() {
                         columns={columns}
                         pageSizeOptions={[10, 20, 50, 100]}
                         getRowId={(row) => row.id}
-                        className="pb-4" // Add bottom padding to ensure visibility
+                        className="pb-4"
                     />
                 </motion.div>
             </div>

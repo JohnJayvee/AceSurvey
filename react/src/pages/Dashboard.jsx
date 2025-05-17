@@ -38,101 +38,93 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
     );
 };
 
+const cache = {};
+
 export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({});
     const [analyticsData, setAnalyticsData] = useState({});
     const [chartData, setChartData] = useState([]);
-    const [ratingsData, setRatingsData] = useState([]); // Added state for ratings data
+    const [ratingsData, setRatingsData] = useState([]);
     const [topSurveys, setTopSurveys] = useState([]);
     const [bottomSurveys, setBottomSurveys] = useState([]);
     const hasFetched = useRef(false);
 
     useEffect(() => {
+        // Check cache first before fetching
+        if (cache['dashboard']) {
+            console.log("Using cached dashboard data");
+            setData(cache['dashboard'].data);
+            setAnalyticsData(cache['dashboard'].analyticsData);
+            setChartData(cache['dashboard'].chartData);
+            setRatingsData(cache['dashboard'].ratingsData);
+            setTopSurveys(cache['dashboard'].topSurveys);
+            setBottomSurveys(cache['dashboard'].bottomSurveys);
+            setLoading(false);
+            return;
+        }
+
         if (hasFetched.current) return; // skip if already fetched
         hasFetched.current = true;
 
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const fetchRatingsData = async () => {
-                    try {
-                        const response = await axiosClient.get('/total-ratings');
-                        const ratings = response.data.ratings;
+        setLoading(true);
 
-                        // Default data with zeros (without number prefixes)
-                        const defaultData = [
-                            { name: 'Very Satisfied', value: 0, rating: '5' },
-                            { name: 'Satisfied', value: 0, rating: '4' },
-                            { name: 'Undecided', value: 0, rating: '3' },
-                            { name: 'Unsatisfied', value: 0, rating: '2' },
-                            { name: 'Very Unsatisfied', value: 0, rating: '1' }
-                        ];
+        // Using simple Promise.all exactly as your friend suggested
+        Promise.all([
+            axiosClient.get('/dashboard'),
+            axiosClient.get('/survey-analytics'),
+            axiosClient.get('/total-ratings'),
+            axiosClient.get('/topSurvey'),
+            axiosClient.get('/botSurvey')
+        ]).then(([dashboardRes, analyticsRes, ratingsRes, topRes, bottomRes]) => {
+            // Process dashboard data
+            setData(dashboardRes.data);
 
-                        // If we have ratings data, update the values
-                        if (ratings && Object.keys(ratings).length > 0) {
-                            Object.entries(ratings).forEach(([rating, data]) => {
-                                const index = defaultData.findIndex(item => item.rating === rating);
-                                if (index !== -1) {
-                                    defaultData[index].value = data.count;
-                                }
-                            });
-                        }
+            // Process analytics data
+            setAnalyticsData(analyticsRes.data.analytics);
+            setChartData(generateMonthlyData(analyticsRes.data.analytics.surveyStats));
 
-                        setRatingsData(defaultData);
-                    } catch (error) {
-                        console.error('Error fetching ratings:', error);
-                        // Set default zero data on error
-                        setRatingsData([
-                            { name: 'Very Satisfied', value: 0, rating: '5' },
-                            { name: 'Satisfied', value: 0, rating: '4' },
-                            { name: 'Undecided', value: 0, rating: '3' },
-                            { name: 'Unsatisfied', value: 0, rating: '2' },
-                            { name: 'Very Unsatisfied', value: 0, rating: '1' }
-                        ]);
+            // Process ratings data
+            const ratings = ratingsRes.data.ratings;
+            const defaultData = [
+                { name: 'Very Satisfied', value: 0, rating: '5' },
+                { name: 'Satisfied', value: 0, rating: '4' },
+                { name: 'Undecided', value: 0, rating: '3' },
+                { name: 'Unsatisfied', value: 0, rating: '2' },
+                { name: 'Very Unsatisfied', value: 0, rating: '1' }
+            ];
+
+            if (ratings && Object.keys(ratings).length > 0) {
+                Object.entries(ratings).forEach(([rating, data]) => {
+                    const index = defaultData.findIndex(item => item.rating === rating);
+                    if (index !== -1) {
+                        defaultData[index].value = data.count;
                     }
-                };
-
-                const fetchSurveyRatings = async () => {
-                    try {
-                        const [topResponse, bottomResponse] = await Promise.all([
-                            axiosClient.get('/topSurvey'),
-                            axiosClient.get('/botSurvey')
-                        ]);
-
-                        // Set the data directly from the API response
-                        setTopSurveys(topResponse.data || []);
-                        setBottomSurveys(bottomResponse.data || []);
-
-                        // Debug logs
-                        console.log('Top surveys:', topResponse.data);
-                        console.log('Bottom surveys:', bottomResponse.data);
-                    } catch (error) {
-                        console.error('Error fetching survey ratings:', error);
-                        setTopSurveys([]);
-                        setBottomSurveys([]);
-                    }
-                };
-
-                const [dashboardRes, analyticsRes] = await Promise.all([
-                    axiosClient.get('/dashboard'),
-                    axiosClient.get('/survey-analytics'),
-                    fetchRatingsData(), // Added fetchRatingsData to Promise.all
-                    fetchSurveyRatings() // Added fetchSurveyRatings to Promise.all
-                ]);
-
-                setData(dashboardRes.data);
-                setAnalyticsData(analyticsRes.data.analytics);
-                setChartData(generateMonthlyData(analyticsRes.data.analytics.surveyStats));
-            } catch (err) {
-                console.error('Fetch failed:', err);
-            } finally {
-                setLoading(false);
+                });
             }
-        };
 
-        fetchData();
-    }, []);
+            setRatingsData(defaultData);
+
+            // Process survey ratings
+            setTopSurveys(topRes.data || []);
+            setBottomSurveys(bottomRes.data || []);
+
+            // Store processed data in cache
+            cache['dashboard'] = {
+                data: dashboardRes.data,
+                analyticsData: analyticsRes.data.analytics,
+                chartData: generateMonthlyData(analyticsRes.data.analytics.surveyStats),
+                ratingsData: defaultData,
+                topSurveys: topRes.data || [],
+                bottomSurveys: bottomRes.data || []
+            };
+
+            setLoading(false);
+        }).catch(error => {
+            console.error('Error fetching data:', error);
+            setLoading(false);
+        });
+    }, []); // Empty dependency array makes this run only once
 
     const generateMonthlyData = (surveyStats) => {
         const months = [

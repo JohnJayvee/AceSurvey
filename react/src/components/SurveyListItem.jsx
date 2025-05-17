@@ -11,63 +11,21 @@ import ShareSurveyPopup from "./ShareSurveyPopup";
 import { Link, useNavigate } from "react-router-dom";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartTooltip } from "recharts";
 import axios from "../axios";
+import { debounce } from 'lodash'; // Add this import
 
-// Create analytics cache (outside component to be shared across all instances)
-let analyticsCache = null;
+// Put these at the top level of your file (outside any component)
+const cache = {};
 let isAnalyticsFetching = false;
-let analyticsListeners = [];
-
-// Custom hook to share analytics data across components
-function useSharedAnalytics() {
-    const [analytics, setAnalytics] = useState(null);
-
-    useEffect(() => {
-        // If data is already cached, use it immediately
-        if (analyticsCache) {
-            setAnalytics(analyticsCache);
-            return;
-        }
-
-        // Add this component as a listener for analytics updates
-        const listener = (data) => {
-            setAnalytics(data);
-        };
-        analyticsListeners.push(listener);
-
-        // Only fetch if not already fetching
-        if (!isAnalyticsFetching) {
-            isAnalyticsFetching = true;
-
-            axios.get("/survey-analytics")
-                .then(res => {
-                    analyticsCache = res.data.analytics.surveyStats;
-                    // Update all listening components
-                    analyticsListeners.forEach(listener => listener(analyticsCache));
-                })
-                .catch(error => {
-                    console.error("Error fetching analytics:", error);
-                    isAnalyticsFetching = false;
-                });
-        }
-
-        // Cleanup listener on unmount
-        return () => {
-            analyticsListeners = analyticsListeners.filter(l => l !== listener);
-        };
-    }, []);
-
-    return analytics;
-}
+let analyticsPromise = null;
 
 export default function SurveyListItem({ survey, onDeleteClick }) {
     const [openSharePopup, setOpenSharePopup] = useState(false);
     const [shareLink, setShareLink] = useState("");
     const [graphData, setGraphData] = useState([]);
     const [totalResponses, setTotalResponses] = useState(0);
+    const [analyticsData, setAnalyticsData] = useState(null);
     const navigate = useNavigate();
-
-    // Use shared analytics hook instead of individual fetching
-    const analyticsData = useSharedAnalytics();
+    const hasFetched = useRef(false);
 
     const isSurveyExpired = (expireDate) => {
         const today = new Date().setHours(0, 0, 0, 0);
@@ -75,14 +33,58 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
         return expiration <= today;
     };
 
-    const handleOpenShare = () => {
+    // Improved API call logic to prevent duplicates
+    useEffect(() => {
+        // Check if analytics are already cached
+        if (cache['survey-analytics']) {
+            setAnalyticsData(cache['survey-analytics']);
+            return;
+        }
+
+        // If a request is already in progress, wait for that instead of making a new one
+        if (isAnalyticsFetching) {
+            analyticsPromise.then(data => {
+                setAnalyticsData(data);
+            }).catch(error => {
+                console.error("Error from existing analytics request:", error);
+            });
+            return;
+        }
+
+        // Start a new request and track it globally
+        isAnalyticsFetching = true;
+
+        // Create and store the promise for other components to use
+        analyticsPromise = axios.get("/survey-analytics")
+            .then(res => {
+                const data = res.data.analytics.surveyStats;
+                // Store in cache for future components
+                cache['survey-analytics'] = data;
+                isAnalyticsFetching = false;
+                return data;
+            })
+            .catch(error => {
+                console.error("Error fetching analytics:", error);
+                isAnalyticsFetching = false;
+                throw error;
+            });
+
+        // Use the promise for this component
+        analyticsPromise.then(data => {
+            setAnalyticsData(data);
+        });
+    }, []);
+
+    // Debounced function for sharing (following your friend's pattern)
+    const handleOpenShare = debounce(() => {
         setShareLink(`${window.location.origin}/survey/public/${survey.slug}`);
         setOpenSharePopup(true);
-    };
+    }, 300);
 
-    const handleViewResponses = (surveyId) => {
+    // Debounced function for viewing responses
+    const handleViewResponses = debounce((surveyId) => {
         navigate(`/surveys/${surveyId}/responses`);
-    };
+    }, 300);
 
     // Process analytics data when it becomes available
     useEffect(() => {

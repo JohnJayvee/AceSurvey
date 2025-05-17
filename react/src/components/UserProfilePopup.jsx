@@ -7,6 +7,7 @@ import { useStateContext } from "../contexts/ContextProvider";
 import axiosClient from "../axios";
 import logo from "/AceLogo.png";
 import { motion, AnimatePresence } from "framer-motion";
+import { debounce } from "lodash";
 
 const inputClassName =
     "relative block w-full px-4 py-2.5 mt-1 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200";
@@ -14,6 +15,11 @@ const buttonClassName =
     "relative z-10 flex items-center justify-center w-full gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 rounded-lg focus:ring-2 focus:ring-offset-2";
 const eyeIconClassName =
     "absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 z-20";
+
+// Add these at the top level, outside the component
+const cache = {};
+let isUserFetching = false;
+let userPromise = null;
 
 export default function UserProfilePopup({ onLogout }) {
     const { currentUser, setCurrentUser, showToast } = useStateContext();
@@ -33,44 +39,87 @@ export default function UserProfilePopup({ onLogout }) {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
     const hasFetched = useRef(false);
 
+    // Apply friend's pattern to user data fetching
     useEffect(() => {
-        if (hasFetched.current) return; // skip if already fetched
+        // Check cache first
+        if (cache['user']) {
+            console.log("Using cached user data");
+            setCurrentUser(cache['user']);
+            setCurrentEmail(cache['user'].email);
+            return;
+        }
+
+        // Check if user data is already being fetched globally
+        if (isUserFetching) {
+            console.log("User fetch already in progress");
+            userPromise.then(data => {
+                setCurrentUser(data);
+                setCurrentEmail(data.email);
+            }).catch(error => {
+                console.error("Error from existing user request:", error);
+            });
+            return;
+        }
+
+        // Skip if already fetched by this component
+        if (hasFetched.current) return;
         hasFetched.current = true;
 
-        axiosClient.get("/me").then(({ data }) => {
+        // Start a new request and track it globally
+        isUserFetching = true;
+
+        // Create and store the promise for other components to use
+        userPromise = axiosClient.get("/me")
+            .then(({ data }) => {
+                // Store in cache for future components
+                cache['user'] = data;
+                isUserFetching = false;
+                return data;
+            })
+            .catch(error => {
+                console.error("Error fetching user data:", error);
+                isUserFetching = false;
+                throw error;
+            });
+
+        // Use the promise for this component
+        userPromise.then(data => {
             setCurrentUser(data);
             setCurrentEmail(data.email);
         });
     }, []);
 
-    const handleChangePassword = async (e) => {
+    // Debounce the password change function
+    const handleChangePassword = debounce((e) => {
         e.preventDefault();
         setLoadingPassword(true);
-        try {
-            const response = await axiosClient.post("/change-password", {
-                current_password: currentPassword,
-                new_password: newPassword,
-                new_password_confirmation: newPasswordConfirmation,
+
+        axiosClient.post("/change-password", {
+            current_password: currentPassword,
+            new_password: newPassword,
+            new_password_confirmation: newPasswordConfirmation,
+        })
+            .then((response) => {
+                setMessage(response.data.message);
+                showToast("Password changed successfully");
+                closePasswordModal();
+            })
+            .catch(error => {
+                handleErrorResponse(error);
+            })
+            .finally(() => {
+                setLoadingPassword(false);
             });
+    }, 300);
 
-            setMessage(response.data.message);
-            showToast("Password changed successfully");
-            closePasswordModal();
-        } catch (error) {
-            handleErrorResponse(error);
-        } finally {
-            setLoadingPassword(false);
-        }
-    };
-
-    const handleChangeEmail = async (e) => {
+    // Debounce the email change function
+    const handleChangeEmail = debounce((e) => {
         e.preventDefault();
         setLoadingEmail(true);
 
         if (!newEmail || !newEmailConfirmation) {
             showToast("New email and confirmation are required.");
             setLoadingEmail(false);
-
             return;
         }
 
@@ -87,22 +136,29 @@ export default function UserProfilePopup({ onLogout }) {
             return;
         }
 
-        try {
-            const response = await axiosClient.post("/change-email", {
-                current_email: currentEmail,
-                email: newEmail,
-                new_email_confirmation: newEmailConfirmation,
-            });
+        axiosClient.post("/change-email", {
+            current_email: currentEmail,
+            email: newEmail,
+            new_email_confirmation: newEmailConfirmation,
+        })
+            .then((response) => {
+                setMessage(response.data.message);
+                showToast("Email changed successfully");
 
-            setMessage(response.data.message);
-            showToast("Email changed successfully");
-            closeEmailModal();
-        } catch (error) {
-            handleErrorResponse(error);
-        } finally {
-            setLoadingEmail(false);
-        }
-    };
+                // Update cache with new email
+                if (cache['user']) {
+                    cache['user'].email = newEmail;
+                }
+
+                closeEmailModal();
+            })
+            .catch(error => {
+                handleErrorResponse(error);
+            })
+            .finally(() => {
+                setLoadingEmail(false);
+            });
+    }, 300);
 
     const handleErrorResponse = (error) => {
         const { response } = error;
@@ -149,6 +205,17 @@ export default function UserProfilePopup({ onLogout }) {
         setMessage("");
         setNewEmail("");
         setNewEmailConfirmation("");
+    };
+
+    // For forms, make sure to call preventDefault immediately
+    const onSubmitPassword = (e) => {
+        e.preventDefault();
+        handleChangePassword(e);
+    };
+
+    const onSubmitEmail = (e) => {
+        e.preventDefault();
+        handleChangeEmail(e);
     };
 
     return (
@@ -256,7 +323,7 @@ export default function UserProfilePopup({ onLogout }) {
                                         </svg>
                                     </button>
                                 </div>
-                                <form onSubmit={handleChangePassword} className="space-y-4">
+                                <form onSubmit={onSubmitPassword} className="space-y-4">
                                     <div>
                                         <label className="block mb-1.5 text-sm font-medium text-gray-700">
                                             Current Password
@@ -415,7 +482,7 @@ export default function UserProfilePopup({ onLogout }) {
                                         </svg>
                                     </button>
                                 </div>
-                                <form onSubmit={handleChangeEmail} className="space-y-4">
+                                <form onSubmit={onSubmitEmail} className="space-y-4">
                                     <div>
                                         <label className="block mb-1.5 text-sm font-medium text-gray-700">
                                             Current Email

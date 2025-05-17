@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "../axios";
 import PublicQuestionView from "../components/PublicQuestionView";
@@ -7,6 +7,10 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { InformationCircleIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { motion } from "framer-motion";
+import { debounce } from 'lodash';
+
+const isFetching = {}; // Keep this but use it properly
+const cache = {};
 
 export default function SurveyPublicView() {
     const answers = {};
@@ -16,37 +20,97 @@ export default function SurveyPublicView() {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [submissionError, setSubmissionError] = useState(null);
     const { slug } = useParams();
+    const hasFetched = useRef(false);
 
     useEffect(() => {
-        axiosClient
-            .get(`survey/get-by-slug/${slug}`)
+        // Check cache first
+        if (cache[slug]) {
+            console.log("Using cached survey data for slug:", slug);
+            setSurvey(cache[slug]);
+            setLoading(false);
+            return;
+        }
+
+        // Check if this slug is already being fetched globally
+        if (isFetching[slug]) {
+            console.log("Request for this slug already in progress");
+            // Wait for the existing request to complete
+            const checkCache = setInterval(() => {
+                if (cache[slug]) {
+                    clearInterval(checkCache);
+                    setSurvey(cache[slug]);
+                    setLoading(false);
+                }
+            }, 100);
+
+            // Cleanup interval if component unmounts
+            return () => clearInterval(checkCache);
+        }
+
+        // Mark this slug as being fetched globally
+        isFetching[slug] = true;
+        console.log("Starting new request for slug:", slug);
+
+        setLoading(true);
+
+        // Make the API request
+        axiosClient.get(`survey/get-by-slug/${slug}`)
             .then(({ data }) => {
+                console.log("Survey data received for slug:", slug);
+                // Cache the data
+                cache[slug] = data.data;
+                // Update state if component is still mounted
                 setSurvey(data.data);
                 setLoading(false);
             })
             .catch((error) => {
+                console.error("Error fetching survey:", error);
                 if (error.response && error.response.status === 404) {
                     setError(error.response.data.message);
+                } else {
+                    setError("An error occurred while loading the survey.");
                 }
                 setLoading(false);
+            })
+            .finally(() => {
+                // Clear the fetching flag when done
+                isFetching[slug] = false;
             });
-    }, [slug]);
+
+        // Cleanup function for component unmount
+        return () => {
+            // Don't clear the cache, but do clear the fetching flag if this component unmounts
+            if (isFetching[slug]) {
+                console.log("Component unmounted during fetch, clearing flag");
+                isFetching[slug] = false;
+            }
+        };
+    }, [slug]); // Only run again if slug changes
+
+    // Debounce the submit function to prevent double-clicks
+    const submitSurvey = debounce(() => {
+        // Clear any previous errors
+        setSubmissionError(null);
+
+        axiosClient.post(`/survey/${survey.id}/answer`, {
+            answers,
+        })
+            .then((response) => {
+                setSurveyFinished(true);
+            })
+            .catch(error => {
+                console.error("Error submitting survey:", error);
+                setSubmissionError(
+                    error.response?.data?.message ||
+                    "There was a problem submitting your response. Please try again."
+                );
+            });
+    }, 300);
 
     function answerChanged(question, value) {
         answers[question.id] = value;
-    }
-
-    function onSubmit(ev) {
-        ev.preventDefault();
-
-        axiosClient
-            .post(`/survey/${survey.id}/answer`, {
-                answers,
-            })
-            .then((response) => {
-                setSurveyFinished(true);
-            });
     }
 
     if (loading) {
@@ -128,7 +192,12 @@ export default function SurveyPublicView() {
                 <AnimatedBackground />
             </div>
             <div className="relative z-10 w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
-                <form onSubmit={(ev) => onSubmit(ev)}>
+                <form onSubmit={(ev) => {
+                    // Call preventDefault immediately to stop the reload
+                    ev.preventDefault();
+                    // Then call your debounced function without passing the event
+                    submitSurvey();
+                }}>
                     <div className="space-y-6">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -222,6 +291,36 @@ export default function SurveyPublicView() {
                                         </motion.div>
                                     ))}
                                 </div>
+                                {submissionError && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="p-4 mb-4 border border-red-200 shadow-sm bg-red-50 rounded-xl"
+                                    >
+                                        <div className="flex">
+                                            <div className="flex-shrink-0">
+                                                <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+                                            </div>
+                                            <div className="ml-3">
+                                                <h3 className="text-sm font-medium text-red-800">
+                                                    Submission Error
+                                                </h3>
+                                                <p className="mt-2 text-sm text-red-700">
+                                                    {submissionError}
+                                                </p>
+                                                <div className="mt-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSubmissionError(null)}
+                                                        className="px-3 py-1.5 text-xs font-medium text-red-800 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                    >
+                                                        Dismiss
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}

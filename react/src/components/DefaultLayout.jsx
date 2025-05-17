@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import { useStateContext } from "../contexts/ContextProvider";
 import axiosClient from "../axios";
 import Toast from "./Toast";
@@ -11,20 +10,35 @@ import logo from "/AceLogo.png"; // Update path according to your logo location
 import { motion } from "framer-motion";
 import { HomeIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 
+// Add a cache object at the top level
+const cache = {};
+
 export default function DefaultLayout() {
     const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
     const [isUserProfilePopupOpen, setIsUserProfilePopupOpen] = useState(false);
     const [anchor, setAnchor] = useState(null);
     const [placement, setPlacement] = useState("bottom-end");
 
+    // Use a ref to prevent duplicate fetches
     const hasFetchedRef = useRef(false);
 
     useEffect(() => {
-        if (hasFetchedRef.current) return; // skip if already fetched
+        // First check if we have cached user data
+        if (cache['user']) {
+            console.log("Using cached user data");
+            setCurrentUser(cache['user']);
+            return;
+        }
+
+        // Skip if already fetched during this component lifecycle
+        if (hasFetchedRef.current) return;
         hasFetchedRef.current = true;
 
+        // Using simple Promise with then/catch as per your friend's pattern
         axiosClient.get("/me")
             .then(({ data }) => {
+                // Store in cache for future use
+                cache['user'] = data;
                 setCurrentUser(data);
             })
             .catch((error) => {
@@ -34,11 +48,20 @@ export default function DefaultLayout() {
 
     const onLogout = (ev) => {
         ev.preventDefault();
+
+        // Simple Promise pattern for logout
         axiosClient.post("logout")
             .then(() => {
+                // Clear user data
                 setCurrentUser({});
                 setUserToken(null);
+                // Clear cache on logout
+                delete cache['user'];
+                // Reset fetch flag to allow fetching again if user logs back in
                 hasFetchedRef.current = false;
+            })
+            .catch(error => {
+                console.error("Logout error:", error);
             });
     };
 

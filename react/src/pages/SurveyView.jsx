@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
     ArrowTopRightOnSquareIcon,
     EyeIcon,
@@ -18,6 +18,10 @@ import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
 import { motion } from "framer-motion";
+import { debounce } from 'lodash';
+
+const cache = {};
+const isFetching = {};
 
 export default function SurveyView() {
     const { showToast } = useStateContext();
@@ -25,6 +29,7 @@ export default function SurveyView() {
     const { id } = useParams();
     const [openSharePopup, setOpenSharePopup] = useState(false);
     const [shareLink, setShareLink] = useState("");
+    const hasFetched = useRef(false);
 
     const getTomorrowDate = () => {
         const tomorrow = new Date();
@@ -46,7 +51,8 @@ export default function SurveyView() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const onImageChoose = (ev) => {
+    // Debounce file reader operation
+    const onImageChoose = debounce((ev) => {
         const file = ev.target.files[0];
 
         const reader = new FileReader();
@@ -60,9 +66,10 @@ export default function SurveyView() {
             ev.target.value = "";
         };
         reader.readAsDataURL(file);
-    };
+    }, 300);
 
-    const onSubmit = (ev) => {
+    // Debounce form submission
+    const handleSubmit = debounce((ev) => {
         ev.preventDefault();
 
         const payload = { ...survey };
@@ -70,12 +77,15 @@ export default function SurveyView() {
             payload.image = payload.image_url;
         }
         delete payload.image_url;
+
+        // Your friend's pattern uses simple Promise chains
         let res = null;
         if (id) {
             res = axiosClient.put(`/survey/${id}`, payload);
         } else {
             res = axiosClient.post("/survey", payload);
         }
+
         res.then((res) => {
             console.log(res);
             navigate("/surveys");
@@ -95,31 +105,87 @@ export default function SurveyView() {
             }
             console.log(err, err.response);
         });
+    }, 300);
 
+    // Need immediate preventDefault
+    const onSubmit = (ev) => {
+        ev.preventDefault();
+        handleSubmit(ev);
     };
 
-    const onDeleteClick = (id) => {
+    // Debounce delete operation
+    const handleDeleteClick = debounce((id) => {
         if (window.confirm("Are you sure you want to delete this survey?")) {
-            axiosClient.delete(`/survey/${id}`).then(() => {
-                setSurvey();
-                navigate("/surveys");
-                showToast("The survey was deleted");
-            });
+            axiosClient.delete(`/survey/${id}`)
+                .then(() => {
+                    setSurvey();
+                    navigate("/surveys");
+                    showToast("The survey was deleted");
+                })
+                .catch(error => {
+                    console.error("Error deleting survey:", error);
+                    showToast("Failed to delete the survey");
+                });
         }
-    };
+    }, 300);
 
     function onQuestionsUpdate(questions) {
         setSurvey({ ...survey, questions });
     }
 
+    // Update your fetch logic with your friend's pattern
     useEffect(() => {
-        if (id) {
-            setLoading(true);
-            axiosClient.get(`/survey/${id}`).then(({ data }) => {
+        if (!id) return;
+
+        // Check cache first
+        if (cache[id]) {
+            console.log("Using cached survey data for ID:", id);
+            setSurvey(cache[id]);
+            setLoading(false);
+            return;
+        }
+
+        // Skip if already fetched by this component
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+
+        // Check if this survey is already being fetched globally
+        if (isFetching[id]) {
+            console.log("Request for this survey already in progress");
+
+            // Poll for cache updates instead of making a new request
+            const checkCache = setInterval(() => {
+                if (cache[id]) {
+                    clearInterval(checkCache);
+                    setSurvey(cache[id]);
+                    setLoading(false);
+                }
+            }, 100);
+
+            return () => clearInterval(checkCache);
+        }
+
+        // Mark as fetching
+        isFetching[id] = true;
+        setLoading(true);
+
+        // Make the API request using your friend's pattern
+        axiosClient.get(`/survey/${id}`)
+            .then(({ data }) => {
+                // Store in cache
+                cache[id] = data.data;
                 setSurvey(data.data);
                 setLoading(false);
+            })
+            .catch(error => {
+                console.error("Error fetching survey:", error);
+                setError("Failed to load the survey");
+                setLoading(false);
+            })
+            .finally(() => {
+                // Mark as no longer fetching
+                isFetching[id] = false;
             });
-        }
     }, [id]);
 
     const isSurveyExpired = (expireDate) => {
@@ -128,18 +194,20 @@ export default function SurveyView() {
         return expiration <= today;
     };
 
-    const handleOpenShare = () => {
+    // Debounce UI interactions
+    const handleOpenShare = debounce(() => {
         setShareLink(`${window.location.origin}/survey/public/${survey.slug}`);
         setOpenSharePopup(true);
-    };
+    }, 300);
 
-    function handleGoBack() {
+    // Debounce navigation
+    const handleGoBack = debounce(() => {
         navigate(-1);
-    }
+    }, 300);
 
-    const handleViewResponses = (surveyId) => {
+    const handleViewResponses = debounce((surveyId) => {
         navigate(`/surveys/${surveyId}/responses`);
-    };
+    }, 300);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -211,7 +279,7 @@ export default function SurveyView() {
 
                                 <Tooltip title="Delete Survey" placement="bottom" TransitionComponent={Fade}>
                                     <button
-                                        onClick={(ev) => onDeleteClick(survey.id)}
+                                        onClick={(ev) => handleDeleteClick(survey.id)}
                                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 transition-all duration-200 rounded-lg bg-red-50 hover:bg-red-100"
                                     >
                                         <TrashIcon className="w-4 h-4" />
