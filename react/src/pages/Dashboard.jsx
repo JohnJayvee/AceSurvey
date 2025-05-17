@@ -179,15 +179,15 @@ export default function Dashboard() {
                 {/* Top Performing Surveys */}
                 <DashboardCard
                     className={`
-                        bg-white
-                        rounded-lg
-                        shadow-sm
-                        w-full
-                        h-full
-                        flex
-                        flex-col
-                        w-full h-full p-6 transition-all duration-300 hover:shadow-lg
-                    `}
+                                        bg-white
+                                        rounded-lg
+                                        shadow-sm
+                                        w-full
+                                        h-full
+                                        flex
+                                        flex-col
+                                        p-6 transition-all duration-300 hover:shadow-lg
+                                    `}
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div>
@@ -246,15 +246,52 @@ export default function Dashboard() {
                                     tickFormatter={(value) => window.innerWidth < 768 && value.length > 15 ? `${value.substring(0, 15)}...` : value}
                                 />
                                 <Tooltip
-                                    formatter={(value) => [`${value}`, "Total Responses"]}
-                                    cursor={{ fill: 'rgba(224, 224, 224, 0.2)' }}
+                                    formatter={(value, name, props) => {
+                                        // const surveyTitle = props.payload.title;
+                                        const surveyTitle = "Total"; // Placeholder for actual title
+                                        // Truncate extremely long titles in the tooltip if needed
+                                        const displayTitle = surveyTitle.length > 100 ?
+                                            surveyTitle.substring(0, 100) + '...' :
+                                            surveyTitle;
+                                        return [
+                                            `${value} responses`,
+                                            displayTitle
+                                        ];
+                                    }}
+                                    cursor={{ fill: 'rgba(224, 224, 224, 0.4)' }}
                                     contentStyle={{
-                                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
                                         border: 'none',
                                         borderRadius: '8px',
-                                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                                        padding: '8px 12px'
+                                        boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15)',
+                                        padding: '10px 14px',
+                                        maxWidth: '300px',
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        color: '#333',
+                                        transform: 'scale(1.02)',
+                                        transition: 'all 0.2s ease',
+                                        borderLeft: '4px solid #4CAF50',
+                                        // Add these to better control text overflow
+                                        textOverflow: 'ellipsis',
+                                        overflow: 'hidden',
+                                        whiteSpace: 'normal',  // Allow text wrapping
+                                        lineHeight: '1.4'      // Better line spacing for readability
                                     }}
+                                    wrapperStyle={{
+                                        zIndex: 1000,
+                                        pointerEvents: 'auto',
+                                        filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+                                        // Ensure tooltip has sufficient width but doesn't break layout
+                                        width: 'auto',
+                                        maxWidth: '100%'
+                                    }}
+                                    position={{ x: 0, y: 0 }}
+                                    allowEscapeViewBox={{ x: true, y: true }}
+                                    isAnimationActive={false}
+                                    labelStyle={{ fontWeight: 'bold', marginBottom: '5px' }}
                                 />
                                 <Legend
                                     iconType="circle"
@@ -347,25 +384,82 @@ export default function Dashboard() {
                                     dataKey="title"
                                     type="category"
                                     width={window.innerWidth < 768 ? 80 : 200}
-                                    tick={{
-                                        fontSize: window.innerWidth < 768 ? 10 : 12,
-                                        fill: '#4B5563',
-                                        fontWeight: 500
+                                    tick={(props) => {
+                                        const { x, y, payload } = props;
+                                        const value = payload.value;
+                                        const maxLength = window.innerWidth < 768 ? 10 : 25;
+                                        const displayText = value.length > maxLength ?
+                                            `${value.substring(0, maxLength)}...` : value;
+
+                                        return (
+                                            <g transform={`translate(${x},${y})`}>
+                                                <text
+                                                    x={0}
+                                                    y={0}
+                                                    dy={4}
+                                                    textAnchor="end"
+                                                    fill="#4B5563"
+                                                    fontSize={window.innerWidth < 768 ? 10 : 12}
+                                                    fontWeight={500}
+                                                    className="transition-colors cursor-pointer hover:text-indigo-600"
+                                                >
+                                                    {displayText}
+                                                </text>
+                                                {/* Add a hidden title element for tooltip behavior */}
+                                                <title>{value}</title>
+                                            </g>
+                                        );
                                     }}
                                     axisLine={false}
                                     tickLine={false}
-                                    tickFormatter={(value) => window.innerWidth < 768 && value.length > 15 ? `${value.substring(0, 15)}...` : value}
                                 />
                                 <Tooltip
-                                    formatter={(value) => [`${value}`, "Total Responses"]}
-                                    cursor={{ fill: 'rgba(224, 224, 224, 0.2)' }}
+                                    formatter={(value, name, props) => {
+                                        const surveyTitle = "Total"; // Placeholder for actual title
+                                        // const surveyTitle = props.payload.title;
+                                        // Truncate extremely long titles in the tooltip if needed
+                                        const displayTitle = surveyTitle.length > 100 ?
+                                            surveyTitle.substring(0, 100) + '...' :
+                                            surveyTitle;
+                                        return [
+                                            `${value} responses`,
+                                            displayTitle
+                                        ];
+                                    }}
+                                    cursor={{ fill: 'rgba(224, 224, 224, 0.4)' }}
                                     contentStyle={{
-                                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
                                         border: 'none',
                                         borderRadius: '8px',
-                                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                                        padding: '8px 12px'
+                                        boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15)',
+                                        padding: '10px 14px',
+                                        maxWidth: '300px',
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        color: '#333',
+                                        transform: 'scale(1.02)',
+                                        transition: 'all 0.2s ease',
+                                        borderLeft: '4px solid #FF5722',
+                                        // Add these to better control text overflow
+                                        textOverflow: 'ellipsis',
+                                        overflow: 'hidden',
+                                        whiteSpace: 'normal',  // Allow text wrapping
+                                        lineHeight: '1.4'      // Better line spacing for readability
                                     }}
+                                    wrapperStyle={{
+                                        zIndex: 1000,
+                                        pointerEvents: 'auto',
+                                        filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+                                        // Ensure tooltip has sufficient width but doesn't break layout
+                                        width: 'auto',
+                                        maxWidth: '100%'
+                                    }}
+                                    position={{ x: 0, y: 0 }}
+                                    allowEscapeViewBox={{ x: true, y: true }}
+                                    isAnimationActive={false}
+                                    labelStyle={{ fontWeight: 'bold', marginBottom: '5px' }}
                                 />
                                 <Legend
                                     iconType="circle"
