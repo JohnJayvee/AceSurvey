@@ -18,6 +18,9 @@ const clientPromise = new Promise(async (resolve) => {
                 withCredentials: true,
             });
 
+            // Set content type here on the actual client instance
+            client.defaults.headers.post['Content-Type'] = 'application/json';
+
             client.interceptors.request.use((config) => {
                 const token = localStorage.getItem("TOKEN") || sessionStorage.getItem("TOKEN");
                 if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -50,17 +53,20 @@ const clientPromise = new Promise(async (resolve) => {
 
 const axiosClient = new Proxy({}, {
     get(_, prop) {
-        return async (...args) => {
-            if (!clientReady) {
-                clientReady = await clientPromise;
-            }
-            if (!clientReady) throw new Error("Axios client initialization failed.");
-            return clientReady[prop](...args);
-        };
-    },
-});
+        // For method calls like .post(), .get(), etc.
+        if (typeof axios.prototype[prop] === 'function') {
+            return async (...args) => {
+                if (!clientReady) {
+                    clientReady = await clientPromise;
+                }
+                if (!clientReady) throw new Error("Axios client initialization failed.");
+                return clientReady[prop](...args);
+            };
+        }
 
-// Add this to your axios instance
-axiosClient.defaults.headers.post['Content-Type'] = 'application/json';
+        // Return a dummy object for property access to avoid undefined errors
+        return {};
+    }
+});
 
 export default axiosClient;
