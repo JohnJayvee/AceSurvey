@@ -10,7 +10,9 @@ const StateContext = createContext({
         show: false,
     },
     setCurrentUser: () => { },
-    setToken: () => { },
+    setUserToken: () => { },
+    logout: () => { }, // Add this line
+    showToast: () => { },
 });
 
 const tmpSurveys = [
@@ -215,40 +217,47 @@ export const ContextProvider = ({ children }) => {
 
     const [toast, setToast] = useState({ message: "", show: false });
 
+    const logout = () => {
+        // Clear all authentication data
+        localStorage.removeItem("TOKEN");
+        localStorage.removeItem("SHARED_TOKEN");
+        localStorage.removeItem("SHARED_CURRENT_USER");
+        localStorage.removeItem('CURRENT_USER');
+        sessionStorage.removeItem("TOKEN");
+        sessionStorage.removeItem('CURRENT_USER');
+
+        // Update state
+        _setUserToken("");
+        setCurrentUser({});
+    };
+
     const setUserToken = (token, keepSignedIn, userData = null) => {
         if (token) {
             if (keepSignedIn) {
-                // Store token and user data in localStorage for persistence
+                // Persistent login - store in localStorage
                 localStorage.setItem("TOKEN", token);
-                localStorage.setItem("SHARED_TOKEN", token);
-                if (userData) {
-                    localStorage.setItem('CURRENT_USER', JSON.stringify(userData));
-                    localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData));
-                }
             } else {
-                // Remove from localStorage for non-persistent login
+                // Session login - clear from localStorage to ensure it expires
                 localStorage.removeItem("TOKEN");
-                localStorage.removeItem("SHARED_TOKEN");
-                localStorage.removeItem("SHARED_CURRENT_USER");
-                localStorage.removeItem('CURRENT_USER');
             }
-            // Always set in sessionStorage for current tab usage
-            sessionStorage.setItem("TOKEN", token);
+
+            // Always set shared values for cross-tab communication
+            localStorage.setItem("SHARED_TOKEN", token);
+
             if (userData) {
+                localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData));
                 sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
             }
+
+            // Always set in sessionStorage for current tab
+            sessionStorage.setItem("TOKEN", token);
+
+            _setUserToken(token);
             setCurrentUser(userData || {});
         } else {
-            // Clear all storage on logout
-            localStorage.removeItem("TOKEN");
-            localStorage.removeItem("SHARED_TOKEN");
-            localStorage.removeItem("SHARED_CURRENT_USER");
-            sessionStorage.removeItem("TOKEN");
-            localStorage.removeItem('CURRENT_USER');
-            sessionStorage.removeItem('CURRENT_USER');
-            setCurrentUser({});
+            // Logout case
+            logout();
         }
-        _setUserToken(token);
     };
 
     const showToast = (message) => {
@@ -332,6 +341,48 @@ export const ContextProvider = ({ children }) => {
         };
     }, []); // Remove currentUser from dependencies
 
+    // Add this function to detect browser close
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            // If this is a session-only login (not kept signed in)
+            if (!localStorage.getItem("TOKEN") && sessionStorage.getItem("TOKEN")) {
+                // Add timestamp to detect if browser was actually closed
+                localStorage.setItem("AUTH_CLOSING_TIMESTAMP", Date.now().toString());
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
+    // Add initialization check for browser restarts
+    useEffect(() => {
+        const checkBrowserRestart = () => {
+            const closingTimestamp = localStorage.getItem("AUTH_CLOSING_TIMESTAMP");
+            if (closingTimestamp) {
+                // Clear temporary auth data on browser restart
+                localStorage.removeItem("SHARED_TOKEN");
+                localStorage.removeItem("SHARED_CURRENT_USER");
+                localStorage.removeItem("AUTH_CLOSING_TIMESTAMP");
+
+                // If there's no persistent token, clear everything
+                if (!localStorage.getItem("TOKEN")) {
+                    sessionStorage.removeItem("TOKEN");
+                    sessionStorage.removeItem("CURRENT_USER");
+                    _setUserToken("");
+                    setCurrentUser({});
+                }
+            }
+        };
+
+        // Run on component mount
+        checkBrowserRestart();
+    }, []);
+
+    // Update the provider value to include the logout function
     return (
         <StateContext.Provider
             value={{
@@ -339,6 +390,7 @@ export const ContextProvider = ({ children }) => {
                 setCurrentUser,
                 userToken,
                 setUserToken,
+                logout, // Add logout function to context
                 surveys,
                 questionTypes,
                 toast,
