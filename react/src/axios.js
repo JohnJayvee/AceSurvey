@@ -60,4 +60,7 @@ const axiosClient = new Proxy({}, {
     },
 });
 
+// Add this to your axios instance
+axiosClient.defaults.headers.post['Content-Type'] = 'application/json';
+
 export default axiosClient;
