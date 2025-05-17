@@ -9,6 +9,7 @@ Route::post('/signup', [AuthController::class, 'signup'])->name('signup');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/survey/get-by-slug/{survey:slug}', [SurveyController::class, 'getBySlug'])->name('survey.getBySlug');
 Route::post('/survey/{survey}/answer', [SurveyController::class, 'storeAnswer'])->name('survey.storeAnswer');
+Route::get('/survey/links', [SurveyController::class, 'getLinks'])->name('survey.getLinks');
 
 Route::post('forgot-password', [AuthController::class, 'sendResetLinkEmail']);
 Route::post('reset', [AuthController::class, 'reset'])->name('password.reset');

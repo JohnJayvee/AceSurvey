@@ -573,5 +573,33 @@ class SurveyController extends Controller
         return response()->json($botSurveys);
     }
 
+    public function getLinks(Request $request)
+    {
+        try {
+            // Get all active surveys slugs
+            $slugs = Survey::where('status', true)
+                ->pluck('slug')
+                ->toArray();
+
+            // Generate full URLs with dynamic base URL
+            $baseUrl = url('/survey');
+            $fullUrls = array_map(function ($slug) use ($baseUrl) {
+                return $baseUrl . '/' . $slug;
+            }, $slugs);
+
+            return response()->json([
+                'success' => true,
+                'count' => count($fullUrls),
+                'data' => $fullUrls
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve survey links',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
 
