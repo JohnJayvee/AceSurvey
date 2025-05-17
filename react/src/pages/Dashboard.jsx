@@ -176,6 +176,7 @@ export default function Dashboard() {
     return (
         <div>
             <div className="flex flex-col w-full gap-5 mx-auto mb-8 text-gray-700 lg:flex-row xl:w-3/4">
+                {/* Top Performing Surveys */}
                 <DashboardCard
                     className={`
                         bg-white
@@ -211,7 +212,12 @@ export default function Dashboard() {
                             <BarChart
                                 layout="vertical"
                                 data={topSurveys}
-                                margin={{ top: 5, right: 30, left: 120, bottom: 5 }}
+                                margin={{
+                                    top: 5,
+                                    right: 30,
+                                    left: window.innerWidth < 768 ? 80 : 120,
+                                    bottom: 5
+                                }}
                             >
                                 <CartesianGrid
                                     strokeDasharray="3 3"
@@ -224,19 +230,20 @@ export default function Dashboard() {
                                     allowDecimals={false}
                                     axisLine={false}
                                     tickLine={false}
-                                    style={{ fontSize: '12px' }}
+                                    style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px' }}
                                 />
                                 <YAxis
                                     dataKey="title"
                                     type="category"
-                                    width={200}
+                                    width={window.innerWidth < 768 ? 80 : 200}
                                     tick={{
-                                        fontSize: 12,
+                                        fontSize: window.innerWidth < 768 ? 10 : 12,
                                         fill: '#4B5563',
                                         fontWeight: 500
                                     }}
                                     axisLine={false}
                                     tickLine={false}
+                                    tickFormatter={(value) => window.innerWidth < 768 && value.length > 15 ? `${value.substring(0, 15)}...` : value}
                                 />
                                 <Tooltip
                                     formatter={(value) => [`${value}`, "Total Responses"]}
@@ -259,9 +266,9 @@ export default function Dashboard() {
                                     dataKey="answers_count"
                                     fill="#4CAF50"
                                     name="Responses"
-                                    barSize={20}
+                                    barSize={window.innerWidth < 768 ? 15 : 20}
                                     radius={[4, 4, 4, 4]}
-                                    label={{
+                                    label={window.innerWidth < 768 ? null : {
                                         position: 'right',
                                         fill: '#4B5563',
                                         fontSize: 12,
@@ -316,7 +323,12 @@ export default function Dashboard() {
                             <BarChart
                                 layout="vertical"
                                 data={bottomSurveys}
-                                margin={{ top: 5, right: 30, left: 120, bottom: 5 }}
+                                margin={{
+                                    top: 5,
+                                    right: 30,
+                                    left: window.innerWidth < 768 ? 80 : 120,
+                                    bottom: 5
+                                }}
                             >
                                 <CartesianGrid
                                     strokeDasharray="3 3"
@@ -329,19 +341,20 @@ export default function Dashboard() {
                                     allowDecimals={false}
                                     axisLine={false}
                                     tickLine={false}
-                                    style={{ fontSize: '12px' }}
+                                    style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px' }}
                                 />
                                 <YAxis
                                     dataKey="title"
                                     type="category"
-                                    width={200}
+                                    width={window.innerWidth < 768 ? 80 : 200}
                                     tick={{
-                                        fontSize: 12,
+                                        fontSize: window.innerWidth < 768 ? 10 : 12,
                                         fill: '#4B5563',
                                         fontWeight: 500
                                     }}
                                     axisLine={false}
                                     tickLine={false}
+                                    tickFormatter={(value) => window.innerWidth < 768 && value.length > 15 ? `${value.substring(0, 15)}...` : value}
                                 />
                                 <Tooltip
                                     formatter={(value) => [`${value}`, "Total Responses"]}
@@ -364,9 +377,9 @@ export default function Dashboard() {
                                     dataKey="answers_count"
                                     fill="#FF5722"
                                     name="Responses"
-                                    barSize={20}
+                                    barSize={window.innerWidth < 768 ? 15 : 20}
                                     radius={[4, 4, 4, 4]}
-                                    label={{
+                                    label={window.innerWidth < 768 ? null : {
                                         position: 'right',
                                         fill: '#4B5563',
                                         fontSize: 12,
