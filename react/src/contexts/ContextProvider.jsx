@@ -1,20 +1,32 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import debounce from "lodash.debounce"; // Add this dependency for performance optimization
 
 const StateContext = createContext({
     currentUser: {},
     userToken: null,
     surveys: [],
     questionTypes: [],
-    toast: {
-        message: null,
-        show: false,
-    },
+    toast: { message: null, show: false },
     setCurrentUser: () => { },
     setUserToken: () => { },
-    logout: () => { }, // Add this line
+    logout: () => { },
     showToast: () => { },
 });
 
+const ACTIVITY_TIMEOUT = 300000; // 5 minutes in milliseconds
+const AUTH_KEYS = {
+    TOKEN: "TOKEN",
+    SHARED_TOKEN: "SHARED_TOKEN",
+    CURRENT_USER: "CURRENT_USER",
+    SHARED_CURRENT_USER: "SHARED_CURRENT_USER",
+    BROWSER_SESSION_ID: "BROWSER_SESSION_ID",
+    LAST_BROWSER_SESSION: "LAST_BROWSER_SESSION",
+    AUTH_LAST_ACCESS: "AUTH_LAST_ACCESS",
+    AUTH_TIMESTAMP: "AUTH_TIMESTAMP",
+    LAST_AUTH_TIMESTAMP: "LAST_AUTH_TIMESTAMP",
+};
+
+// Your existing survey data preserved
 const tmpSurveys = [
     {
         id: 1,
@@ -198,253 +210,294 @@ const tmpSurveys = [
 ];
 
 export const ContextProvider = ({ children }) => {
+    // Initialize user state with proper error handling
     const [currentUser, setCurrentUser] = useState(() => {
-        const savedUser = localStorage.getItem('CURRENT_USER');
-        return savedUser ? JSON.parse(savedUser) : {};
+        try {
+            const persistentUser = localStorage.getItem(AUTH_KEYS.CURRENT_USER);
+            const sessionUser = sessionStorage.getItem(AUTH_KEYS.CURRENT_USER);
+            const sharedUser = localStorage.getItem(AUTH_KEYS.SHARED_CURRENT_USER);
+
+            const userData = persistentUser || sessionUser || sharedUser;
+            return userData ? JSON.parse(userData) : {};
+        } catch (e) {
+            console.error("Failed to parse user data during initialization", e);
+            return {};
+        }
     });
 
-    const [userToken, _setUserToken] = useState(
-        localStorage.getItem("TOKEN") || sessionStorage.getItem("TOKEN") || ""
-    );
+    // Initialize token with correct priority
+    const [userToken, _setUserToken] = useState(() => {
+        return localStorage.getItem(AUTH_KEYS.TOKEN) ||
+            sessionStorage.getItem(AUTH_KEYS.TOKEN) ||
+            "";
+    });
+
     const [surveys, setSurveys] = useState(tmpSurveys);
     const [questionTypes] = useState([
-        "short answer",
-        "dropdown",
-        "multiple choice",
-        "checkboxes",
-        "paragraph",
+        "short answer", "dropdown", "multiple choice", "checkboxes", "paragraph",
     ]);
-
     const [toast, setToast] = useState({ message: "", show: false });
 
-    const logout = () => {
-        // Clear all authentication data
-        localStorage.removeItem("TOKEN");
-        localStorage.removeItem("SHARED_TOKEN");
-        localStorage.removeItem("SHARED_CURRENT_USER");
-        localStorage.removeItem('CURRENT_USER');
-        sessionStorage.removeItem("TOKEN");
-        sessionStorage.removeItem('CURRENT_USER');
+    // Optimized logout function using useCallback to prevent recreation
+    const logout = useCallback(() => {
+        console.log("Logging out...");
+
+        // Clear localStorage
+        [
+            AUTH_KEYS.TOKEN, AUTH_KEYS.SHARED_TOKEN, AUTH_KEYS.SHARED_CURRENT_USER,
+            AUTH_KEYS.CURRENT_USER, AUTH_KEYS.LAST_BROWSER_SESSION,
+            AUTH_KEYS.LAST_AUTH_TIMESTAMP, AUTH_KEYS.AUTH_LAST_ACCESS
+        ].forEach(key => localStorage.removeItem(key));
+
+        // Clear sessionStorage
+        [
+            AUTH_KEYS.TOKEN, AUTH_KEYS.CURRENT_USER, AUTH_KEYS.BROWSER_SESSION_ID
+        ].forEach(key => sessionStorage.removeItem(key));
 
         // Update state
         _setUserToken("");
         setCurrentUser({});
+    }, []);
+
+    // Generate a unique session ID
+    const generateSessionId = () => {
+        return Math.random().toString(36).substring(2) + Date.now().toString(36);
     };
 
-    const setUserToken = (token, keepSignedIn, userData = null) => {
-        if (token) {
-            if (keepSignedIn) {
-                // Persistent login - store in localStorage
-                localStorage.setItem("TOKEN", token);
-            } else {
-                // Session login - clear from localStorage to ensure it expires
-                localStorage.removeItem("TOKEN");
-            }
-
-            // Always set shared values for cross-tab communication
-            localStorage.setItem("SHARED_TOKEN", token);
-
-            if (userData) {
-                localStorage.setItem('SHARED_CURRENT_USER', JSON.stringify(userData));
-                sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
-            }
-
-            // Always set in sessionStorage for current tab
-            sessionStorage.setItem("TOKEN", token);
-
-            _setUserToken(token);
-            setCurrentUser(userData || {});
-        } else {
-            // Logout case
+    // Improved setUserToken function
+    const setUserToken = useCallback((token, keepSignedIn, userData = null) => {
+        if (!token) {
             logout();
+            return;
         }
-    };
 
-    const showToast = (message) => {
+        console.log(`Setting token with keepSignedIn=${keepSignedIn}`);
+
+        // Create a unique browser session ID
+        const sessionId = generateSessionId();
+        sessionStorage.setItem(AUTH_KEYS.BROWSER_SESSION_ID, sessionId);
+        localStorage.setItem(AUTH_KEYS.LAST_BROWSER_SESSION, sessionId);
+
+        // Set a timestamp to verify active sessions
+        const timestamp = Date.now().toString();
+        localStorage.setItem(AUTH_KEYS.LAST_AUTH_TIMESTAMP, timestamp);
+        localStorage.setItem(AUTH_KEYS.AUTH_LAST_ACCESS, timestamp);
+
+        // Handle storage based on persistence preference
+        if (keepSignedIn) {
+            localStorage.setItem(AUTH_KEYS.TOKEN, token);
+            if (userData) {
+                localStorage.setItem(AUTH_KEYS.CURRENT_USER, JSON.stringify(userData));
+            }
+        } else {
+            localStorage.removeItem(AUTH_KEYS.TOKEN);
+            localStorage.removeItem(AUTH_KEYS.CURRENT_USER);
+        }
+
+        // Always store in sessionStorage for current tab
+        sessionStorage.setItem(AUTH_KEYS.TOKEN, token);
+
+        // Always set shared token for cross-tab communication
+        localStorage.setItem(AUTH_KEYS.SHARED_TOKEN, token);
+
+        // Store user data
+        if (userData) {
+            const userJson = JSON.stringify(userData);
+            sessionStorage.setItem(AUTH_KEYS.CURRENT_USER, userJson);
+            localStorage.setItem(AUTH_KEYS.SHARED_CURRENT_USER, userJson);
+        }
+
+        // Update state
+        _setUserToken(token);
+        setCurrentUser(userData || {});
+    }, [logout]);
+
+    const showToast = useCallback((message) => {
         setToast({ message, show: true });
         setTimeout(() => {
             setToast({ message: "", show: false });
         }, 4700);
+    }, []);
+
+    // Function to safely parse user data
+    const parseUserData = (dataString, fallback = {}) => {
+        try {
+            return dataString ? JSON.parse(dataString) : fallback;
+        } catch (e) {
+            console.error("Failed to parse user data", e);
+            return fallback;
+        }
     };
 
+    // Authentication initialization system
     useEffect(() => {
+        console.log("Authentication system initializing...");
+
+        // Helper function to restore session in a new tab
+        const restoreSession = (token, userDataString) => {
+            sessionStorage.setItem(AUTH_KEYS.TOKEN, token);
+            _setUserToken(token);
+
+            try {
+                const userData = parseUserData(userDataString);
+                sessionStorage.setItem(AUTH_KEYS.CURRENT_USER, JSON.stringify(userData));
+                setCurrentUser(userData);
+            } catch (e) {
+                console.error("Failed to parse user data", e);
+            }
+
+            const sessionId = generateSessionId();
+            sessionStorage.setItem(AUTH_KEYS.BROWSER_SESSION_ID, sessionId);
+            localStorage.setItem(AUTH_KEYS.LAST_BROWSER_SESSION, sessionId);
+            localStorage.setItem(AUTH_KEYS.AUTH_LAST_ACCESS, Date.now().toString());
+        };
+
+        // Primary authentication initialization
+        const initializeAuth = () => {
+            // Check for persistent login
+            const persistentToken = localStorage.getItem(AUTH_KEYS.TOKEN);
+            if (persistentToken) {
+                console.log("Persistent login detected");
+                _setUserToken(persistentToken);
+                const userData = parseUserData(localStorage.getItem(AUTH_KEYS.CURRENT_USER));
+                setCurrentUser(userData);
+
+                const sessionId = generateSessionId();
+                sessionStorage.setItem(AUTH_KEYS.BROWSER_SESSION_ID, sessionId);
+                localStorage.setItem(AUTH_KEYS.LAST_BROWSER_SESSION, sessionId);
+                return;
+            }
+
+            // Check for shared token
+            const sharedToken = localStorage.getItem(AUTH_KEYS.SHARED_TOKEN);
+
+            // Handle browser restart vs new tab
+            if (sharedToken && !sessionStorage.getItem(AUTH_KEYS.BROWSER_SESSION_ID)) {
+                // For persistent logins, always restore
+                if (localStorage.getItem(AUTH_KEYS.TOKEN)) {
+                    console.log("Persistent login in new tab");
+                    restoreSession(sharedToken, localStorage.getItem(AUTH_KEYS.SHARED_CURRENT_USER));
+                    return;
+                }
+
+                // For session-only logins, check if this is a new tab or a browser restart
+                const lastAccess = localStorage.getItem(AUTH_KEYS.AUTH_LAST_ACCESS);
+                const lastAuthTimestamp = localStorage.getItem(AUTH_KEYS.LAST_AUTH_TIMESTAMP);
+                const now = Date.now();
+
+                // Check if this is a new tab (recent activity or login)
+                const recentActivity =
+                    (lastAccess && (now - parseInt(lastAccess) < ACTIVITY_TIMEOUT)) ||
+                    (lastAuthTimestamp && (now - parseInt(lastAuthTimestamp) < 86400000)); // 24 hours
+
+                if (recentActivity) {
+                    console.log("New tab detected - restoring session");
+                    restoreSession(sharedToken, localStorage.getItem(AUTH_KEYS.SHARED_CURRENT_USER));
+                    return;
+                }
+
+                // This is a browser restart for a session-only login
+                console.log("Browser restart detected - clearing session-only login");
+                localStorage.removeItem(AUTH_KEYS.SHARED_TOKEN);
+                localStorage.removeItem(AUTH_KEYS.SHARED_CURRENT_USER);
+                localStorage.removeItem(AUTH_KEYS.LAST_AUTH_TIMESTAMP);
+                localStorage.removeItem(AUTH_KEYS.AUTH_LAST_ACCESS);
+                _setUserToken("");
+                setCurrentUser({});
+                return;
+            }
+
+            // Regular tab with shared token
+            if (sharedToken) {
+                console.log("Session continuation detected");
+                restoreSession(sharedToken, localStorage.getItem(AUTH_KEYS.SHARED_CURRENT_USER));
+                return;
+            }
+
+            // No authentication found
+            console.log("No authentication found");
+            _setUserToken("");
+            setCurrentUser({});
+        };
+
+        // Run initialization
+        initializeAuth();
+
+        // Handle cross-tab authentication events
         const handleStorageChange = (e) => {
-            if (e.key === 'SHARED_TOKEN') {
-                const newToken = e.newValue;
-                if (newToken) {
-                    sessionStorage.setItem("TOKEN", newToken);
-                    _setUserToken(newToken);
+            if (e.key === AUTH_KEYS.SHARED_TOKEN) {
+                if (e.newValue) {
+                    console.log("Authentication updated in another tab");
+                    sessionStorage.setItem(AUTH_KEYS.TOKEN, e.newValue);
+                    _setUserToken(e.newValue);
                 } else {
-                    sessionStorage.removeItem("TOKEN");
-                    _setUserToken('');
+                    console.log("Logout detected in another tab");
+                    sessionStorage.removeItem(AUTH_KEYS.TOKEN);
+                    _setUserToken("");
                     setCurrentUser({});
                 }
-            } else if (e.key === 'SHARED_CURRENT_USER') {
-                const userData = e.newValue ? JSON.parse(e.newValue) : {};
-                sessionStorage.setItem('CURRENT_USER', JSON.stringify(userData));
+            } else if (e.key === AUTH_KEYS.SHARED_CURRENT_USER && e.newValue) {
+                console.log("User data updated in another tab");
+                const userData = parseUserData(e.newValue);
+                sessionStorage.setItem(AUTH_KEYS.CURRENT_USER, JSON.stringify(userData));
                 setCurrentUser(userData);
             }
         };
 
-        const checkAuthStatus = () => {
-            const token = localStorage.getItem("TOKEN") ||
-                (document.visibilityState === 'visible' ? localStorage.getItem("SHARED_TOKEN") : null) ||
-                sessionStorage.getItem("TOKEN");
+        window.addEventListener("storage", handleStorageChange);
+        return () => window.removeEventListener("storage", handleStorageChange);
+    }, []);
 
-            if (token) {
-                _setUserToken(token);
-                // If using SHARED_TOKEN, ensure it's in sessionStorage
-                if (localStorage.getItem("SHARED_TOKEN") === token) {
-                    sessionStorage.setItem("TOKEN", token);
-                    const sharedUser = localStorage.getItem('SHARED_CURRENT_USER');
-                    if (sharedUser) {
-                        try {
-                            sessionStorage.setItem('CURRENT_USER', sharedUser);
-                            setCurrentUser(JSON.parse(sharedUser));
-                        } catch (e) {
-                            console.error('Error parsing user data:', e);
-                        }
-                    }
-                } else {
-                    const savedUser = token === localStorage.getItem("TOKEN")
-                        ? localStorage.getItem('CURRENT_USER')
-                        : sessionStorage.getItem('CURRENT_USER');
-
-                    if (savedUser) {
-                        try {
-                            const userData = JSON.parse(savedUser);
-                            setCurrentUser(userData);
-                        } catch (e) {
-                            console.error('Error parsing user data:', e);
-                        }
-                    }
-                }
-            } else {
-                _setUserToken('');
-                setCurrentUser({});
-                localStorage.removeItem("SHARED_TOKEN");
-                localStorage.removeItem("SHARED_CURRENT_USER");
-                localStorage.removeItem("CURRENT_USER");
-                sessionStorage.removeItem("CURRENT_USER");
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        document.addEventListener('visibilitychange', checkAuthStatus);
-
-        // Initial check
-        checkAuthStatus();
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            document.removeEventListener('visibilitychange', checkAuthStatus);
-        };
-    }, []); // Remove currentUser from dependencies
-
-    // Replace your current beforeunload handler with this implementation
-
+    // Optimized inactivity monitor with debouncing
     useEffect(() => {
-        // When the tab visibility changes to visible (tab is focused)
+        // Only run for non-persistent logins
+        if (!userToken || localStorage.getItem(AUTH_KEYS.TOKEN)) return;
+
+        console.log("Setting up inactivity monitor for session-only login");
+
+        // Debounced update function for better performance
+        const updateLastAccess = debounce(() => {
+            if (userToken && !localStorage.getItem(AUTH_KEYS.TOKEN)) {
+                localStorage.setItem(AUTH_KEYS.AUTH_LAST_ACCESS, Date.now().toString());
+            }
+        }, 1000); // Update at most once per second
+
+        // Only use necessary event listeners
+        const events = ["mousemove", "keydown", "click", "scroll"];
+        events.forEach(event => window.addEventListener(event, updateLastAccess));
+
+        // Track visibility changes
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                // Check for session login expiration
-                const sessionToken = sessionStorage.getItem('TOKEN');
-                const permanentToken = localStorage.getItem('TOKEN');
+            if (document.visibilityState === "visible") {
+                updateLastAccess();
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
 
-                // If we have a session token but no permanent token, check browser restart
-                if (sessionToken && !permanentToken) {
-                    // Get browser session ID from storage
-                    const storedSessionId = localStorage.getItem('BROWSER_SESSION_ID');
-                    const currentSessionId = sessionStorage.getItem('SESSION_ID');
+        // Set initial timestamp
+        updateLastAccess();
 
-                    // If session IDs don't match, browser was closed and reopened
-                    if (storedSessionId !== currentSessionId) {
-                        console.log('Browser was closed and reopened - logging out session user');
-                        // Clear session auth
-                        sessionStorage.removeItem('TOKEN');
-                        sessionStorage.removeItem('CURRENT_USER');
-                        localStorage.removeItem('SHARED_TOKEN');
-                        localStorage.removeItem('SHARED_CURRENT_USER');
-                        _setUserToken('');
-                        setCurrentUser({});
-                    }
+        // Check for inactivity
+        const inactivityCheck = setInterval(() => {
+            const lastAccess = localStorage.getItem(AUTH_KEYS.AUTH_LAST_ACCESS);
+            if (lastAccess && !localStorage.getItem(AUTH_KEYS.TOKEN)) {
+                const inactiveTime = Date.now() - parseInt(lastAccess);
+
+                if (inactiveTime > ACTIVITY_TIMEOUT) {
+                    console.log("Session timeout: Logging out due to inactivity");
+                    logout();
                 }
             }
-        };
-
-        // Generate a unique session ID when the page loads
-        const sessionId = Math.random().toString(36).substring(2, 15);
-        sessionStorage.setItem('SESSION_ID', sessionId);
-
-        // Store this ID in localStorage to compare across page loads
-        localStorage.setItem('BROWSER_SESSION_ID', sessionId);
-
-        // Listen for tab visibility changes
-        document.addEventListener('visibilitychange', handleVisibilityChange);
+        }, 30000);
 
         return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            events.forEach(event => window.removeEventListener(event, updateLastAccess));
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            clearInterval(inactivityCheck);
+            updateLastAccess.cancel(); // Cancel any pending debounced updates
         };
-    }, []);
+    }, [userToken, logout]);
 
-    // Add this effect to handle page refresh
-    useEffect(() => {
-        const handleBeforeUnload = () => {
-            // Only for non-persistent logins
-            if (!localStorage.getItem('TOKEN') && sessionStorage.getItem('TOKEN')) {
-                const token = sessionStorage.getItem('TOKEN');
-                const user = sessionStorage.getItem('CURRENT_USER');
-                const sessionId = sessionStorage.getItem('SESSION_ID');
-
-                // Save these for page refreshes only
-                localStorage.setItem('REFRESH_TOKEN', token);
-                localStorage.setItem('REFRESH_USER', user);
-                localStorage.setItem('REFRESH_SESSION_ID', sessionId);
-                localStorage.setItem('REFRESH_TIMESTAMP', Date.now().toString());
-            }
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        // On page load, check if we're refreshing
-        const handlePageRefresh = () => {
-            const refreshToken = localStorage.getItem('REFRESH_TOKEN');
-            const refreshSessionId = localStorage.getItem('REFRESH_SESSION_ID');
-            const currentSessionId = sessionStorage.getItem('SESSION_ID');
-
-            if (refreshToken && refreshSessionId) {
-                // Compare session IDs to detect refresh vs restart
-                // If they're different, the sessionStorage was cleared (browser closed)
-                if (refreshSessionId === currentSessionId) {
-                    console.log('Page refresh detected - restoring session');
-                    // This was just a refresh, restore the auth
-                    sessionStorage.setItem('TOKEN', refreshToken);
-
-                    const user = localStorage.getItem('REFRESH_USER');
-                    if (user) {
-                        sessionStorage.setItem('CURRENT_USER', user);
-                        setCurrentUser(JSON.parse(user));
-                    }
-                    _setUserToken(refreshToken);
-                }
-
-                // Clean up refresh data
-                localStorage.removeItem('REFRESH_TOKEN');
-                localStorage.removeItem('REFRESH_USER');
-                localStorage.removeItem('REFRESH_SESSION_ID');
-                localStorage.removeItem('REFRESH_TIMESTAMP');
-            }
-        };
-
-        // Run on mount
-        handlePageRefresh();
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, []);
-
-    // Update the provider value to include the logout function
     return (
         <StateContext.Provider
             value={{
@@ -452,7 +505,7 @@ export const ContextProvider = ({ children }) => {
                 setCurrentUser,
                 userToken,
                 setUserToken,
-                logout, // Add logout function to context
+                logout,
                 surveys,
                 questionTypes,
                 toast,
