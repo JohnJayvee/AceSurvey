@@ -16,10 +16,11 @@ const clientPromise = new Promise(async (resolve) => {
             const client = axios.create({
                 baseURL: `${url}/api`,
                 withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json', // Set header during client creation
+                    'Accept': 'application/json'
+                }
             });
-
-            // Set content type here on the actual client instance
-            client.defaults.headers.post['Content-Type'] = 'application/json';
 
             client.interceptors.request.use((config) => {
                 const token = localStorage.getItem("TOKEN") || sessionStorage.getItem("TOKEN");
@@ -51,21 +52,25 @@ const clientPromise = new Promise(async (resolve) => {
     resolve(null);
 });
 
+// Improved proxy implementation that safely handles property access
 const axiosClient = new Proxy({}, {
-    get(_, prop) {
-        // For method calls like .post(), .get(), etc.
-        if (typeof axios.prototype[prop] === 'function') {
-            return async (...args) => {
-                if (!clientReady) {
-                    clientReady = await clientPromise;
-                }
-                if (!clientReady) throw new Error("Axios client initialization failed.");
-                return clientReady[prop](...args);
-            };
+    get(target, prop) {
+        if (prop === 'then' || prop === 'catch') {
+            // Handle promises correctly
+            return undefined;
         }
 
-        // Return a dummy object for property access to avoid undefined errors
-        return {};
+        return async (...args) => {
+            if (!clientReady) {
+                clientReady = await clientPromise;
+            }
+
+            if (!clientReady) {
+                throw new Error("Axios client initialization failed. Check your API URLs.");
+            }
+
+            return clientReady[prop](...args);
+        };
     }
 });
 
