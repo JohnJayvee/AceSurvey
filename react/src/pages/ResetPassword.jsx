@@ -154,7 +154,6 @@ const ResetPassword = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                    required
                                 />
                             </div>
 
@@ -170,7 +169,6 @@ const ResetPassword = () => {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                        required
                                     />
                                     <button
                                         type="button"
@@ -198,7 +196,6 @@ const ResetPassword = () => {
                                         value={passwordConfirmation}
                                         onChange={(e) => setPasswordConfirmation(e.target.value)}
                                         className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                        required
                                     />
                                     <button
                                         type="button"
