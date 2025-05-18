@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
 import { Loader as RsuiteLoader } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import logo from '/AceLogo.png'; // Adjust path if needed
@@ -11,13 +11,14 @@ import ErrorMessage from "../components/ErrorMessage"; // Add this import
 
 const ResetPassword = () => {
     const { token } = useParams();
+    const navigate = useNavigate(); // Add navigate hook
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [message, setMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState(''); // Changed from errors array to errorMessage string
     const [loading, setLoading] = useState(false);
-    const [countdown, setCountdown] = useState(null);
+    const [isSuccess, setIsSuccess] = useState(false); // Add success state
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -28,15 +29,6 @@ const ResetPassword = () => {
     const clearErrorMessage = () => {
         setErrorMessage('');
     };
-
-    useEffect(() => {
-        if (countdown !== null && countdown > 0) {
-            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            return () => clearTimeout(timer);
-        } else if (countdown === 0) {
-            window.location.href = '/login';
-        }
-    }, [countdown]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -52,7 +44,7 @@ const ResetPassword = () => {
                 password_confirmation: passwordConfirmation,
             });
             setMessage(data.message);
-            setCountdown(5);
+            setIsSuccess(true); // Set success state instead of countdown
         } catch (error) {
             if (error.response && error.response.data.errors) {
                 // Convert error array to HTML format for ErrorMessage component
@@ -69,6 +61,56 @@ const ResetPassword = () => {
         }
     };
 
+    // If password reset was successful, show success screen
+    if (isSuccess) {
+        return (
+            <div className="relative flex flex-col justify-between min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+                <AnimatedBackground />
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="relative z-10 flex flex-col items-center w-full max-w-lg p-4 mx-auto my-auto"
+                >
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full p-8 bg-white shadow-lg rounded-xl backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ y: -20 }}
+                            animate={{ y: 0 }}
+                            className="flex justify-center mb-6"
+                        >
+                            <img src={logo} loading="lazy" alt="Logo" className="w-auto h-24 drop-shadow-md" />
+                        </motion.div>
+
+                        <div className="flex flex-col items-center justify-center py-6">
+                            <div className="flex items-center justify-center w-24 h-24 mb-6 bg-green-100 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+
+                            <h2 className="mb-2 text-2xl font-bold text-center text-gray-900">Password Reset Successful</h2>
+                            <p className="max-w-md mb-8 text-center text-gray-600">
+                                {message || "Your password has been reset successfully. You can now log in with your new password."}
+                            </p>
+
+                            <motion.button
+                                onClick={() => navigate('/login')}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                className="flex items-center justify-center px-6 py-3 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg w-44 hover:bg-blue-700"
+                            >
+                                Go to Login
+                            </motion.button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            </div>
+        );
+    }
+
     return (
         <div className="relative flex flex-col justify-between min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
             <AnimatedBackground />
@@ -77,24 +119,6 @@ const ResetPassword = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative z-10 flex flex-col items-center w-full max-w-lg p-4 mx-auto my-auto"
             >
-                {message && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="w-full px-4 py-3 mb-4 text-sm font-medium text-green-700 bg-green-100 border border-green-200 rounded-lg"
-                    >
-                        <div className="flex items-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            {message}
-                            {countdown !== null && countdown > 0 && (
-                                <span className="ml-1">Redirecting in {countdown} seconds...</span>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -119,21 +143,33 @@ const ResetPassword = () => {
                         )}
 
                         <div className="space-y-4">
-                            <input
-                                type="text"
-                                placeholder="Email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            />
+                            <div className="relative">
+                                <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
+                                    Email Address
+                                </label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    placeholder="Enter your email address"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    required
+                                />
+                            </div>
 
                             <div className="relative">
+                                <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
+                                    New Password
+                                </label>
                                 <input
+                                    id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="New Password"
+                                    placeholder="Create new password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    required
                                 />
                                 <button
                                     type="button"
@@ -149,12 +185,17 @@ const ResetPassword = () => {
                             </div>
 
                             <div className="relative">
+                                <label htmlFor="passwordConfirmation" className="block mb-1 text-sm font-medium text-gray-700">
+                                    Confirm Password
+                                </label>
                                 <input
+                                    id="passwordConfirmation"
                                     type={showConfirmPassword ? "text" : "password"}
-                                    placeholder="Confirm New Password"
+                                    placeholder="Confirm new password"
                                     value={passwordConfirmation}
                                     onChange={(e) => setPasswordConfirmation(e.target.value)}
                                     className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    required
                                 />
                                 <button
                                     type="button"
