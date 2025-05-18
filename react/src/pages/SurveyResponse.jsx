@@ -481,6 +481,20 @@ export default function SurveyResponse() {
                                         />
                                     ))}
                                 </Pie>
+
+                                {/* Add Legend component here */}
+                                <Legend
+                                    layout="horizontal"
+                                    verticalAlign="bottom"
+                                    align="center"
+                                    wrapperStyle={{
+                                        paddingTop: '20px',
+                                        fontSize: '14px'
+                                    }}
+                                    iconType="circle"
+                                    iconSize={10}
+                                />
+
                                 <RechartsTooltip
                                     content={({ active, payload }) => {
                                         if (active && payload && payload.length) {
