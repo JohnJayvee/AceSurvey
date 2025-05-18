@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useStateContext } from "../contexts/ContextProvider";
 import SurveyListItem from "../components/SurveyListItem";
 import { PlusCircleIcon, DocumentIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -20,6 +20,8 @@ export default function Surveys() {
     const [searchTerm, setSearchTerm] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [surveyToDelete, setSurveyToDelete] = useState(null);
+    const [requestInProgress, setRequestInProgress] = useState({});
+    const initialLoadDone = useRef(false);
 
     const onDeleteClick = (id) => {
         setSurveyToDelete(id);
@@ -46,11 +48,21 @@ export default function Surveys() {
     const getSurveys = (url = "/survey") => {
         if (loading) return;
 
-        setLoading(true);
+        // Check if this exact URL is already being requested
+        if (requestInProgress[url]) return;
 
-        axiosClient
-            .get(url)
-            .then(({ data }) => {
+        setLoading(true);
+        // Track this URL request
+        setRequestInProgress(prev => ({ ...prev, [url]: true }));
+
+        // Using Promise.all for multiple requests
+        Promise.all([
+            axiosClient.get(url),
+            // Add more requests here if needed
+            // axiosClient.get('/some-other-endpoint')
+        ])
+            .then(([surveyResponse]) => {
+                const { data } = surveyResponse;
                 setAllSurveys(data.data);
                 setFilteredSurveys(data.data);
                 setMeta(data.meta);
@@ -60,6 +72,12 @@ export default function Surveys() {
             })
             .finally(() => {
                 setLoading(false);
+                // Clear the tracking for this URL
+                setRequestInProgress(prev => {
+                    const updated = { ...prev };
+                    delete updated[url];
+                    return updated;
+                });
             });
     };
 
@@ -78,8 +96,16 @@ export default function Surveys() {
     };
 
     useEffect(() => {
+        // Skip if we've already loaded once
+        if (initialLoadDone.current) return;
+
         getSurveys();
-    }, []);
+        initialLoadDone.current = true;
+
+        return () => {
+            // cleanup if needed
+        };
+    }, []);  // Empty dependency array ensures this runs only once
 
     const breadcrumbLinks = [
         { to: "/dashboard", label: "Home" },
