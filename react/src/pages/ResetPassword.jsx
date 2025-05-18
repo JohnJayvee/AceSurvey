@@ -162,52 +162,56 @@ const ResetPassword = () => {
                                 <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
                                     New Password
                                 </label>
-                                <input
-                                    id="password"
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="Create new password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={toggleShowPassword}
-                                    className="absolute text-gray-400 transition-colors -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
-                                >
-                                    {showPassword ? (
-                                        <FaEye className="w-5 h-5" />
-                                    ) : (
-                                        <FaEyeSlash className="w-5 h-5" />
-                                    )}
-                                </button>
+                                <div className="relative">
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Create new password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={toggleShowPassword}
+                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition-colors hover:text-gray-600"
+                                    >
+                                        {showPassword ? (
+                                            <FaEye className="w-5 h-5" />
+                                        ) : (
+                                            <FaEyeSlash className="w-5 h-5" />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="relative">
                                 <label htmlFor="passwordConfirmation" className="block mb-1 text-sm font-medium text-gray-700">
                                     Confirm Password
                                 </label>
-                                <input
-                                    id="passwordConfirmation"
-                                    type={showConfirmPassword ? "text" : "password"}
-                                    placeholder="Confirm new password"
-                                    value={passwordConfirmation}
-                                    onChange={(e) => setPasswordConfirmation(e.target.value)}
-                                    className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={toggleShowConfirmPassword}
-                                    className="absolute text-gray-400 transition-colors -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
-                                >
-                                    {showConfirmPassword ? (
-                                        <FaEye className="w-5 h-5" />
-                                    ) : (
-                                        <FaEyeSlash className="w-5 h-5" />
-                                    )}
-                                </button>
+                                <div className="relative">
+                                    <input
+                                        id="passwordConfirmation"
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        placeholder="Confirm new password"
+                                        value={passwordConfirmation}
+                                        onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                        className="w-full px-4 py-3 text-gray-700 transition-colors duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={toggleShowConfirmPassword}
+                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition-colors hover:text-gray-600"
+                                    >
+                                        {showConfirmPassword ? (
+                                            <FaEye className="w-5 h-5" />
+                                        ) : (
+                                            <FaEyeSlash className="w-5 h-5" />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
