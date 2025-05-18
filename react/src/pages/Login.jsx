@@ -127,16 +127,17 @@ export default function Login() {
                                         onChange={(ev) => setPassword(ev.target.value)}
                                         className={inputClassName}
                                     />
-                                    <div
+                                    <button
+                                        type="button"
                                         onClick={toggleShowPassword}
-                                        className={eyeIconClassName}
+                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition-colors hover:text-gray-600"
                                     >
                                         {showPassword ? (
-                                            <FaEyeSlash className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                                            <FaEye className="w-5 h-5" />
                                         ) : (
-                                            <FaEye className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                                            <FaEyeSlash className="w-5 h-5" />
                                         )}
-                                    </div>
+                                    </button>
                                 </div>
                             </div>
                         </div>
