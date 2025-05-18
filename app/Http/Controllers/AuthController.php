@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Validation\ValidationException;
+use App\Mail\PasswordReset;
 
 class AuthController extends Controller
 {
@@ -224,12 +225,16 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required|min:8|confirmed',
         ]);
+
         $status = Password::reset(
             $data,
             function ($user, $password) {
                 $user->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
                 ])->save();
+
+                // ✅ Send the email
+                Mail::to($user->email)->send(new PasswordReset($user));
             }
         );
 
