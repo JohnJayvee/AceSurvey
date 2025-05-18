@@ -28,26 +28,27 @@
         <tr>
             <td align="center" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative;">
                 <table class="content" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%; margin: 0; padding: 0; width: 100%;">
+                    <!-- Logo Outside -->
+                    <tr>
+                        <td align="center" style="padding: 25px 0 15px;">
+                            <table width="100px" height="100px" cellpadding="0" cellspacing="0" role="presentation" style="border-radius: 50%; background-color: #ffffff; border: 2px solid #e5e7eb; margin: 0 auto; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); z-index: 2; position: relative;">
+                                <tr>
+                                    <td align="center" valign="middle">
+                                        <img src="{{ asset('./AceLogo.png') }}" alt="Ace Medical Center" style="width: 80px; height: auto; border-radius: 50%; object-fit: contain;">
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
                     <!-- Body -->
                     <tr>
-                        <td class="body" width="100%" cellpadding="0" cellspacing="0" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%; background-color: #edf2f7; border-bottom: 1px solid #edf2f7; border-top: 1px solid #edf2f7; margin: 0; padding: 32px 0; width: 100%;">
-                            <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 570px; background-color: #ffffff; border-color: #e8e5ef; border-radius: 8px; border-width: 1px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin: 0 auto; padding: 0; width: 570px;">
+                        <td class="body" width="100%" cellpadding="0" cellspacing="0" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%; background-color: #edf2f7; border-bottom: 1px solid #edf2f7; border-top: 1px solid #edf2f7; margin: 0; padding: 0 0 32px 0; width: 100%;">
+                            <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 570px; background-color: #ffffff; border-color: #e8e5ef; border-radius: 8px; border-width: 1px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin: 0 auto; padding: 0; width: 570px; margin-top: -40px;">
                                 <tr>
                                     <td class="content-cell" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; max-width: 100vw; padding: 32px;">
-                                        <!-- Logo in Circle -->
-                                        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                                            <tr>
-                                                <td align="center" style="padding-bottom: 24px;">
-                                                    <table width="100px" height="100px" cellpadding="0" cellspacing="0" role="presentation" style="border-radius: 50%; background-color: #ffffff; border: 1px solid #e5e7eb; margin: 0 auto; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
-                                                        <tr>
-                                                            <td align="center" valign="middle">
-                                                                <img src="{{ asset('./AceLogo.png') }}" alt="Ace Medical Center" style="width: 80px; height: auto; border-radius: 50%; object-fit: contain;">
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
+                                        <!-- Top Space for Logo Overlap -->
+                                        <div style="height: 40px;"></div>
 
                                         <!-- Greeting -->
                                         <h1 style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; color: #1f2937; font-size: 22px; font-weight: bold; margin-top: 0; text-align: center; letter-spacing: -0.025em;">
