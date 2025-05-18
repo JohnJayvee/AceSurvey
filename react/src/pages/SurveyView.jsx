@@ -21,6 +21,7 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
 import ErrorMessage from "../components/ErrorMessage"; // Add this import
+import logo from "/AceLogo.png";
 
 const cache = {};
 const isFetching = {};
@@ -333,13 +334,13 @@ export default function SurveyView() {
                                             ) : (
                                                 <div className="flex items-center justify-center w-full h-full bg-gray-50">
                                                     <img
-                                                        src="/default-survey-image.jpg"
+                                                        src={logo}
                                                         alt="Default Survey"
                                                         className="object-cover w-auto h-full transition-all duration-300 hover:scale-105"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = "/AceLogo.png";
-                                                        }}
+                                                    // onError={(e) => {
+                                                    //     e.target.onerror = null;
+                                                    //     e.target.src = "/AceLogo.png";
+                                                    // }}
                                                     />
                                                 </div>
                                             )}
