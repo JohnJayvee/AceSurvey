@@ -252,67 +252,98 @@ export default function SurveyView() {
                         </p>
                     </motion.div>
 
+                    {/* Enhanced navigation section */}
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="sticky top-0 z-10 flex justify-between p-4 mb-6 bg-white border border-gray-100 shadow-sm rounded-xl backdrop-blur-xl bg-opacity-90"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="sticky top-0 z-10 py-3 mb-6 bg-white border-b border-gray-200 shadow-sm backdrop-blur-xl bg-opacity-95"
                     >
-                        <div className="flex items-center space-x-2">
-                            <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
-                                <button
-                                    onClick={handleGoBack}
-                                    className="p-2 transition-all duration-200 rounded-lg hover:bg-gray-100 active:bg-gray-200"
-                                >
-                                    <FaArrowLeft className="w-5 h-5 text-gray-700" />
-                                </button>
-                            </Tooltip>
+                        <div className="container px-4 mx-auto max-w-7xl">
+                            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                                {/* Left side - Back button and title */}
+                                <div className="flex items-center gap-3">
+                                    <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
+                                        <button
+                                            onClick={handleGoBack}
+                                            className="p-2 text-gray-600 transition-all duration-200 bg-gray-100 rounded-lg hover:bg-gray-200 active:bg-gray-300"
+                                            aria-label="Go back to previous page"
+                                        >
+                                            <FaArrowLeft className="w-4 h-4" />
+                                        </button>
+                                    </Tooltip>
+
+                                    <div className="hidden truncate md:block">
+                                        <h2 className="text-lg font-medium text-gray-900 truncate">
+                                            {survey.title || "New Survey"}
+                                        </h2>
+                                        <div className="flex items-center mt-1 text-xs text-gray-500">
+                                            {id ? (
+                                                <>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${survey.status && !isSurveyExpired(survey.expire_date)
+                                                            ? "bg-green-100 text-green-800"
+                                                            : "bg-red-100 text-red-800"
+                                                        }`}>
+                                                        {survey.status && !isSurveyExpired(survey.expire_date) ? "Active" : "Inactive"}
+                                                    </span>
+                                                    <span className="mx-2">•</span>
+                                                    <span>Expires: {new Date(survey.expire_date).toLocaleDateString()}</span>
+                                                </>
+                                            ) : (
+                                                <span>Creating new survey</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right side - Action buttons */}
+                                {id && (
+                                    <div className="flex flex-wrap items-center w-full gap-2 md:w-auto">
+                                        <Tooltip title="View Responses" placement="bottom" TransitionComponent={Fade}>
+                                            <button
+                                                onClick={() => handleViewResponses(survey.id)}
+                                                className="flex items-center justify-center flex-1 gap-2 px-3 py-2 text-sm font-medium text-green-700 transition-all duration-200 bg-white border border-green-200 rounded-lg md:flex-none hover:bg-green-50"
+                                            >
+                                                <UsersIcon className="w-4 h-4" />
+                                                <span className="md:hidden lg:inline">Responses</span>
+                                            </button>
+                                        </Tooltip>
+
+                                        <Tooltip title="Preview Survey" placement="bottom" TransitionComponent={Fade}>
+                                            <a
+                                                href={`/survey/public/${survey.slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center justify-center flex-1 gap-2 px-3 py-2 text-sm font-medium text-purple-700 transition-all duration-200 bg-white border border-purple-200 rounded-lg md:flex-none hover:bg-purple-50"
+                                            >
+                                                <EyeIcon className="w-4 h-4" />
+                                                <span className="md:hidden lg:inline">Preview</span>
+                                            </a>
+                                        </Tooltip>
+
+                                        <Tooltip title="Share Survey" placement="bottom" TransitionComponent={Fade}>
+                                            <button
+                                                onClick={handleOpenShare}
+                                                className="flex items-center justify-center flex-1 gap-2 px-3 py-2 text-sm font-medium text-blue-700 transition-all duration-200 bg-white border border-blue-200 rounded-lg md:flex-none hover:bg-blue-50"
+                                            >
+                                                <LinkIcon className="w-4 h-4" />
+                                                <span className="md:hidden lg:inline">Share</span>
+                                            </button>
+                                        </Tooltip>
+
+                                        <div className="w-full md:w-auto md:ml-2">
+                                            <Tooltip title="Delete Survey" placement="bottom" TransitionComponent={Fade}>
+                                                <button
+                                                    onClick={() => handleDeleteClick(survey.id)}
+                                                    className="flex items-center justify-center w-full gap-2 px-3 py-2 text-sm font-medium text-white transition-all duration-200 bg-red-600 rounded-lg hover:bg-red-700"
+                                                >
+                                                    <TrashIcon className="w-4 h-4" />
+                                                    <span className="md:hidden lg:inline">Delete</span>
+                                                </button>
+                                            </Tooltip>
+                                        </div>
+                                )}
+                                    </div>
                         </div>
-
-                        {id && (
-                            <div className="flex items-center gap-2">
-                                <Tooltip title="Share Survey" placement="bottom" TransitionComponent={Fade}>
-                                    <button
-                                        onClick={handleOpenShare}
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 transition-all duration-200 rounded-lg bg-blue-50 hover:bg-blue-100"
-                                    >
-                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                        Share
-                                    </button>
-                                </Tooltip>
-
-                                <Tooltip title="View Responses" placement="bottom" TransitionComponent={Fade}>
-                                    <button
-                                        onClick={() => handleViewResponses(survey.id)}
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 transition-all duration-200 rounded-lg bg-green-50 hover:bg-green-100"
-                                    >
-                                        <UsersIcon className="w-4 h-4" />
-                                        Responses
-                                    </button>
-                                </Tooltip>
-
-                                <Tooltip title="Preview Survey" placement="bottom" TransitionComponent={Fade}>
-                                    <a
-                                        href={`/survey/public/${survey.slug}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 transition-all duration-200 rounded-lg bg-purple-50 hover:bg-purple-100"
-                                    >
-                                        <EyeIcon className="w-4 h-4" />
-                                        Preview
-                                    </a>
-                                </Tooltip>
-
-                                <Tooltip title="Delete Survey" placement="bottom" TransitionComponent={Fade}>
-                                    <button
-                                        onClick={(ev) => handleDeleteClick(survey.id)}
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 transition-all duration-200 rounded-lg bg-red-50 hover:bg-red-100"
-                                    >
-                                        <TrashIcon className="w-4 h-4" />
-                                        Delete
-                                    </button>
-                                </Tooltip>
-                            </div>
-                        )}
                     </motion.div>
 
                     <form onSubmit={onSubmit} className="space-y-6">
