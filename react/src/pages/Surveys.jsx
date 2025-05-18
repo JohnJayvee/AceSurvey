@@ -21,6 +21,7 @@ export default function Surveys() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [surveyToDelete, setSurveyToDelete] = useState(null);
     const [requestInProgress, setRequestInProgress] = useState({});
+    const [pageCache, setPageCache] = useState({}); // Add page data caching
     const initialLoadDone = useRef(false);
 
     const onDeleteClick = (id) => {
@@ -41,7 +42,9 @@ export default function Surveys() {
         setSurveyToDelete(null);
     };
 
+    // Modify your onPageClick function to replace history state instead of adding to it
     const onPageClick = (link) => {
+        // Just fetch data without changing URL
         getSurveys(link.url);
     };
 
@@ -50,6 +53,14 @@ export default function Surveys() {
 
         // Check if this exact URL is already being requested
         if (requestInProgress[url]) return;
+
+        // Check if we already have this page cached
+        if (pageCache[url]) {
+            setAllSurveys(pageCache[url].data);
+            setFilteredSurveys(pageCache[url].data);
+            setMeta(pageCache[url].meta);
+            return;
+        }
 
         setLoading(true);
         // Track this URL request
@@ -63,6 +74,13 @@ export default function Surveys() {
         ])
             .then(([surveyResponse]) => {
                 const { data } = surveyResponse;
+
+                // Cache the results
+                setPageCache(prev => ({
+                    ...prev,
+                    [url]: { data: data.data, meta: data.meta }
+                }));
+
                 setAllSurveys(data.data);
                 setFilteredSurveys(data.data);
                 setMeta(data.meta);
