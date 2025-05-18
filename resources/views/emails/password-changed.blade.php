@@ -30,14 +30,8 @@
                 <table class="content" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%; margin: 0; padding: 0; width: 100%;">
                     <!-- Header -->
                     <tr>
-                        <td align="center" style="padding: 25px 0 15px;">
-                            <table width="100px" height="100px" cellpadding="0" cellspacing="0" role="presentation" style="border-radius: 50%; background-color: transparent; border: 2px solid #e5e7eb; margin: 0 auto; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); z-index: 2; position: relative;">
-                                <tr>
-                                    <td align="center" valign="middle">
-                                        <img src="{{ asset('./AceLogo.png') }}" alt="Ace Medical Center" style="width: 80px; height: auto; border-radius: 50%; object-fit: contain;">
-                                    </td>
-                                </tr>
-                            </table>
+                        <td class="header" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; padding: 25px 0; text-align: center;">
+                            <img src="{{ asset('./AceLogo.png') }}" alt="Ace Medical Center Tuguegarao" style="width: 120px; height: auto;">
                         </td>
                     </tr>
 
