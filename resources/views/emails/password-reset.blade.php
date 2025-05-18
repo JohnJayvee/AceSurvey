@@ -28,29 +28,20 @@
         <tr>
             <td align="center" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative;">
                 <table class="content" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%; margin: 0; padding: 0; width: 100%;">
-                    <!-- Header -->
-                    <tr>
-                        <td class="header" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; padding: 25px 0; text-align: center; background-color: #1e40af;">
-                            <img src="{{ asset('./AceLogo.png') }}" alt="Ace Medical Center" style="width: 120px; height: auto;">
-                        </td>
-                    </tr>
-
                     <!-- Body -->
                     <tr>
-                        <td class="body" width="100%" cellpadding="0" cellspacing="0" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%; background-color: #edf2f7; border-bottom: 1px solid #edf2f7; border-top: 1px solid #edf2f7; margin: 0; padding: 0; width: 100%;">
-                            <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 570px; background-color: #ffffff; border-color: #e8e5ef; border-radius: 8px; border-width: 1px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin: 0 auto; padding: 0; width: 570px; margin-top: -15px;">
+                        <td class="body" width="100%" cellpadding="0" cellspacing="0" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%; background-color: #edf2f7; border-bottom: 1px solid #edf2f7; border-top: 1px solid #edf2f7; margin: 0; padding: 32px 0; width: 100%;">
+                            <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 570px; background-color: #ffffff; border-color: #e8e5ef; border-radius: 8px; border-width: 1px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin: 0 auto; padding: 0; width: 570px;">
                                 <tr>
                                     <td class="content-cell" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; max-width: 100vw; padding: 32px;">
-                                        <!-- Success Icon -->
+                                        <!-- Logo in Circle -->
                                         <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                                             <tr>
                                                 <td align="center" style="padding-bottom: 24px;">
-                                                    <table width="80px" height="80px" cellpadding="0" cellspacing="0" role="presentation" style="border-radius: 50%; background-color: rgba(16, 185, 129, 0.1); margin: 0 auto;">
+                                                    <table width="100px" height="100px" cellpadding="0" cellspacing="0" role="presentation" style="border-radius: 50%; background-color: #ffffff; border: 1px solid #e5e7eb; margin: 0 auto; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
                                                         <tr>
                                                             <td align="center" valign="middle">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#10b981" width="48" height="48">
-                                                                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
-                                                                </svg>
+                                                                <img src="{{ asset('./AceLogo.png') }}" alt="Ace Medical Center" style="width: 80px; height: auto; border-radius: 50%; object-fit: contain;">
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -96,11 +87,6 @@
                                                 </td>
                                             </tr>
                                         </table>
-
-                                        <!-- Security Message -->
-                                        <p style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; font-size: 16px; line-height: 1.6em; margin-top: 24px; text-align: left; color: #4b5563; background-color: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                                            For security reasons, we recommend using a strong, unique password for your account. Your new password is not visible to anyone, including our staff.
-                                        </p>
 
                                         <!-- Warning -->
                                         <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top: 28px; border-left: 4px solid #ef4444; background-color: #fef2f2; border-radius: 0 6px 6px 0;">
