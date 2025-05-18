@@ -17,23 +17,45 @@ export default function Respondent() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        let isMounted = true;
+        const controller = new AbortController();
+
         const fetchResponseDetails = async () => {
             try {
                 setLoading(true);
-                const response = await axiosClient.get(
-                    `/survey/${surveyId}/responses/${responseId}/details`
+
+                // Use getWithCache with unique requestKey to prevent cancellation
+                const response = await axiosClient.getWithCache(
+                    `/survey/${surveyId}/responses/${responseId}/details`,
+                    {},  // empty params
+                    {
+                        signal: controller.signal,
+                        requestKey: `respondent_details_${surveyId}_${responseId}_${Date.now()}`,
+                        cancelPrevious: false
+                    }
                 );
-                setResponseDetails(response.data);
+
+                if (isMounted) {
+                    setResponseDetails(response.data);
+                    setLoading(false);
+                }
             } catch (error) {
-                setError(
-                    error.response ? error.response.data.message : error.message
-                );
-            } finally {
-                setLoading(false);
+                if (isMounted && !error.isCanceled && error.name !== 'AbortError') {
+                    setError(
+                        error.response ? error.response.data.message : error.message
+                    );
+                    setLoading(false);
+                }
             }
         };
 
         fetchResponseDetails();
+
+        // Cleanup function
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
     }, [surveyId, responseId]);
 
     if (loading) return (
