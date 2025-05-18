@@ -6,8 +6,55 @@ const baseURLs = [
     import.meta.env.VITE_API_OFFICE,
 ];
 
+// Cache and request tracking
+const responseCache = new Map();
+const pendingRequests = new Map();
+const debouncedFunctions = new Map();
+
+// Configuration
+const CACHE_TTL = 60000; // 1 minute cache lifetime
+const MAX_CACHE_SIZE = 100; // Maximum cached responses
+
 let clientReady = null;
 
+/**
+ * Properly implemented debounce function
+ */
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+/**
+ * Trims cache when it exceeds limit
+ */
+const trimCache = () => {
+    if (responseCache.size <= MAX_CACHE_SIZE) return;
+
+    const entries = Array.from(responseCache.entries());
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+
+    const toRemove = entries.slice(0, Math.floor(MAX_CACHE_SIZE * 0.2));
+    toRemove.forEach(([key]) => responseCache.delete(key));
+};
+
+/**
+ * Generate consistent request keys
+ */
+const getRequestKey = (method, url, params = {}, data = {}) => {
+    const paramString = typeof params === 'object' ? JSON.stringify(params) : params;
+    const dataString = data ? JSON.stringify(data) : '';
+    return `${method.toUpperCase()}:${url}:${paramString}:${dataString}`;
+};
+
+// Try connecting to available API endpoints
 const clientPromise = new Promise(async (resolve) => {
     for (const url of baseURLs) {
         try {
@@ -17,25 +64,117 @@ const clientPromise = new Promise(async (resolve) => {
                 baseURL: `${url}/api`,
                 withCredentials: true,
                 headers: {
-                    'Content-Type': 'application/json', // Set header during client creation
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                }
+                },
+                timeout: 30000
             });
 
+            // Request interceptor with caching and cancellation
             client.interceptors.request.use((config) => {
+                // Auth token
                 const token = localStorage.getItem("TOKEN") || sessionStorage.getItem("TOKEN");
-                if (token) config.headers.Authorization = `Bearer ${token}`;
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+
+                // Set up cancellation
+                const controller = new AbortController();
+
+                // Merge with existing signal if present
+                if (config.signal) {
+                    const originalSignal = config.signal;
+                    originalSignal.addEventListener('abort', () => controller.abort());
+                }
+
+                config.signal = controller.signal;
+
+                // Generate or use request key
+                const method = config.method || 'get';
+                const requestKey = config.requestKey ||
+                    getRequestKey(method, config.url, config.params, config.data);
+                config.requestKey = requestKey;
+
+                // Check cache for GET requests
+                if (method === 'get' && config.cache !== false) {
+                    const cached = responseCache.get(requestKey);
+                    if (cached && Date.now() - cached.timestamp < (config.cacheTTL || CACHE_TTL)) {
+                        // Short-circuit if resolving from cache
+                        if (config.resolveFromCache) {
+                            return { ...config, cachedResponse: cached };
+                        }
+                    }
+                }
+
+                // Cancel existing request with same key
+                if (pendingRequests.has(requestKey)) {
+                    const pendingController = pendingRequests.get(requestKey);
+                    pendingController.abort();
+                    pendingRequests.delete(requestKey);
+                }
+
+                // Track for cancellation
+                pendingRequests.set(requestKey, controller);
+
                 return config;
             });
 
+            // Response interceptor with cache management
             client.interceptors.response.use(
-                (res) => res,
+                (response) => {
+                    const { config } = response;
+
+                    // Handle cached responses
+                    if (config.cachedResponse) {
+                        return {
+                            ...response,
+                            data: config.cachedResponse.data,
+                            headers: config.cachedResponse.headers,
+                            fromCache: true,
+                            status: 200,
+                        };
+                    }
+
+                    // Remove from pending requests
+                    if (config.requestKey) {
+                        pendingRequests.delete(config.requestKey);
+                    }
+
+                    // Cache successful GET responses
+                    if (config.method === 'get' && config.cache !== false) {
+                        responseCache.set(config.requestKey, {
+                            data: response.data,
+                            timestamp: Date.now(),
+                            headers: response.headers
+                        });
+
+                        trimCache();
+                    }
+
+                    return response;
+                },
                 (error) => {
+                    // Handle aborted requests
+                    if (axios.isCancel(error)) {
+                        return Promise.reject({
+                            isCanceled: true,
+                            message: 'Request was canceled',
+                            originalError: error
+                        });
+                    }
+
+                    // Clean up pending request
+                    if (error.config?.requestKey) {
+                        pendingRequests.delete(error.config.requestKey);
+                    }
+
+                    // Handle authentication errors
                     if (error.response?.status === 401) {
                         localStorage.removeItem("TOKEN");
                         sessionStorage.removeItem("TOKEN");
                         // window.location.reload();
                     }
+
                     throw error;
                 }
             );
@@ -52,11 +191,203 @@ const clientPromise = new Promise(async (resolve) => {
     resolve(null);
 });
 
-// Improved proxy implementation that safely handles property access
-const axiosClient = new Proxy({}, {
+// Enhanced proxy implementation that safely handles property access and adds lifecycle methods
+const axiosClient = new Proxy({
+    // Add custom methods to the proxy target
+
+    // Cancel a specific request by key
+    cancelRequest: (key) => {
+        if (pendingRequests.has(key)) {
+            const controller = pendingRequests.get(key);
+            controller.abort();
+            pendingRequests.delete(key);
+            return true;
+        }
+        return false;
+    },
+
+    // Cancel all pending requests
+    cancelAllRequests: () => {
+        let count = 0;
+        pendingRequests.forEach((controller) => {
+            controller.abort();
+            count++;
+        });
+        pendingRequests.clear();
+        return count;
+    },
+
+    // Check if a request is pending
+    isRequestPending: (key) => pendingRequests.has(key),
+
+    // Get all pending request keys
+    getPendingRequests: () => Array.from(pendingRequests.keys()),
+
+    // Clear entire response cache
+    clearCache: () => {
+        const size = responseCache.size;
+        responseCache.clear();
+        return size;
+    },
+
+    // Invalidate cache entries by prefix
+    invalidateCache: (keyPrefix) => {
+        let count = 0;
+        for (const key of responseCache.keys()) {
+            if (key.startsWith(keyPrefix)) {
+                responseCache.delete(key);
+                count++;
+            }
+        }
+        return count;
+    },
+
+    // Clear all debounced functions
+    clearDebouncedRequests: () => {
+        const count = debouncedFunctions.size;
+        debouncedFunctions.clear();
+        return count;
+    },
+
+    // Get cache statistics
+    getCacheStats: () => {
+        return {
+            size: responseCache.size,
+            maxSize: MAX_CACHE_SIZE,
+            pendingRequests: pendingRequests.size,
+            pendingKeys: Array.from(pendingRequests.keys()),
+            debouncedRequests: debouncedFunctions.size
+        };
+    },
+
+    // Enhanced GET with caching
+    getWithCache: async (url, params = {}, options = {}) => {
+        if (!clientReady) {
+            clientReady = await clientPromise;
+        }
+
+        if (!clientReady) {
+            throw new Error("Axios client initialization failed. Check your API URLs.");
+        }
+
+        const config = {
+            ...options,
+            params,
+            method: 'get',
+            cache: options.cache !== false,
+            cacheTTL: options.cacheTTL || CACHE_TTL
+        };
+
+        const requestKey = options.requestKey || getRequestKey('get', url, params);
+        config.requestKey = requestKey;
+
+        // Fast path for cached data
+        const cached = responseCache.get(requestKey);
+        if (cached && Date.now() - cached.timestamp < config.cacheTTL) {
+            return Promise.resolve({
+                data: cached.data,
+                headers: cached.headers,
+                fromCache: true,
+                status: 200,
+                statusText: 'OK (cached)'
+            });
+        }
+
+        return clientReady.get(url, config);
+    },
+
+    // POST with cache invalidation
+    postWithCancel: async (url, data = {}, options = {}) => {
+        if (!clientReady) {
+            clientReady = await clientPromise;
+        }
+
+        if (!clientReady) {
+            throw new Error("Axios client initialization failed. Check your API URLs.");
+        }
+
+        const requestKey = options.requestKey || getRequestKey('post', url, {}, data);
+
+        // Invalidate affected caches
+        if (options.invalidateCache !== false) {
+            const cachePrefix = options.cachePrefix || url.split('/')[1];
+            let count = 0;
+            for (const key of responseCache.keys()) {
+                if (key.startsWith(`GET:/${cachePrefix}`)) {
+                    responseCache.delete(key);
+                    count++;
+                }
+            }
+        }
+
+        return clientReady.post(url, data, {
+            ...options,
+            requestKey,
+            cache: false
+        });
+    },
+
+    // Properly implemented debounced GET with promise interface
+    getDebouncedWithCancel: async (url, params = {}, options = {}) => {
+        if (!clientReady) {
+            clientReady = await clientPromise;
+        }
+
+        if (!clientReady) {
+            throw new Error("Axios client initialization failed. Check your API URLs.");
+        }
+
+        const debounceTime = options.debounceTime || 300;
+        const requestKey = options.requestKey || `debounced:${getRequestKey('get', url, params)}`;
+
+        // Create promise-based debounced function
+        if (!debouncedFunctions.has(requestKey)) {
+            let resolvePromise = null;
+            let rejectPromise = null;
+
+            // Create the debounced executor
+            const debouncedExecutor = debounce(async () => {
+                try {
+                    const config = {
+                        ...options,
+                        params,
+                        method: 'get',
+                        requestKey: `${requestKey}:executed`
+                    };
+
+                    const response = await clientReady.get(url, config);
+                    if (resolvePromise) resolvePromise(response);
+                } catch (error) {
+                    if (rejectPromise) rejectPromise(error);
+                }
+            }, debounceTime);
+
+            // Store the function and its resolver
+            debouncedFunctions.set(requestKey, {
+                execute: debouncedExecutor,
+                setPromiseHandlers: (resolve, reject) => {
+                    resolvePromise = resolve;
+                    rejectPromise = reject;
+                }
+            });
+        }
+
+        // Return promise that will be resolved when the debounced function executes
+        return new Promise((resolve, reject) => {
+            const debouncedFn = debouncedFunctions.get(requestKey);
+            debouncedFn.setPromiseHandlers(resolve, reject);
+            debouncedFn.execute();
+        });
+    }
+}, {
     get(target, prop) {
+        // Handle direct access to custom methods
+        if (prop in target) {
+            return target[prop];
+        }
+
+        // Handle promise methods correctly
         if (prop === 'then' || prop === 'catch') {
-            // Handle promises correctly
             return undefined;
         }
 
