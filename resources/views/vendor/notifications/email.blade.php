@@ -103,7 +103,7 @@
                                             @endif
                                         </p>
 
-                                        <!-- Action URL -->
+                                        {{-- <!-- Action URL -->
                                         @isset($actionText)
                                         <table class="subcopy" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; position: relative; border-top: 1px solid #e8e5ef; margin-top: 25px; padding-top: 25px;">
                                             <tr>
@@ -117,7 +117,7 @@
                                                 </td>
                                             </tr>
                                         </table>
-                                        @endisset
+                                        @endisset --}}
                                     </td>
                                 </tr>
                             </table>
