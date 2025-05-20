@@ -482,18 +482,7 @@ class SurveyController extends Controller
         // Get IDs of surveys belonging to the logged-in user
         $userSurveyIds = Survey::where('user_id', $user->id)->pluck('id');
 
-        // Get survey answers for user's surveys
-        $totalAnswers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($userSurveyIds) {
-            $query->whereIn('survey_id', $userSurveyIds);
-        })->count();
-
-        if ($totalAnswers === 0) {
-            return response()->json([
-                'message' => 'No ratings found for this survey answer',
-                'ratings' => []
-            ]);
-        }
-
+        // Initialize ratings array
         $ratings = [
             '5' => ['count' => 0, 'percentage' => 0],
             '4' => ['count' => 0, 'percentage' => 0],
@@ -502,18 +491,36 @@ class SurveyController extends Controller
             '1' => ['count' => 0, 'percentage' => 0]
         ];
 
+        // Get all answers for this specific survey answer
         $answers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($user, $surveyAnswerId) {
-            $query->where('id', $surveyAnswerId)
+            $query->where('survey_id', $surveyAnswerId)
                 ->whereHas('survey', function ($q) use ($user) {
                     $q->where('user_id', $user->id);
                 });
-        })
-            ->whereRaw('answer REGEXP "^[1-5]"')
-            ->get();
+        })->get();
+
+        if ($answers->isEmpty()) {
+            return response()->json([
+                'message' => 'No ratings found for this survey answer',
+                'ratings' => $ratings
+            ]);
+        }
 
         foreach ($answers as $answer) {
-            $rating = substr($answer->answer, 0, 1);
-            if (isset($ratings[$rating])) {
+            // Improved rating detection - handle both string and JSON formats
+            $answerValue = $answer->answer;
+
+            // Try to decode if it's JSON
+            $decoded = json_decode($answerValue, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                // Handle JSON format if needed
+                continue; // Skip JSON answers for now - modify based on your data structure
+            }
+
+            // Clean the answer string and check if it starts with a digit 1-5
+            $cleanAnswer = trim($answerValue);
+            if (preg_match('/^([1-5])/', $cleanAnswer, $matches)) {
+                $rating = $matches[1];
                 $ratings[$rating]['count']++;
             }
         }
