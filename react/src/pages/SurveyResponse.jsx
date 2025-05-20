@@ -318,12 +318,22 @@ export default function SurveyResponse() {
     ];
 
     const rows = responses.data.map((response) => {
+        // Get created date from any answer (they should all have the same timestamp)
         const createdAt = new Date(response.answers[0]?.created_at);
-        const answerDisplay = response.answers[0]?.answer || "No answer";
+
+        // Find the first question's answer
+        let nameAnswer = "No answer";
+        if (survey.questions && survey.questions.length > 0) {
+            const firstQuestion = survey.questions[0].question;
+            const firstQuestionAnswer = response.answers.find(
+                ans => ans.question === firstQuestion
+            );
+            nameAnswer = firstQuestionAnswer?.answer || "No answer";
+        }
 
         return {
             id: response.id,
-            answer: answerDisplay,
+            answer: nameAnswer,
             date: format(createdAt, "MMMM d, yyyy"),
             time: format(createdAt, "h:mm a"),
         };
