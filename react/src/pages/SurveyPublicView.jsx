@@ -43,7 +43,15 @@ const surveyCache = {
 
 export default function SurveyPublicView() {
     const { slug } = useParams();
-    const [survey, setSurvey] = useState({ questions: [] });
+    const [survey, setSurvey] = useState({
+        id: null,
+        questions: [],
+        title: '',
+        description: '',
+        status: false,
+        expire_date: new Date().toISOString(),
+        image_url: null
+    });
     const [answers, setAnswers] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -66,16 +74,43 @@ export default function SurveyPublicView() {
         setError(null);
 
         try {
-            const { data } = await axiosClient.get(`survey/get-by-slug/${slug}`);
+            console.log("Attempting to fetch survey with slug:", slug);
+            const response = await axiosClient.get(`survey/get-by-slug/${slug}`);
+            console.log("Raw API response:", response);
+
+            // Check if data structure is as expected
+            if (!response.data || !response.data.data) {
+                throw new Error("API response format is not as expected");
+            }
+
             console.log("Survey data received for slug:", slug);
 
             // Cache the data
-            surveyCache.set(slug, data.data);
-            setSurvey(data.data);
+            surveyCache.set(slug, response.data.data);
+            setSurvey(response.data.data);
         } catch (error) {
             console.error("Error fetching survey:", error);
-            setError(error.response?.data?.message ||
-                "An error occurred while loading the survey.");
+
+            // More detailed error logging
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.error("Error response data:", error.response.data);
+                console.error("Error response status:", error.response.status);
+                console.error("Error response headers:", error.response.headers);
+            } else if (error.request) {
+                // The request was made but no response was received
+                console.error("No response received:", error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                console.error("Request setup error:", error.message);
+            }
+
+            setError(
+                (error.response?.data?.message) ||
+                (typeof error === 'string' ? error : error.message) ||
+                "An error occurred while loading the survey."
+            );
         } finally {
             setLoading(false);
         }
@@ -102,6 +137,12 @@ export default function SurveyPublicView() {
         setIsSubmitting(true);
         setSubmissionError(null);
 
+        if (!survey?.id) {
+            setSubmissionError("Cannot submit survey: Survey data not fully loaded.");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             await axiosClient.post(`/survey/${survey.id}/answer`, { answers });
             setSurveyFinished(true);
@@ -114,7 +155,7 @@ export default function SurveyPublicView() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [answers, survey.id, isSubmitting]);
+    }, [answers, survey?.id, isSubmitting]);
 
     // Debounced submit handler
     const debouncedSubmit = useCallback(
