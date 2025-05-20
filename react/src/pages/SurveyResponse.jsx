@@ -311,7 +311,15 @@ export default function SurveyResponse() {
 
     const rows = responses.data.map((response) => {
         const createdAt = new Date(response.answers[0]?.created_at);
-        const answerDisplay = response.answers[0]?.answer || "No answer";
+
+        // Get the first question from the survey
+        const firstQuestion = survey.questions?.[0]?.question;
+
+        // Find the answer that corresponds to the first question
+        const firstAnswer = response.answers.find(ans => ans.question === firstQuestion);
+
+        // Use the first question's answer as the display, or fallback to "No answer"
+        const answerDisplay = firstAnswer?.answer || "No answer";
 
         return {
             id: response.id,
