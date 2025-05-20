@@ -21,9 +21,13 @@ const COLORS = ['#22C55E', '#3B82F6', '#EAB308', '#F97316', '#EF4444'];
 const RADIAN = Math.PI / 180;
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    // Calculate position for the label
     const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    // Calculate font size - smaller for tiny slices
+    const fontSize = percent < 0.05 ? '10px' : '14px';
 
     return (
         <text
@@ -32,9 +36,13 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
             fill="white"
             textAnchor={x > cx ? 'start' : 'end'}
             dominantBaseline="central"
-            style={{ fontSize: '14px', fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
+            style={{
+                fontSize,
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+            }}
         >
-            {percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
+            {`${(percent * 100).toFixed(0)}%`}
         </text>
     );
 };
@@ -311,15 +319,7 @@ export default function SurveyResponse() {
 
     const rows = responses.data.map((response) => {
         const createdAt = new Date(response.answers[0]?.created_at);
-
-        // Get the first question from the survey
-        const firstQuestion = survey.questions?.[0]?.question;
-
-        // Find the answer that corresponds to the first question
-        const firstAnswer = response.answers.find(ans => ans.question === firstQuestion);
-
-        // Use the first question's answer as the display, or fallback to "No answer"
-        const answerDisplay = firstAnswer?.answer || "No answer";
+        const answerDisplay = response.answers[0]?.answer || "No answer";
 
         return {
             id: response.id,
