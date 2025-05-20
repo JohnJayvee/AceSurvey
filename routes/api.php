@@ -14,6 +14,9 @@ Route::get('/survey/links', [SurveyController::class, 'getLinks'])->name('survey
 Route::post('forgot-password', [AuthController::class, 'sendResetLinkEmail']);
 Route::post('reset', [AuthController::class, 'reset'])->name('password.reset');
 
+// Email verification endpoint for password reset flow
+Route::post('/verify-email-exists', [AuthController::class, 'verifyEmailExists']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/survey-analytics', [DashboardController::class, 'analytics']);
 
@@ -29,10 +32,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/survey/{survey}/responses/{responseId}/details', [SurveyController::class, 'getResponseDetails'])->name('survey.getResponseDetails');
     Route::get('/total-ratings', [SurveyController::class, 'totalRatings'])->name('totalRatings');
     Route::get('/total-department-ratings/{surveyAnswerId}', [SurveyController::class, 'totalDepartmentRatings'])->name('totalDepartmentRatings');
-
-
-
-
 
     Route::get('/topSurvey', [SurveyController::class, 'topSurvey']);
     Route::get('/botSurvey', [SurveyController::class, 'botSurvey']);

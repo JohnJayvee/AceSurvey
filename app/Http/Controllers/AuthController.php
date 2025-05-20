@@ -207,14 +207,37 @@ class AuthController extends Controller
     {
         $data = $request->validate(['email' => 'required|email']);
 
+        // First check if the email exists (prevents throttling for non-existent emails)
+        $user = User::where('email', $data['email'])->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'If the email exists in our system, we will send a password reset link.'
+            ], 200);
+        }
+
+        // Clear any previous reset attempts for this user to prevent throttling
+        DB::table('password_resets')
+            ->where('email', $data['email'])
+            ->delete();
+
+        // Send the reset link
         $status = Password::sendResetLink($data);
 
+        // Add debugging to see the exact status
+        \Log::info('Password reset status: ' . $status . ' for email: ' . $data['email']);
+
+        // Return appropriate response based on status
         if ($status === Password::RESET_LINK_SENT) {
-            return response()->json(['message' => __($status)], 200);
+            return response()->json(['message' => 'Password reset link has been sent to your email.'], 200);
         } elseif ($status === Password::RESET_THROTTLED) {
-            return response()->json(['message' => 'Please wait before retrying.'], 429);
+            // Override throttling with a more user-friendly message and status
+            return response()->json([
+                'message' => 'Password reset link has been sent to your email.'
+            ], 200);
         } else {
-            return response()->json(['message' => __($status)], 400);
+            return response()->json([
+                'message' => 'Unable to send password reset link. Please try again later.'
+            ], 400);
         }
     }
 
@@ -257,5 +280,38 @@ class AuthController extends Controller
         Mail::to($user->email)->send(new EmailChanged($user));
 
         return response()->json(['message' => 'Email address updated successfully.'], 200);
+    }
+
+    /**
+     * Verify if an email exists and return basic account information
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function verifyEmailExists(Request $request)
+    {
+        // Validate the input
+        $data = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // Find the user by email
+        $user = User::where('email', $data['email'])->first();
+
+        // If no user is found with this email
+        if (!$user) {
+            return response()->json([
+                'message' => 'No account found with this email address'
+            ], 404);
+        }
+
+        // Return basic account information (no sensitive data)
+        return response()->json([
+            'accountInfo' => [
+                'name' => $user->name,
+                'avatarUrl' => $user->avatar_url ?? null, // Assuming you have an avatar_url field
+                // You can add other non-sensitive fields here
+            ]
+        ]);
     }
 }
