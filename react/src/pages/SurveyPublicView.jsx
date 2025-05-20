@@ -67,12 +67,14 @@ export default function SurveyPublicView() {
                 setLoading(false);
             })
             .catch((error) => {
-                console.error("Error fetching survey:", error);
-                if (error.response && error.response.status === 404) {
-                    setError(error.response.data.message);
-                } else {
-                    setError("An error occurred while loading the survey.");
+                // Don't update state if the request was canceled (component unmounted)
+                if (isRequestCanceled(error)) {
+                    console.log("Request canceled:", error.message);
+                    return;
                 }
+
+                console.error("Error fetching survey:", error);
+                setError(error.response?.data?.message || "An error occurred while loading the survey.");
                 setLoading(false);
             })
             .finally(() => {
@@ -320,4 +322,10 @@ export default function SurveyPublicView() {
             </div>
         </div>
     );
+}
+
+function isRequestCanceled(error) {
+    return error.__CANCEL__ ||
+        (error.message && error.message.includes('cancel')) ||
+        error.name === 'CanceledError';
 }
