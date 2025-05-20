@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "../axios";
 import PublicQuestionView from "../components/PublicQuestionView";
@@ -10,112 +10,119 @@ import { motion } from "framer-motion";
 import { debounce } from 'lodash';
 import ErrorMessage from "../components/ErrorMessage";
 
-const isFetching = {}; // Keep this but use it properly
-const cache = {};
+// Use a proper cache with localStorage support
+const surveyCache = {
+    data: {},
+    set(key, value) {
+        this.data[key] = value;
+        // Also save to localStorage for persistence between sessions
+        try {
+            localStorage.setItem(`survey_${key}`, JSON.stringify(value));
+        } catch (e) {
+            console.warn('Could not save to localStorage:', e);
+        }
+    },
+    get(key) {
+        // Try to get from memory first
+        if (this.data[key]) return this.data[key];
+
+        // Otherwise try localStorage
+        try {
+            const item = localStorage.getItem(`survey_${key}`);
+            if (item) {
+                const parsed = JSON.parse(item);
+                this.data[key] = parsed; // Update in-memory cache
+                return parsed;
+            }
+        } catch (e) {
+            console.warn('Could not retrieve from localStorage:', e);
+        }
+        return null;
+    }
+};
 
 export default function SurveyPublicView() {
-    const answers = {};
-    const [surveyFinished, setSurveyFinished] = useState(false);
-    const [survey, setSurvey] = useState({
-        questions: [],
-    });
+    const { slug } = useParams();
+    const [survey, setSurvey] = useState({ questions: [] });
+    const [answers, setAnswers] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [submissionError, setSubmissionError] = useState(null);
-    const { slug } = useParams();
-    const hasFetched = useRef(false);
+    const [surveyFinished, setSurveyFinished] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
+    // Function to fetch survey data
+    const fetchSurvey = useCallback(async () => {
         // Check cache first
-        if (cache[slug]) {
+        const cachedData = surveyCache.get(slug);
+        if (cachedData) {
             console.log("Using cached survey data for slug:", slug);
-            setSurvey(cache[slug]);
+            setSurvey(cachedData);
             setLoading(false);
             return;
         }
 
-        // Check if this slug is already being fetched globally
-        if (isFetching[slug]) {
-            console.log("Request for this slug already in progress");
-            // Wait for the existing request to complete
-            const checkCache = setInterval(() => {
-                if (cache[slug]) {
-                    clearInterval(checkCache);
-                    setSurvey(cache[slug]);
-                    setLoading(false);
-                }
-            }, 100);
-
-            // Cleanup interval if component unmounts
-            return () => clearInterval(checkCache);
-        }
-
-        // Mark this slug as being fetched globally
-        isFetching[slug] = true;
-        console.log("Starting new request for slug:", slug);
-
         setLoading(true);
+        setError(null);
 
-        // Make the API request
-        axiosClient.get(`survey/get-by-slug/${slug}`)
-            .then(({ data }) => {
-                console.log("Survey data received for slug:", slug);
-                // Cache the data
-                cache[slug] = data.data;
-                // Update state if component is still mounted
-                setSurvey(data.data);
-                setLoading(false);
-            })
-            .catch((error) => {
-                // Don't update state if the request was canceled (component unmounted)
-                if (isRequestCanceled(error)) {
-                    console.log("Request canceled:", error.message);
-                    return;
-                }
+        try {
+            const { data } = await axiosClient.get(`survey/get-by-slug/${slug}`);
+            console.log("Survey data received for slug:", slug);
 
-                console.error("Error fetching survey:", error);
-                setError(error.response?.data?.message || "An error occurred while loading the survey.");
-                setLoading(false);
-            })
-            .finally(() => {
-                // Clear the fetching flag when done
-                isFetching[slug] = false;
-            });
+            // Cache the data
+            surveyCache.set(slug, data.data);
+            setSurvey(data.data);
+        } catch (error) {
+            console.error("Error fetching survey:", error);
+            setError(error.response?.data?.message ||
+                "An error occurred while loading the survey.");
+        } finally {
+            setLoading(false);
+        }
+    }, [slug]);
 
-        // Cleanup function for component unmount
-        return () => {
-            // Don't clear the cache, but do clear the fetching flag if this component unmounts
-            if (isFetching[slug]) {
-                console.log("Component unmounted during fetch, clearing flag");
-                isFetching[slug] = false;
-            }
-        };
-    }, [slug]); // Only run again if slug changes
+    // Load survey data
+    useEffect(() => {
+        fetchSurvey();
+    }, [fetchSurvey]);
 
-    // Debounce the submit function to prevent double-clicks
-    const submitSurvey = debounce(() => {
-        // Clear any previous errors
+    // Handle answer changes
+    const handleAnswerChange = useCallback((question, value) => {
+        setAnswers(prev => ({
+            ...prev,
+            [question.id]: value
+        }));
+    }, []);
+
+    // Submit the survey
+    const handleSubmit = useCallback(async (e) => {
+        if (e) e.preventDefault();
+
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         setSubmissionError(null);
 
-        axiosClient.post(`/survey/${survey.id}/answer`, {
-            answers,
-        })
-            .then((response) => {
-                setSurveyFinished(true);
-            })
-            .catch(error => {
-                console.error("Error submitting survey:", error);
-                setSubmissionError(
-                    error.response?.data?.message ||
-                    "There was a problem submitting your response. Please try again."
-                );
-            });
-    }, 300);
+        try {
+            await axiosClient.post(`/survey/${survey.id}/answer`, { answers });
+            setSurveyFinished(true);
+        } catch (error) {
+            console.error("Error submitting survey:", error);
+            setSubmissionError(
+                error.response?.data?.message ||
+                "There was a problem submitting your response. Please try again."
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [answers, survey.id, isSubmitting]);
 
-    function answerChanged(question, value) {
-        answers[question.id] = value;
-    }
+    // Debounced submit handler
+    const debouncedSubmit = useCallback(
+        debounce((e) => handleSubmit(e), 300),
+        [handleSubmit]
+    );
 
+    // Loading state
     if (loading) {
         return (
             <div className="w-full min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -153,6 +160,7 @@ export default function SurveyPublicView() {
         );
     }
 
+    // Error state
     if (error) {
         return (
             <div className="w-full min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -195,13 +203,12 @@ export default function SurveyPublicView() {
                 <AnimatedBackground />
             </div>
             <div className="relative z-10 w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
-                <form onSubmit={(ev) => {
-                    // Call preventDefault immediately to stop the reload
-                    ev.preventDefault();
-                    // Then call your debounced function without passing the event
-                    submitSurvey();
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    debouncedSubmit();
                 }}>
                     <div className="space-y-6">
+                        {/* Survey Header Card */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -213,8 +220,7 @@ export default function SurveyPublicView() {
                                         <img
                                             src={survey.image_url || '/AceLogo.png'}
                                             loading="lazy"
-                                            className={`w-full h-full transition-transform duration-300 hover:scale-105 ${!survey.image_url ? 'object-contain p-8' : 'object-cover'
-                                                }`}
+                                            className={`w-full h-full transition-transform duration-300 hover:scale-105 ${!survey.image_url ? 'object-contain p-8' : 'object-cover'}`}
                                             alt={survey.title}
                                             onError={(e) => {
                                                 e.target.onerror = null;
@@ -289,7 +295,7 @@ export default function SurveyPublicView() {
                                             <PublicQuestionView
                                                 question={question}
                                                 index={index}
-                                                answerChanged={(val) => answerChanged(question, val)}
+                                                answerChanged={(val) => handleAnswerChange(question, val)}
                                             />
                                         </motion.div>
                                     ))}
@@ -309,10 +315,11 @@ export default function SurveyPublicView() {
                                     className="flex justify-end"
                                 >
                                     <button
-                                        className="px-6 py-3 text-base font-medium text-white transition-all duration-300 bg-blue-600 rounded-xl hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        className={`px-6 py-3 text-base font-medium text-white transition-all duration-300 bg-blue-600 rounded-xl hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                                         type="submit"
+                                        disabled={isSubmitting}
                                     >
-                                        Submit Survey
+                                        {isSubmitting ? 'Submitting...' : 'Submit Survey'}
                                     </button>
                                 </motion.div>
                             </>
@@ -322,10 +329,4 @@ export default function SurveyPublicView() {
             </div>
         </div>
     );
-}
-
-function isRequestCanceled(error) {
-    return error.__CANCEL__ ||
-        (error.message && error.message.includes('cancel')) ||
-        error.name === 'CanceledError';
 }
