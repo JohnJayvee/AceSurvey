@@ -17,7 +17,7 @@ import { motion } from "framer-motion";
 import { HiDownload } from "react-icons/hi";
 import { debounce } from 'lodash';
 
-const COLORS = ['#22C55E', '#3B82F6', '#EAB308', '#F97316', '#EF4444'];
+const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF9800', '#F44336'];
 const RADIAN = Math.PI / 180;
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {

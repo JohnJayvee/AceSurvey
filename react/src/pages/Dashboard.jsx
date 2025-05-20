@@ -13,7 +13,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';  // Importing Recharts
 import { PieChart, Pie, Cell } from 'recharts'; // Importing PieChart components
 
-const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#6366F1'];
+const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF9800', '#F44336'];
 const RADIAN = Math.PI / 180;
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
