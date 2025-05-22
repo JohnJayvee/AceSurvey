@@ -3,7 +3,7 @@ import './css/AnimatedBackground.css';
 
 const AnimatedBackground = memo(() => {
     const getRandomColor = () => {
-        // Use more vibrant colors with lower opacity
+        // Pure red and green with consistent 20% opacity
         return Math.random() < 0.5
             ? 'rgba(255, 0, 0, 0.2)' // Pure red with 20% opacity
             : 'rgba(0, 255, 0, 0.2)'; // Pure green with 20% opacity
@@ -16,7 +16,8 @@ const AnimatedBackground = memo(() => {
                     key={index}
                     className="line"
                     style={{
-                        backgroundColor: getRandomColor()
+                        backgroundColor: getRandomColor(),
+                        willChange: 'transform' // Performance hint for browsers
                     }}
                 />
             ))}

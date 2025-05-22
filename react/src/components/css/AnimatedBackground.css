@@ -12,87 +12,194 @@
 /* Common line styles */
 .line {
     position: absolute;
-    animation-duration: 4s;
-    animation-timing-function: linear;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    transform: translateZ(0);
     animation-iteration-count: infinite;
 }
 
-/* Vertical lines (y-axis) */
-.line:nth-child(odd) {
+/* Each line gets its own unique animation */
+.line:nth-child(1) {
     width: 2px;
-    /* Slightly thicker for better visibility */
     height: 100vh;
+    left: 23%;
     top: 0;
-    animation-name: moveVertical;
+    animation: line1 7.3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Horizontal lines (x-axis) */
-.line:nth-child(even) {
+.line:nth-child(2) {
     width: 100vw;
     height: 2px;
-    /* Slightly thicker for better visibility */
     left: 0;
-    animation-name: moveHorizontal;
+    top: 17%;
+    animation: line2 9.7s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
 }
 
-@keyframes moveVertical {
+.line:nth-child(3) {
+    width: 2px;
+    height: 100vh;
+    left: 67%;
+    top: 0;
+    animation: line3 15.2s linear infinite;
+}
+
+.line:nth-child(4) {
+    width: 100vw;
+    height: 2px;
+    left: 0;
+    top: 53%;
+    animation: line4 11.5s cubic-bezier(0.2, 0.8, 0.8, 0.2) infinite;
+}
+
+.line:nth-child(5) {
+    width: 2px;
+    height: 100vh;
+    left: 47%;
+    top: 0;
+    animation: line5 12.8s cubic-bezier(0.65, 0.05, 0.36, 1) infinite;
+}
+
+.line:nth-child(6) {
+    width: 100vw;
+    height: 2px;
+    left: 0;
+    top: 77%;
+    animation: line6 8.6s cubic-bezier(0.1, 0.9, 0.2, 1) infinite;
+}
+
+.line:nth-child(7) {
+    width: 2px;
+    height: 100vh;
+    left: 83%;
+    top: 0;
+    animation: line7 13.9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.line:nth-child(8) {
+    width: 100vw;
+    height: 2px;
+    left: 0;
+    top: 33%;
+    animation: line8 10.3s cubic-bezier(0.3, 0.7, 0.4, 0.9) infinite;
+}
+
+/* Unique animation patterns for each line */
+@keyframes line1 {
     0% {
         transform: translateY(-100vh);
     }
 
+    40% {
+        transform: translateY(30vh);
+    }
+
+    60% {
+        transform: translateY(60vh);
+    }
+
     100% {
-        transform: translateY(100vh);
+        transform: translateY(200vh);
     }
 }
 
-@keyframes moveHorizontal {
+@keyframes line2 {
     0% {
         transform: translateX(-100vw);
     }
 
+    50% {
+        transform: translateX(200vw);
+    }
+
     100% {
-        transform: translateX(100vw);
+        transform: translateX(-100vw);
     }
 }
 
-/* Position vertical lines */
-.line:nth-child(1) {
-    left: 20%;
-    animation-delay: 0s;
+@keyframes line3 {
+    0% {
+        transform: translateY(200vh) translateX(0);
+    }
+
+    100% {
+        transform: translateY(-100vh) translateX(20px);
+    }
 }
 
-.line:nth-child(3) {
-    left: 40%;
-    animation-delay: -1s;
+@keyframes line4 {
+    0% {
+        transform: translateX(200vw);
+    }
+
+    30% {
+        transform: translateX(50vw);
+    }
+
+    70% {
+        transform: translateX(25vw);
+    }
+
+    100% {
+        transform: translateX(-100vw);
+    }
 }
 
-.line:nth-child(5) {
-    left: 60%;
-    animation-delay: -2s;
+@keyframes line5 {
+    0% {
+        transform: translateY(-100vh) translateX(0);
+    }
+
+    100% {
+        transform: translateY(200vh) translateX(-15px);
+    }
 }
 
-.line:nth-child(7) {
-    left: 80%;
-    animation-delay: -3s;
+@keyframes line6 {
+    0% {
+        transform: translateX(50vw);
+    }
+
+    25% {
+        transform: translateX(-100vw);
+    }
+
+    75% {
+        transform: translateX(75vw);
+    }
+
+    100% {
+        transform: translateX(50vw);
+    }
 }
 
-/* Position horizontal lines */
-.line:nth-child(2) {
-    top: 20%;
-    animation-delay: -0.5s;
+@keyframes line7 {
+    0% {
+        transform: translateY(30vh);
+    }
+
+    33% {
+        transform: translateY(-100vh);
+    }
+
+    66% {
+        transform: translateY(200vh);
+    }
+
+    100% {
+        transform: translateY(30vh);
+    }
 }
 
-.line:nth-child(4) {
-    top: 40%;
-    animation-delay: -1.5s;
-}
+@keyframes line8 {
+    0% {
+        transform: translateX(-100vw);
+    }
 
-.line:nth-child(6) {
-    top: 60%;
-    animation-delay: -2.5s;
-}
+    65% {
+        transform: translateX(200vw);
+    }
 
-.line:nth-child(8) {
-    top: 80%;
-    animation-delay: -3.5s;
+    100% {
+        transform: translateX(-100vw);
+    }
 }
