@@ -13,7 +13,6 @@ import axiosClient from "../axios.js";
 import { useNavigate, useParams } from "react-router-dom";
 import SurveyQuestions from "../components/SurveyQuestions.jsx";
 import { useStateContext } from "../contexts/ContextProvider.jsx";
-import Loader from "../components/Loader.jsx";
 import ShareSurveyPopup from "../components/ShareSurveyPopup.jsx";
 import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
@@ -22,6 +21,8 @@ import { motion } from "framer-motion";
 import { debounce } from 'lodash';
 import ErrorMessage from "../components/ErrorMessage"; // Add this import
 import logo from "/AceLogo.png";
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const cache = {};
 const isFetching = {};
@@ -236,7 +237,76 @@ export default function SurveyView() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            {loading && <Loader />}
+            {loading && (
+                <div className="px-4 py-8 mx-auto max-w-7xl">
+                    <div className="mb-8">
+                        <Skeleton height={40} width={300} />
+                        <Skeleton height={20} width={400} className="mt-2" />
+                    </div>
+
+                    <div className="p-4 mb-6 bg-white border border-gray-100 shadow-sm rounded-xl">
+                        <div className="flex justify-between">
+                            <Skeleton width={40} height={40} borderRadius={8} />
+                            <div className="flex gap-2">
+                                <Skeleton width={100} height={40} borderRadius={8} />
+                                <Skeleton width={100} height={40} borderRadius={8} />
+                                <Skeleton width={100} height={40} borderRadius={8} />
+                                <Skeleton width={100} height={40} borderRadius={8} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="overflow-hidden bg-white shadow-sm rounded-xl">
+                            <div className="p-6 space-y-6 lg:p-8">
+                                <div className="grid gap-8 lg:grid-cols-2">
+                                    <div className="space-y-4">
+                                        <Skeleton height={200} className="rounded-lg" />
+                                        <Skeleton height={40} className="rounded-lg" />
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="p-4">
+                                            <Skeleton height={24} width={150} className="mb-2" />
+                                            <Skeleton height={48} className="rounded-lg" />
+                                        </div>
+
+                                        <div className="p-4">
+                                            <Skeleton height={24} width={150} className="mb-2" />
+                                            <Skeleton height={100} className="rounded-lg" />
+                                            <Skeleton height={16} width={300} className="mt-2" />
+                                        </div>
+
+                                        <div className="p-4">
+                                            <Skeleton height={24} width={150} className="mb-2" />
+                                            <Skeleton height={48} className="rounded-lg" />
+                                        </div>
+
+                                        <div className="p-4">
+                                            <Skeleton height={24} width={150} className="mb-2" />
+                                            <Skeleton height={60} className="rounded-lg" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-white shadow-sm rounded-xl">
+                            <Skeleton height={30} width={200} className="mb-4" />
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="mb-6">
+                                    <Skeleton height={60} className="mb-2 rounded-lg" />
+                                    <Skeleton height={40} width="80%" />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-end">
+                            <Skeleton height={40} width={120} className="rounded-lg" />
+                        </div>
+                    </div>
+                </div>
+            )}
             {!loading && (
                 <div className="px-4 py-8 mx-auto max-w-7xl">
                     <motion.div
@@ -560,6 +630,7 @@ export default function SurveyView() {
                     )}
 
                     <ShareSurveyPopup
+                        openSharePopup={openSharePopup}
                         openSharePopup={openSharePopup}
                         setOpenSharePopup={setOpenSharePopup}
                         shareLink={shareLink}
