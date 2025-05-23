@@ -181,7 +181,7 @@ export default function DefaultLayout() {
                 onMouseEnter={handleSidebarMouseEnter}
                 onMouseLeave={handleSidebarMouseLeave}
             >
-                <div className={`p-1 border-b border-gray-200 ${!shouldExpandSidebar ? 'flex justify-center' : ''}`}>
+                <div className={`p-2 border-b border-gray-200 ${!shouldExpandSidebar ? 'flex justify-center' : ''}`}>
                     <AnimatePresence mode="wait">
                         {!shouldExpandSidebar ? (
                             <motion.img
@@ -215,26 +215,30 @@ export default function DefaultLayout() {
                         className={({ isActive }) =>
                             `flex items-center transition-all duration-250 rounded-lg ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4 gap-2'
                             } py-3 text-sm font-medium ${isActive
-                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
                                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                             }`
                         }
                         title={!shouldExpandSidebar ? "Dashboard" : ""}
                     >
-                        <HomeIcon className="flex-shrink-0 w-5 h-5" />
-                        <motion.span
-                            initial={false}
-                            animate={{
-                                opacity: shouldExpandSidebar ? 1 : 0,
-                                width: shouldExpandSidebar ? "auto" : 0,
-                                marginLeft: shouldExpandSidebar ? "0.5rem" : 0
-                            }}
-                            transition={{ duration: 0.25, ease: "easeInOut" }}
-                            className="overflow-hidden whitespace-nowrap"
-                            style={{ display: shouldExpandSidebar ? 'block' : 'none' }}
-                        >
-                            Dashboard
-                        </motion.span>
+                        {({ isActive }) => (
+                            <>
+                                <HomeIcon className={`flex-shrink-0 w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
+                                <motion.span
+                                    initial={false}
+                                    animate={{
+                                        opacity: shouldExpandSidebar ? 1 : 0,
+                                        width: shouldExpandSidebar ? "auto" : 0,
+                                        marginLeft: shouldExpandSidebar ? "0.5rem" : 0
+                                    }}
+                                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                                    className={`overflow-hidden whitespace-nowrap ${isActive ? 'text-white underline decoration-2 underline-offset-2' : 'text-inherit'}`}
+                                    style={{ display: shouldExpandSidebar ? 'block' : 'none' }}
+                                >
+                                    Dashboard
+                                </motion.span>
+                            </>
+                        )}
                     </NavLink>
 
                     <NavLink
@@ -242,26 +246,30 @@ export default function DefaultLayout() {
                         className={({ isActive }) =>
                             `flex items-center transition-all duration-250 rounded-lg ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4 gap-2'
                             } py-3 text-sm font-medium ${isActive
-                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
                                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                             }`
                         }
                         title={!shouldExpandSidebar ? "Surveys" : ""}
                     >
-                        <ClipboardDocumentListIcon className="flex-shrink-0 w-5 h-5" />
-                        <motion.span
-                            initial={false}
-                            animate={{
-                                opacity: shouldExpandSidebar ? 1 : 0,
-                                width: shouldExpandSidebar ? "auto" : 0,
-                                marginLeft: shouldExpandSidebar ? "0.5rem" : 0
-                            }}
-                            transition={{ duration: 0.25, ease: "easeInOut" }}
-                            className="overflow-hidden whitespace-nowrap"
-                            style={{ display: shouldExpandSidebar ? 'block' : 'none' }}
-                        >
-                            Surveys
-                        </motion.span>
+                        {({ isActive }) => (
+                            <>
+                                <ClipboardDocumentListIcon className={`flex-shrink-0 w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
+                                <motion.span
+                                    initial={false}
+                                    animate={{
+                                        opacity: shouldExpandSidebar ? 1 : 0,
+                                        width: shouldExpandSidebar ? "auto" : 0,
+                                        marginLeft: shouldExpandSidebar ? "0.5rem" : 0
+                                    }}
+                                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                                    className={`overflow-hidden whitespace-nowrap ${isActive ? 'text-white underline decoration-2 underline-offset-2' : 'text-inherit'}`}
+                                    style={{ display: shouldExpandSidebar ? 'block' : 'none' }}
+                                >
+                                    Surveys
+                                </motion.span>
+                            </>
+                        )}
                     </NavLink>
                 </div>
 
@@ -307,7 +315,7 @@ export default function DefaultLayout() {
                                 className={({ isActive }) =>
                                     `flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg
                                     ${isActive
-                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
                                         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
                                 }
                             >
@@ -320,7 +328,7 @@ export default function DefaultLayout() {
                                 className={({ isActive }) =>
                                     `flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg
                                     ${isActive
-                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
+                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
                                         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
                                 }
                             >
@@ -404,7 +412,7 @@ export default function DefaultLayout() {
                             <div className="min-w-0">
                                 {/* Desktop version */}
                                 <div className="hidden md:block">
-                                    <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap">
+                                    <h1 className="font-semibold text-gray-800 text-md whitespace-nowrap">
                                         Ace Survey
                                     </h1>
                                     <p className="text-xs text-gray-500 whitespace-nowrap">
