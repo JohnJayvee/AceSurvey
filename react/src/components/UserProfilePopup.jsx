@@ -41,25 +41,14 @@ export default function UserProfilePopup({ onLogout }) {
 
     // Apply friend's pattern to user data fetching
     useEffect(() => {
-        // Check cache first
+        // Clear cache on component mount to ensure consistent rendering
         if (cache['user']) {
-            console.log("Using cached user data");
-            setCurrentUser(cache['user']);
-            setCurrentEmail(cache['user'].email);
-            return;
+            delete cache['user'];
         }
 
-        // Check if user data is already being fetched globally
-        if (isUserFetching) {
-            console.log("User fetch already in progress");
-            userPromise.then(data => {
-                setCurrentUser(data);
-                setCurrentEmail(data.email);
-            }).catch(error => {
-                console.error("Error from existing user request:", error);
-            });
-            return;
-        }
+        // Reset fetching state
+        isUserFetching = false;
+        userPromise = null;
 
         // Skip if already fetched by this component
         if (hasFetched.current) return;
@@ -86,30 +75,58 @@ export default function UserProfilePopup({ onLogout }) {
         userPromise.then(data => {
             setCurrentUser(data);
             setCurrentEmail(data.email);
+        }).catch(error => {
+            console.error("Error setting user data:", error);
         });
-    }, []);
+    }, [setCurrentUser]);
 
     // Debounce the password change function
-    const handleChangePassword = debounce((e) => {
+    const handleChangePassword = debounce(async (e) => {
         e.preventDefault();
         setLoadingPassword(true);
 
-        axiosClient.post("/change-password", {
-            current_password: currentPassword,
-            new_password: newPassword,
-            new_password_confirmation: newPasswordConfirmation,
-        })
-            .then((response) => {
-                setMessage(response.data.message);
-                showToast("Password changed successfully");
-                closePasswordModal();
-            })
-            .catch(error => {
-                handleErrorResponse(error);
-            })
-            .finally(() => {
-                setLoadingPassword(false);
+        try {
+            const response = await axiosClient.post("/change-password", {
+                current_password: currentPassword,
+                new_password: newPassword,
+                new_password_confirmation: newPasswordConfirmation,
             });
+
+            // Show success message
+            showToast("Password changed successfully. Logging out in 5 seconds...");
+            closePasswordModal();
+
+            // Create a flag to prevent multiple redirects
+            let hasRedirected = false;
+
+            setTimeout(() => {
+                if (hasRedirected) return;
+                hasRedirected = true;
+
+                // Clear storage
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    if (cache['user']) {
+                        delete cache['user'];
+                    }
+                } catch (e) {
+                    console.error('Error clearing storage:', e);
+                }
+
+                // Redirect with multiple fallbacks
+                try {
+                    window.location.href = '/login';
+                } catch (e) {
+                    window.location.replace('/login');
+                }
+            }, 5000);
+
+        } catch (error) {
+            handleErrorResponse(error);
+        } finally {
+            setLoadingPassword(false);
+        }
     }, 300);
 
     // Debounce the email change function
@@ -243,8 +260,12 @@ export default function UserProfilePopup({ onLogout }) {
                             <div className="w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
                         </div>
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold text-gray-900">{currentUser.name}</h3>
-                    <p className="text-sm text-gray-500">{currentUser.email}</p>
+                    <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                        {currentUser?.name || 'Loading...'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                        {currentUser?.email || 'Loading...'}
+                    </p>
                 </motion.div>
 
                 <Divider className="mb-4" />
