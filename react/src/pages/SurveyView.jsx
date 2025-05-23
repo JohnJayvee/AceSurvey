@@ -631,7 +631,6 @@ export default function SurveyView() {
 
                     <ShareSurveyPopup
                         openSharePopup={openSharePopup}
-                        openSharePopup={openSharePopup}
                         setOpenSharePopup={setOpenSharePopup}
                         shareLink={shareLink}
                     />
