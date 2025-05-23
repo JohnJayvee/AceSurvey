@@ -5,8 +5,12 @@ import viteCompression from 'vite-plugin-compression';
 import svgr from 'vite-plugin-svgr'
 import path from 'path'
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: './',
+
     plugins: [
         react({
             jsxRuntime: 'automatic',
@@ -14,51 +18,73 @@ export default defineConfig({
             babel: {
                 plugins: [
                     "@emotion/babel-plugin",
-                    'babel-plugin-styled-components', { displayName: true }
+                    ...(isProduction ? [] : ['babel-plugin-styled-components', { displayName: true }])
                 ],
             },
-            fastRefresh: true
+            fastRefresh: !isProduction
         }),
-        svgr(), // SVG as React components
-        // Compresses assets using Gzip (.js, .css, etc.)
-        viteCompression({
-            algorithm: 'gzip',
-            ext: '.gz',
-            deleteOriginFile: false,
+        svgr({
+            svgrOptions: {
+                icon: true,
+            },
         }),
 
-        // Visual report of bundle size
-        visualizer({
-            filename: './dist/bundle-report.html',
-            open: true,
-            gzipSize: true,
-            brotliSize: true,
-        }),
+        // Production only compression
+        ...(isProduction ? [
+            viteCompression({
+                algorithm: 'gzip',
+                ext: '.gz',
+                deleteOriginFile: false,
+                threshold: 1024,
+                compressionOptions: { level: 9 }
+            })
+        ] : []),
+
+        // Dev only bundle analyzer
+        ...(!isProduction ? [
+            visualizer({
+                filename: './dist/bundle-report.html',
+                open: true,
+                gzipSize: true,
+                brotliSize: true,
+                template: 'treemap'
+            })
+        ] : []),
     ],
 
     css: {
-        devSourcemap: false, // Disable source maps
+        devSourcemap: !isProduction,
     },
+
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, 'src') // Simplify imports
+            '@': path.resolve(__dirname, 'src')
         }
     },
+
     build: {
-        // minify: 'terser',
-        // terserOptions: {
-        //     compress: {
-        //         drop_console: true, // Remove console.logs
-        //         drop_debugger: true,
-        //     },
-        // },
-        target: 'esnext', // Modern target for better tree-shaking
-        minify: 'esbuild', // Faster minification than terser
-        cssCodeSplit: true, // Enable CSS code splitting
-        sourcemap: false, // Disable sourcemaps in production for smaller builds
+        target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
+        minify: 'esbuild',
+        cssCodeSplit: true,
+        sourcemap: false,
         outDir: 'dist',
         chunkSizeWarningLimit: 500,
+        reportCompressedSize: false,
+        assetsInlineLimit: 4096,
+
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['react', 'react-dom'],
+                    emotion: ['@emotion/react', '@emotion/styled']
+                },
+                chunkFileNames: 'assets/js/[name]-[hash].js',
+                entryFileNames: 'assets/js/[name]-[hash].js',
+                assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
+            }
+        }
     },
+
     server: {
         port: 3000,
         open: true,
@@ -67,10 +93,17 @@ export default defineConfig({
             overlay: true,
         }
     },
+
     optimizeDeps: {
-        include: ['react', 'react-dom'],
+        include: ['react', 'react-dom', '@emotion/react', '@emotion/styled'],
         esbuildOptions: {
-            target: 'esnext'
+            target: 'es2020'
         }
+    },
+
+    esbuild: {
+        drop: isProduction ? ['console', 'debugger'] : [],
+        legalComments: 'none',
+        target: 'es2020'
     }
 });
