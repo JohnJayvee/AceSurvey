@@ -404,17 +404,17 @@ export default function DefaultLayout() {
                             <div className="min-w-0">
                                 {/* Desktop version */}
                                 <div className="hidden md:block">
-                                    <h1 className="font-semibold text-gray-800 truncate text-md">
+                                    <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap">
                                         Ace Survey
                                     </h1>
-                                    <p className="text-xs text-gray-500 truncate">
+                                    <p className="text-xs text-gray-500 whitespace-nowrap">
                                         Survey Management Platform
                                     </p>
                                 </div>
 
                                 {/* Mobile version */}
                                 <div className="block md:hidden">
-                                    <h1 className="text-lg font-semibold text-gray-800 truncate">
+                                    <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap">
                                         Ace Survey
                                     </h1>
                                 </div>
