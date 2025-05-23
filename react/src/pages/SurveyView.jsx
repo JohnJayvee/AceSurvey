@@ -27,6 +27,38 @@ import 'react-loading-skeleton/dist/skeleton.css';
 const cache = {};
 const isFetching = {};
 
+const cacheManager = {
+    clear: (pattern) => {
+        if (pattern === 'surveys') {
+            // Clear surveys list cache
+            Object.keys(cache).forEach(key => {
+                if (key.includes('survey') || key.includes('/survey')) {
+                    delete cache[key];
+                }
+            });
+
+            // Also clear any global survey caches
+            if (window.surveysCache) window.surveysCache = {};
+            if (window.pageCache) window.pageCache = {};
+
+            // Clear localStorage survey caches if they exist
+            Object.keys(localStorage).forEach(key => {
+                if (key.includes('survey') || key.includes('surveys')) {
+                    localStorage.removeItem(key);
+                }
+            });
+        } else if (pattern) {
+            delete cache[pattern];
+        }
+    },
+
+    clearAll: () => {
+        Object.keys(cache).forEach(key => delete cache[key]);
+        if (window.surveysCache) window.surveysCache = {};
+        if (window.pageCache) window.pageCache = {};
+    }
+};
+
 export default function SurveyView() {
     const { showToast } = useStateContext();
     const navigate = useNavigate();
