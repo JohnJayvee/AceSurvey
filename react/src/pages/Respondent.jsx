@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axiosClient from "../axios.js";
-import RespondentAnswerView from "../components/RespondentAnswerView.jsx";
+import axiosClient from "@api/axios.js";
+import RespondentAnswerView from "@components/RespondentAnswerView.jsx";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import Tooltip from "@mui/material/Tooltip";

@@ -7,10 +7,10 @@ import {
 } from "@heroicons/react/24/outline";
 import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
-import ShareSurveyPopup from "./ShareSurveyPopup";
+import ShareSurveyPopup from "@components/ShareSurveyPopup";
 import { Link, useNavigate } from "react-router-dom";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartTooltip } from "recharts";
-import axios from "../axios";
+import axios from "@api/axios";
 import { debounce } from 'lodash'; // Add this import
 
 // Put these at the top level of your file (outside any component)

@@ -8,18 +8,18 @@ import {
     UsersIcon,
     ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import TButton from "../components/core/TButton";
-import axiosClient from "../axios.js";
+import TButton from "@components/core/TButton";
+import axiosClient from "@api/axios.js";
 import { useNavigate, useParams } from "react-router-dom";
-import SurveyQuestions from "../components/SurveyQuestions.jsx";
-import { useStateContext } from "../contexts/ContextProvider.jsx";
+import SurveyQuestions from "@components/SurveyQuestions.jsx";
+import { useStateContext } from "@context/ContextProvider.jsx";
 import ShareSurveyPopup from "../components/ShareSurveyPopup.jsx";
 import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
-import ErrorMessage from "../components/ErrorMessage"; // Add this import
+import ErrorMessage from "@components/ErrorMessage"; // Add this import
 import logo from "/AceLogo.png";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';

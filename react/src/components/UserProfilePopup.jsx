@@ -3,8 +3,8 @@ import Divider from "@mui/material/Divider";
 import { VscSignOut } from "react-icons/vsc";
 import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Eye icons for show/hide
-import { useStateContext } from "../contexts/ContextProvider";
-import axiosClient from "../axios";
+import { useStateContext } from "@context/ContextProvider";
+import axiosClient from "@api/axios";
 import logo from "/AceLogo.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { debounce } from "lodash";

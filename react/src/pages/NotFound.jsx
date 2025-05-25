@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AnimatedBackground from "../components/AnimatedBackground";
+import AnimatedBackground from "@components/AnimatedBackground";
 
 export default function NotFound() {
     return (

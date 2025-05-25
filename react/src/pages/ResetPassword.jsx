@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import axiosClient from '../axios';
+import axiosClient from '@api/axios';
 import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
 import { Loader as RsuiteLoader } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import logo from '/AceLogo.png'; // Adjust path if needed
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import AnimatedBackground from "../components/AnimatedBackground";
+import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from 'framer-motion';
-import ErrorMessage from "../components/ErrorMessage"; // Add this import
+import ErrorMessage from "@components/ErrorMessage"; // Add this import
 
 const ResetPassword = () => {
     const { token } = useParams();

@@ -2,22 +2,22 @@ import React, { useEffect, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-const GuestLayout = React.lazy(() => import("./components/GuestLayout"));
-const Login = React.lazy(() => import("./pages/Login"));
-const Signup = React.lazy(() => import("./pages/Signup"));
-const DefaultLayout = React.lazy(() => import("./components/DefaultLayout"));
-const Dashboard = React.lazy(() => import("./pages/Dashboard"));
-const Surveys = React.lazy(() => import("./pages/Surveys"));
-const SurveyView = React.lazy(() => import("./pages/SurveyView"));
-const SurveyPublicView = React.lazy(() => import("./pages/SurveyPublicView"));
-const SurveyResponse = React.lazy(() => import("./pages/SurveyResponse"));
-const Respondent = React.lazy(() => import("./pages/Respondent"));
-const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
-const NotFound = React.lazy(() => import("./pages/NotFound"));
+const GuestLayout = React.lazy(() => import("@components/GuestLayout"));
+const Login = React.lazy(() => import("@pages/Login"));
+const Signup = React.lazy(() => import("@pages/Signup"));
+const DefaultLayout = React.lazy(() => import("@components/DefaultLayout"));
+const Dashboard = React.lazy(() => import("@pages/Dashboard"));
+const Surveys = React.lazy(() => import("@pages/Surveys"));
+const SurveyView = React.lazy(() => import("@pages/SurveyView"));
+const SurveyPublicView = React.lazy(() => import("@pages/SurveyPublicView"));
+const SurveyResponse = React.lazy(() => import("@pages/SurveyResponse"));
+const Respondent = React.lazy(() => import("@pages/Respondent"));
+const ForgotPassword = React.lazy(() => import("@pages/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("@pages/ResetPassword"));
+const NotFound = React.lazy(() => import("@pages/NotFound"));
 
 // Import the custom loading spinner with animation
-import Loading from './components/Loading';
+import Loading from '@components/Loading';
 
 const capitalizeFirstLetter = (string) => {
     return string.replace(/\b\w/g, char => char.toUpperCase());

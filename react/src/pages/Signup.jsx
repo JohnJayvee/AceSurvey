@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useStateContext } from "../contexts/ContextProvider";
-import axiosClient from "../axios.js";
-import Footer from "../components/Footer.jsx";
+import { useStateContext } from "@context/ContextProvider";
+import axiosClient from "@api/axios.js";
+import Footer from "@components/Footer.jsx";
 import { FaEye, FaEyeSlash, FaLightbulb } from "react-icons/fa";
 import { Loader as RsuiteLoader } from "rsuite";
 import "rsuite/dist/rsuite.min.css";
-import Bulb from "../components/Bulb.jsx";
+import Bulb from "@components/Bulb.jsx";
 
 export default function Signup() {
     const { setCurrentUser, setUserToken } = useStateContext();

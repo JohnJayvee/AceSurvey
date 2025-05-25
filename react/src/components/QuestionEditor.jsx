@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useStateContext } from "../contexts/ContextProvider";
+import { useStateContext } from "@context/ContextProvider";
 import {
     TrashIcon,
     ChevronDownIcon,

@@ -2,7 +2,7 @@ import React, { memo, useMemo } from 'react';
 import './css/AnimatedBackground.css';
 
 const AnimatedBackground = memo(() => {
-    // Pre-generate colors for better performance
+
     const lineColors = useMemo(() => {
         const colors = [];
         for (let i = 0; i < 12; i++) {

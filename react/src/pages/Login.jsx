@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom"; // Import Link from react-router-dom
-import axiosClient from "../axios";
-import { useStateContext } from "../contexts/ContextProvider";
-import Footer from "../components/Footer";
+import axiosClient from "@api/axios";
+import { useStateContext } from "@context/ContextProvider";
+import Footer from "@components/Footer";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Loader as RsuiteLoader } from "rsuite";
 import "rsuite/dist/rsuite.min.css";
-import Bulb from "../components/Bulb";
+import Bulb from "@components/Bulb";
 import logo from "/AceLogo.png"; // Update path according to your logo location
 import AnimatedBackground from "../components/AnimatedBackground";
 import { motion } from "framer-motion";
-import ErrorMessage from "../components/ErrorMessage";
+import ErrorMessage from "@components/ErrorMessage";
 
 export default function Login() {
     const { setCurrentUser, setUserToken } = useStateContext();

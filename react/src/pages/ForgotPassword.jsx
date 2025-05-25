@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import axiosClient from '../axios';
+import axiosClient from '@api/axios';
 import { Loader as RsuiteLoader } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import 'rsuite/dist/rsuite.min.css';
 import logo from "/AceLogo.png";
-import AnimatedBackground from "../components/AnimatedBackground";
+import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from "framer-motion";
-import ErrorMessage from "../components/ErrorMessage";
+import ErrorMessage from "@components/ErrorMessage";
 import { HiOutlineMail, HiArrowLeft, HiUser, HiCheck } from "react-icons/hi";
 import { FaUserShield } from "react-icons/fa";
 

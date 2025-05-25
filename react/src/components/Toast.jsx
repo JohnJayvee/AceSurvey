@@ -1,4 +1,4 @@
-import { useStateContext } from "../contexts/ContextProvider";
+import { useStateContext } from "@context/ContextProvider";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircleIcon, XCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 

@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
-import { useStateContext } from "../contexts/ContextProvider";
-import axiosClient from "../axios";
+import { useStateContext } from "@context/ContextProvider";
+import axiosClient from "@api/axios";
 import Toast from "./Toast";
-import UserProfilePopup from "./UserProfilePopup";
+import UserProfilePopup from "@components/UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
 import logo from "/AceLogo.png"; // Update path according to your logo location

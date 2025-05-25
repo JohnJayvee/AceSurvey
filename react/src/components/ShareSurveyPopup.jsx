@@ -4,7 +4,7 @@ import Modal from "@mui/material/Modal";
 import ModalClose from "@mui/joy/ModalClose";
 import Divider from "@mui/material/Divider";
 import { useMediaQuery } from "@mui/material";
-import { useStateContext } from "../contexts/ContextProvider";
+import { useStateContext } from "@context/ContextProvider";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ClipboardDocumentIcon, QrCodeIcon } from "@heroicons/react/24/outline";

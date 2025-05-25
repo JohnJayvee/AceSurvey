@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useStateContext } from "../contexts/ContextProvider";
-import SurveyListItem from "../components/SurveyListItem";
+import { useStateContext } from "@context/ContextProvider";
+import SurveyListItem from "@components/SurveyListItem";
 import { PlusCircleIcon, DocumentIcon, ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import axiosClient from "../axios";
-import PaginationLinks from "../components/PaginationLinks";
-import Breadcrumbs from "../components/Breadcrumbs";
+import axiosClient from "@api/axios";
+import PaginationLinks from "@components/PaginationLinks";
+import Breadcrumbs from "@components/Breadcrumbs";
 import { Link } from "react-router-dom";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import SearchBar from "../components/SearchBar";
+import SearchBar from "@components/SearchBar";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Surveys() {

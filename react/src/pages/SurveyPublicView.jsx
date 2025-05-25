@@ -1,14 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import axiosClient from "../axios";
-import PublicQuestionView from "../components/PublicQuestionView";
+import axiosClient from "@api/axios";
+import PublicQuestionView from "@components/PublicQuestionView";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { InformationCircleIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import AnimatedBackground from "../components/AnimatedBackground";
+import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
-import ErrorMessage from "../components/ErrorMessage";
+import ErrorMessage from "@components/ErrorMessage";
 
 // Use a proper cache with localStorage support
 const surveyCache = {

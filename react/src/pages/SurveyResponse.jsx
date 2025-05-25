@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosClient from "../axios.js";
-import Loader from "../components/Loader";
+import axiosClient from "@api/axios.js";
+import Loader from "@components/Loader";
 import { Divider } from "@mui/joy";
 import { DataGrid } from "@mui/x-data-grid";
 import { gridClasses } from "@mui/x-data-grid";

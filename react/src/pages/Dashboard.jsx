@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-import DashboardCard from "../components/DashboardCard";
-import axiosClient from "../axios.js";
-import TButton from "../components/core/TButton.jsx";
+import DashboardCard from "@components/DashboardCard";
+import axiosClient from "@api/axios.js";
+import TButton from "@components/core/TButton.jsx";
 import { EyeIcon, PencilIcon } from "@heroicons/react/24/outline";
-import Loader from "../components/Loader";
+import Loader from "@components/Loader";
 import { Divider } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import Footer from "../components/Footer.jsx";
+import Footer from "@components/Footer.jsx";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';  // Importing Recharts

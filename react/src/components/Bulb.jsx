@@ -1,7 +1,7 @@
 import { FaLightbulb } from "react-icons/fa";
 import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
-import AboutPopup from "./AboutPopup";
+import AboutPopup from "@components/AboutPopup";
 import { useState } from "react";
 
 export default function Bulb() {
