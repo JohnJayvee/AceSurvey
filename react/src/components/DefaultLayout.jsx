@@ -7,7 +7,7 @@ import UserProfilePopup from "./UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
 import logo from "/AceLogo.png"; // Update path according to your logo location
-import logo1 from "/ace_logo.png"; // Update path according to your logo location
+import banner from "/AceBanner.png"; // Update path according to your logo location
 import { motion, AnimatePresence } from "framer-motion";
 import {
     HomeIcon,
@@ -201,7 +201,7 @@ export default function DefaultLayout() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 transition={{ duration: 0.15, delay: 0.1 }}
-                                src={logo1}
+                                src={banner}
                                 alt="Ace Survey Logo"
                                 className="w-auto h-12 mx-auto"
                             />
@@ -303,7 +303,7 @@ export default function DefaultLayout() {
                     >
                         <div className="px-4 py-3 mb-4 border-b border-red-200">
                             <img
-                                src={logo1}
+                                src={banner}
                                 alt="Ace Survey Logo"
                                 className="w-auto h-12 mx-auto"
                             />
