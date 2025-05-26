@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import './css/AnimatedBackground.css';
+import '@css/AnimatedBackground.css';
 
 const AnimatedBackground = memo(() => {
 

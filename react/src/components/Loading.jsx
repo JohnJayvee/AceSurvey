@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import './css/Loading.css';
+import '@css/Loading.css';
 import logo from '@images/AceLogo.png'; // Update path according to your logo location
 
 const Loading = () => {
