@@ -1,6 +1,6 @@
 import React, { useEffect, Suspense } from "react";
 import { useLocation } from "react-router-dom";
-import "./App.css";
+import "@css/main.css";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 const GuestLayout = React.lazy(() => import("@components/GuestLayout"));
 const Login = React.lazy(() => import("@pages/Login"));
