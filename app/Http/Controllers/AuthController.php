@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Cache; // Add this import
 use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Validation\ValidationException;
 use App\Mail\PasswordReset;
@@ -168,7 +169,15 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return $request->user();
+        $user = $request->user();
+        $cacheKey = 'user_profile_' . $user->id;
+
+        // Cache user profile data for 10 minutes
+        $userProfile = Cache::remember($cacheKey, 600, function () use ($user) {
+            return $user->only(['id', 'name', 'email', 'avatar_url', 'created_at']);
+        });
+
+        return response()->json($userProfile);
     }
 
     public function changePassword(ChangePasswordRequest $request)
@@ -273,8 +282,13 @@ class AuthController extends Controller
         ]);
 
         $user = Auth::user();
+        $oldEmail = $user->email;
         $user->email = $data['email'];
         $user->save();
+
+        // Clear cache for old and new email
+        Cache::forget('user_email_' . md5($oldEmail));
+        Cache::forget('user_profile_' . $user->id);
 
         // Send email notification
         Mail::to($user->email)->send(new EmailChanged($user));
@@ -295,23 +309,33 @@ class AuthController extends Controller
             'email' => 'required|email',
         ]);
 
-        // Find the user by email
-        $user = User::where('email', $data['email'])->first();
+        // Create a cache key for this email lookup
+        $cacheKey = 'user_email_' . md5($data['email']);
+
+        // Try to get user data from cache first
+        $userInfo = Cache::remember($cacheKey, 300, function () use ($data) { // Cache for 5 minutes
+            $user = User::where('email', $data['email'])->first(['name']);
+
+            if (!$user) {
+                return null;
+            }
+
+            return [
+                'name' => $user->name,
+                'avatarUrl' => $user->avatar_url ?? null,
+            ];
+        });
 
         // If no user is found with this email
-        if (!$user) {
+        if (!$userInfo) {
             return response()->json([
                 'message' => 'No account found with this email address'
             ], 404);
         }
 
-        // Return basic account information (no sensitive data)
+        // Return cached account information
         return response()->json([
-            'accountInfo' => [
-                'name' => $user->name,
-                'avatarUrl' => $user->avatar_url ?? null, // Assuming you have an avatar_url field
-                // You can add other non-sensitive fields here
-            ]
+            'accountInfo' => $userInfo
         ]);
     }
 }
