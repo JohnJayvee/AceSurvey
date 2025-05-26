@@ -19,6 +19,7 @@ use Illuminate\Validation\Rules\Enum;
 use App\Enums\QuestionTypeEnum;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use App\Services\DatabaseLogger; // Add this import
 
 class SurveyController extends Controller
 {
@@ -31,24 +32,46 @@ class SurveyController extends Controller
         $search = $request->query('search');
         $page = $request->query('page', 1);
 
+        DatabaseLogger::info('surveys_index', 'User accessed surveys list', [
+            'search' => $search,
+            'page' => $page
+        ], $request, $user->id);
+
         // Create cache key based on user, search, and page
         $cacheKey = "surveys_user_{$user->id}_search_" . md5($search ?? '') . "_page_{$page}";
 
-        return Cache::remember($cacheKey, 300, function () use ($user, $search) {
-            $query = Survey::where("user_id", $user->id);
+        try {
+            $result = Cache::remember($cacheKey, 300, function () use ($user, $search) {
+                $query = Survey::where("user_id", $user->id);
 
-            if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('title', 'LIKE', "%{$search}%")
-                        ->orWhere('description', 'LIKE', "%{$search}%");
-                });
-            }
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('title', 'LIKE', "%{$search}%")
+                            ->orWhere('description', 'LIKE', "%{$search}%");
+                    });
+                }
 
-            return SurveyResource::collection(
-                $query->orderBy("created_at", "desc")
-                    ->paginate(12)
-            );
-        });
+                return SurveyResource::collection(
+                    $query->orderBy("created_at", "desc")
+                        ->paginate(12)
+                );
+            });
+
+            DatabaseLogger::info('surveys_index_success', 'Surveys list retrieved successfully', [
+                'search' => $search,
+                'page' => $page,
+                'cached' => true
+            ], $request, $user->id);
+
+            return $result;
+        } catch (\Exception $e) {
+            DatabaseLogger::error('surveys_index_error', 'Failed to retrieve surveys list', [
+                'search' => $search,
+                'page' => $page,
+                'error' => $e->getMessage()
+            ], $request, $user->id);
+            throw $e;
+        }
     }
 
     /**
@@ -58,25 +81,45 @@ class SurveyController extends Controller
     {
         $data = $request->validated();
 
-        if (isset($data['image'])) {
-            $relativePath = $this->saveImage($data['image']);
-            $data['image'] = $relativePath;
+        DatabaseLogger::info('survey_create_attempt', 'User attempting to create survey', [
+            'title' => $data['title'],
+            'questions_count' => count($data['questions'] ?? [])
+        ], $request, $request->user()->id);
+
+        try {
+            if (isset($data['image'])) {
+                $relativePath = $this->saveImage($data['image']);
+                $data['image'] = $relativePath;
+            }
+
+            $survey = Survey::create($data);
+
+            foreach ($data['questions'] as $question) {
+                $question['survey_id'] = $survey->id;
+                $this->createQuestion($question);
+            }
+
+            // Clear user's survey cache
+            $this->clearUserSurveyCache($request->user()->id);
+
+            // Cache the new survey
+            Cache::put("survey_{$survey->id}", $survey->load('questions'), 3600);
+
+            DatabaseLogger::info('survey_create_success', 'Survey created successfully', [
+                'survey_id' => $survey->id,
+                'title' => $survey->title,
+                'slug' => $survey->slug,
+                'questions_count' => count($data['questions'] ?? [])
+            ], $request, $request->user()->id);
+
+            return new SurveyResource($survey);
+        } catch (\Exception $e) {
+            DatabaseLogger::error('survey_create_error', 'Failed to create survey', [
+                'title' => $data['title'] ?? null,
+                'error' => $e->getMessage()
+            ], $request, $request->user()->id);
+            throw $e;
         }
-
-        $survey = Survey::create($data);
-
-        foreach ($data['questions'] as $question) {
-            $question['survey_id'] = $survey->id;
-            $this->createQuestion($question);
-        }
-
-        // Clear user's survey cache
-        $this->clearUserSurveyCache($request->user()->id);
-
-        // Cache the new survey
-        Cache::put("survey_{$survey->id}", $survey->load('questions'), 3600);
-
-        return new SurveyResource($survey);
     }
 
     /**
@@ -86,8 +129,18 @@ class SurveyController extends Controller
     {
         $user = $request->user();
         if ($user->id !== $survey->user_id) {
+            DatabaseLogger::warning('survey_access_denied', 'Unauthorized survey access attempt', [
+                'survey_id' => $survey->id,
+                'survey_title' => $survey->title,
+                'survey_owner_id' => $survey->user_id
+            ], $request, $user->id);
             return abort(403, 'Unauthorized action');
         }
+
+        DatabaseLogger::info('survey_view', 'User viewing survey details', [
+            'survey_id' => $survey->id,
+            'survey_title' => $survey->title
+        ], $request, $user->id);
 
         // Cache survey data for 1 hour
         $cachedSurvey = Cache::remember("survey_{$survey->id}", 3600, function () use ($survey) {
@@ -104,55 +157,76 @@ class SurveyController extends Controller
     {
         $data = $request->validated();
 
-        // Check if image was given and save on local file system
-        if (isset($data['image'])) {
-            $relativePath = $this->saveImage($data['image']);
-            $data['image'] = $relativePath;
+        DatabaseLogger::info('survey_update_attempt', 'User attempting to update survey', [
+            'survey_id' => $survey->id,
+            'title' => $data['title'] ?? $survey->title,
+            'questions_count' => count($data['questions'] ?? [])
+        ], $request, $survey->user_id);
 
-            // If there is an old image, delete it
-            if ($survey->image) {
-                $absolutePath = public_path($survey->image);
-                File::delete($absolutePath);
+        try {
+            // Check if image was given and save on local file system
+            if (isset($data['image'])) {
+                $relativePath = $this->saveImage($data['image']);
+                $data['image'] = $relativePath;
+
+                // If there is an old image, delete it
+                if ($survey->image) {
+                    $absolutePath = public_path($survey->image);
+                    File::delete($absolutePath);
+                }
             }
-        }
 
-        // Update survey in the database
-        $survey->update($data);
+            // Update survey in the database
+            $survey->update($data);
 
-        // Get ids as plain array of existing questions
-        $existingIds = $survey->questions()->pluck('id')->toArray();
-        // Get ids as plain array of new questions
-        $newIds = Arr::pluck($data['questions'], 'id');
-        // Find questions to delete
-        $toDelete = array_diff($existingIds, $newIds);
-        //Find questions to add
-        $toAdd = array_diff($newIds, $existingIds);
+            // Get ids as plain array of existing questions
+            $existingIds = $survey->questions()->pluck('id')->toArray();
+            // Get ids as plain array of new questions
+            $newIds = Arr::pluck($data['questions'], 'id');
+            // Find questions to delete
+            $toDelete = array_diff($existingIds, $newIds);
+            //Find questions to add
+            $toAdd = array_diff($newIds, $existingIds);
 
-        // Delete questions by $toDelete array
-        SurveyQuestion::destroy($toDelete);
+            // Delete questions by $toDelete array
+            SurveyQuestion::destroy($toDelete);
 
-        // Create new questions
-        foreach ($data['questions'] as $question) {
-            if (in_array($question['id'], $toAdd)) {
-                $question['survey_id'] = $survey->id;
-                $this->createQuestion($question);
+            // Create new questions
+            foreach ($data['questions'] as $question) {
+                if (in_array($question['id'], $toAdd)) {
+                    $question['survey_id'] = $survey->id;
+                    $this->createQuestion($question);
+                }
             }
-        }
 
-        // Update existing questions
-        $questionMap = collect($data['questions'])->keyBy('id');
-        foreach ($survey->questions as $question) {
-            if (isset($questionMap[$question->id])) {
-                $this->updateQuestion($question, $questionMap[$question->id]);
+            // Update existing questions
+            $questionMap = collect($data['questions'])->keyBy('id');
+            foreach ($survey->questions as $question) {
+                if (isset($questionMap[$question->id])) {
+                    $this->updateQuestion($question, $questionMap[$question->id]);
+                }
             }
+
+            // Clear caches related to this survey
+            Cache::forget("survey_{$survey->id}");
+            Cache::forget("survey_by_slug_{$survey->slug}");
+            $this->clearUserSurveyCache($survey->user_id);
+
+            DatabaseLogger::info('survey_update_success', 'Survey updated successfully', [
+                'survey_id' => $survey->id,
+                'title' => $survey->title,
+                'questions_deleted' => count($toDelete),
+                'questions_added' => count($toAdd)
+            ], $request, $survey->user_id);
+
+            return new SurveyResource($survey);
+        } catch (\Exception $e) {
+            DatabaseLogger::error('survey_update_error', 'Failed to update survey', [
+                'survey_id' => $survey->id,
+                'error' => $e->getMessage()
+            ], $request, $survey->user_id);
+            throw $e;
         }
-
-        // Clear caches related to this survey
-        Cache::forget("survey_{$survey->id}");
-        Cache::forget("survey_by_slug_{$survey->slug}");
-        $this->clearUserSurveyCache($survey->user_id);
-
-        return new SurveyResource($survey);
     }
 
     /**
@@ -162,29 +236,58 @@ class SurveyController extends Controller
     {
         $user = $request->user();
         if ($user->id !== $survey->user_id) {
+            DatabaseLogger::warning('survey_delete_denied', 'Unauthorized survey deletion attempt', [
+                'survey_id' => $survey->id,
+                'survey_title' => $survey->title,
+                'survey_owner_id' => $survey->user_id
+            ], $request, $user->id);
             return abort(403, 'Unauthorized action');
         }
 
-        // Clear all caches related to this survey
-        Cache::forget("survey_{$survey->id}");
-        Cache::forget("survey_by_slug_{$survey->slug}");
-        Cache::forget("survey_responses_{$survey->id}");
-        Cache::forget("survey_response_count_{$survey->id}");
-        $this->clearUserSurveyCache($user->id);
+        DatabaseLogger::info('survey_delete_attempt', 'User attempting to delete survey', [
+            'survey_id' => $survey->id,
+            'survey_title' => $survey->title
+        ], $request, $user->id);
 
-        $survey->delete();
+        try {
+            // Clear all caches related to this survey
+            Cache::forget("survey_{$survey->id}");
+            Cache::forget("survey_by_slug_{$survey->slug}");
+            Cache::forget("survey_responses_{$survey->id}");
+            Cache::forget("survey_response_count_{$survey->id}");
+            $this->clearUserSurveyCache($user->id);
 
-        // If there is an old image, delete it
-        if ($survey->image) {
-            $absolutePath = public_path($survey->image);
-            File::delete($absolutePath);
+            $survey->delete();
+
+            // If there is an old image, delete it
+            if ($survey->image) {
+                $absolutePath = public_path($survey->image);
+                File::delete($absolutePath);
+            }
+
+            DatabaseLogger::info('survey_delete_success', 'Survey deleted successfully', [
+                'survey_id' => $survey->id,
+                'survey_title' => $survey->title
+            ], $request, $user->id);
+
+            return response('', 204);
+        } catch (\Exception $e) {
+            DatabaseLogger::error('survey_delete_error', 'Failed to delete survey', [
+                'survey_id' => $survey->id,
+                'error' => $e->getMessage()
+            ], $request, $user->id);
+            throw $e;
         }
-
-        return response('', 204);
     }
 
     public function getBySlug(Survey $survey)
     {
+        DatabaseLogger::info('survey_public_access', 'Public survey access attempt', [
+            'survey_id' => $survey->id,
+            'survey_slug' => $survey->slug,
+            'survey_title' => $survey->title
+        ], request());
+
         // Cache survey by slug for public access
         $cachedSurvey = Cache::remember("survey_by_slug_{$survey->slug}", 1800, function () use ($survey) {
             if (!$survey->status) {
@@ -201,8 +304,21 @@ class SurveyController extends Controller
         });
 
         if (!$cachedSurvey) {
+            DatabaseLogger::warning('survey_public_access_denied', 'Public survey access denied - survey not available', [
+                'survey_id' => $survey->id,
+                'survey_slug' => $survey->slug,
+                'status' => $survey->status,
+                'expire_date' => $survey->expire_date
+            ], request());
+
             return response()->json(['message' => "Survey not available"], 404);
         }
+
+        DatabaseLogger::info('survey_public_access_success', 'Public survey accessed successfully', [
+            'survey_id' => $survey->id,
+            'survey_slug' => $survey->slug,
+            'survey_title' => $survey->title
+        ], request());
 
         return new SurveyResource($cachedSurvey);
     }
@@ -211,43 +327,77 @@ class SurveyController extends Controller
     {
         $validated = $request->validated();
 
-        $surveyAnswer = SurveyAnswer::create([
+        DatabaseLogger::info('survey_answer_attempt', 'User attempting to submit survey answer', [
             'survey_id' => $survey->id,
-            'start_date' => date('Y-m-d H:i:s'),
-            'end_date' => date('Y-m-d H:i:s'),
-        ]);
+            'survey_title' => $survey->title,
+            'answers_count' => count($validated['answers'] ?? [])
+        ], $request);
 
-        foreach ($validated['answers'] as $questionId => $answer) {
-            $question = SurveyQuestion::where(['id' => $questionId, 'survey_id' => $survey->id])->get();
-            if (!$question) {
-                return response("Invalid question ID: \"$questionId\"", 400);
+        try {
+            $surveyAnswer = SurveyAnswer::create([
+                'survey_id' => $survey->id,
+                'start_date' => date('Y-m-d H:i:s'),
+                'end_date' => date('Y-m-d H:i:s'),
+            ]);
+
+            foreach ($validated['answers'] as $questionId => $answer) {
+                $question = SurveyQuestion::where(['id' => $questionId, 'survey_id' => $survey->id])->get();
+                if (!$question) {
+                    DatabaseLogger::error('survey_answer_invalid_question', 'Invalid question ID in survey answer', [
+                        'survey_id' => $survey->id,
+                        'question_id' => $questionId
+                    ], $request);
+                    return response("Invalid question ID: \"$questionId\"", 400);
+                }
+
+                $data = [
+                    'survey_question_id' => $questionId,
+                    'survey_answer_id' => $surveyAnswer->id,
+                    'answer' => is_array($answer) ? json_encode($answer) : $answer
+                ];
+
+                $questionAnswer = SurveyQuestionAnswer::create($data);
             }
 
-            $data = [
-                'survey_question_id' => $questionId,
-                'survey_answer_id' => $surveyAnswer->id,
-                'answer' => is_array($answer) ? json_encode($answer) : $answer
-            ];
+            // Clear related caches when new answer is stored
+            Cache::forget("survey_responses_{$survey->id}");
+            Cache::forget("survey_response_count_{$survey->id}");
+            Cache::forget("user_total_ratings_{$survey->user_id}");
+            Cache::forget("top_surveys_user_{$survey->user_id}");
+            Cache::forget("bot_surveys_user_{$survey->user_id}");
 
-            $questionAnswer = SurveyQuestionAnswer::create($data);
+            DatabaseLogger::info('survey_answer_success', 'Survey answer submitted successfully', [
+                'survey_id' => $survey->id,
+                'survey_title' => $survey->title,
+                'answer_id' => $surveyAnswer->id,
+                'answers_count' => count($validated['answers'] ?? [])
+            ], $request);
+
+            return response("", 201);
+        } catch (\Exception $e) {
+            DatabaseLogger::error('survey_answer_error', 'Failed to submit survey answer', [
+                'survey_id' => $survey->id,
+                'error' => $e->getMessage()
+            ], $request);
+            throw $e;
         }
-
-        // Clear related caches when new answer is stored
-        Cache::forget("survey_responses_{$survey->id}");
-        Cache::forget("survey_response_count_{$survey->id}");
-        Cache::forget("user_total_ratings_{$survey->user_id}");
-        Cache::forget("top_surveys_user_{$survey->user_id}");
-        Cache::forget("bot_surveys_user_{$survey->user_id}");
-
-        return response("", 201);
     }
 
     public function responses(Survey $survey, Request $request)
     {
         $user = $request->user();
         if ($user->id !== $survey->user_id) {
+            DatabaseLogger::warning('survey_responses_access_denied', 'Unauthorized survey responses access attempt', [
+                'survey_id' => $survey->id,
+                'survey_owner_id' => $survey->user_id
+            ], $request, $user->id);
             return abort(403, 'Unauthorized action');
         }
+
+        DatabaseLogger::info('survey_responses_view', 'User viewing survey responses', [
+            'survey_id' => $survey->id,
+            'survey_title' => $survey->title
+        ], $request, $user->id);
 
         // Cache survey responses for 5 minutes
         $cacheKey = "survey_responses_{$survey->id}";
@@ -312,8 +462,17 @@ class SurveyController extends Controller
     {
         $user = $request->user();
         if ($user->id !== $survey->user_id) {
+            DatabaseLogger::warning('survey_count_access_denied', 'Unauthorized survey response count access attempt', [
+                'survey_id' => $survey->id,
+                'survey_owner_id' => $survey->user_id
+            ], $request, $user->id);
             return abort(403, 'Unauthorized action');
         }
+
+        DatabaseLogger::info('survey_count_view', 'User viewing survey response count', [
+            'survey_id' => $survey->id,
+            'survey_title' => $survey->title
+        ], $request, $user->id);
 
         // Cache response count for 5 minutes
         $count = Cache::remember("survey_response_count_{$survey->id}", 300, function () use ($survey) {
@@ -325,6 +484,11 @@ class SurveyController extends Controller
 
     public function getResponseDetails($surveyId, $responseId)
     {
+        DatabaseLogger::info('survey_response_details_view', 'User viewing survey response details', [
+            'survey_id' => $surveyId,
+            'response_id' => $responseId
+        ], request());
+
         // Cache response details for 10 minutes
         $cacheKey = "response_details_{$surveyId}_{$responseId}";
 
@@ -368,6 +532,10 @@ class SurveyController extends Controller
         });
 
         if (!$responseData) {
+            DatabaseLogger::warning('survey_response_details_not_found', 'Survey response details not found', [
+                'survey_id' => $surveyId,
+                'response_id' => $responseId
+            ], request());
             return response()->json(['message' => 'Response not found'], 404);
         }
 
@@ -377,6 +545,8 @@ class SurveyController extends Controller
     public function totalRatings(Request $request)
     {
         $user = $request->user();
+
+        DatabaseLogger::info('ratings_total_view', 'User viewing total ratings', [], $request, $user->id);
 
         // Cache user ratings for 10 minutes
         $cacheKey = "user_total_ratings_{$user->id}";
@@ -434,6 +604,11 @@ class SurveyController extends Controller
     public function totalDepartmentRatings($surveyAnswerId, Survey $survey, Request $request)
     {
         $user = $request->user();
+
+        DatabaseLogger::info('ratings_department_view', 'User viewing department ratings', [
+            'survey_answer_id' => $surveyAnswerId,
+            'survey_id' => $survey->id
+        ], $request, $user->id);
 
         // Cache department ratings for 10 minutes
         $cacheKey = "dept_ratings_{$surveyAnswerId}_{$user->id}";
@@ -495,8 +670,11 @@ class SurveyController extends Controller
         $user = $request->user();
 
         if (!$user) {
+            DatabaseLogger::warning('top_surveys_unauthorized', 'Unauthorized access to top surveys', [], $request);
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        DatabaseLogger::info('top_surveys_view', 'User viewing top surveys', [], $request, $user->id);
 
         // Cache top surveys for 15 minutes
         $cacheKey = "top_surveys_user_{$user->id}";
@@ -520,8 +698,11 @@ class SurveyController extends Controller
         $user = $request->user();
 
         if (!$user) {
+            DatabaseLogger::warning('bot_surveys_unauthorized', 'Unauthorized access to bottom surveys', [], $request);
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        DatabaseLogger::info('bot_surveys_view', 'User viewing bottom surveys', [], $request, $user->id);
 
         // Cache bottom surveys for 15 minutes
         $cacheKey = "bot_surveys_user_{$user->id}";
@@ -542,6 +723,8 @@ class SurveyController extends Controller
 
     public function getLinks(Request $request)
     {
+        DatabaseLogger::info('survey_links_view', 'User viewing survey links', [], $request);
+
         // Cache survey links for 30 minutes
         $cacheKey = "survey_links_all";
 
@@ -571,6 +754,12 @@ class SurveyController extends Controller
                 ];
             }
         });
+
+        if (!$linksData['success']) {
+            DatabaseLogger::error('survey_links_error', 'Failed to retrieve survey links', [
+                'error' => $linksData['error'] ?? 'Unknown error'
+            ], $request);
+        }
 
         return response()->json($linksData, $linksData['success'] ? 200 : 500);
     }
@@ -676,4 +865,3 @@ class SurveyController extends Controller
         return $question->update($validator->validated());
     }
 }
-
