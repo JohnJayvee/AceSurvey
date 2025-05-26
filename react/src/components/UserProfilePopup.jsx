@@ -484,6 +484,15 @@ export default function UserProfilePopup({ onLogout }) {
                                 className="relative w-full max-w-md p-6 bg-white shadow-xl rounded-2xl"
                                 onClick={(e) => e.stopPropagation()}
                             >
+
+
+
+
+
+
+
+
+
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-xl font-semibold text-gray-900">Change Email</h2>
                                     <button
