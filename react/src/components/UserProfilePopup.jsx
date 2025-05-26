@@ -5,7 +5,7 @@ import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Eye icons for show/hide
 import { useStateContext } from "@context/ContextProvider";
 import axiosClient from "@api/axios";
-import logo from "/AceLogo.png";
+import logo from "@images/AceLogo.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { debounce } from "lodash";
 

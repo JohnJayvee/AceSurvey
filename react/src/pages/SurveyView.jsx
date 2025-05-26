@@ -20,7 +20,7 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
 import ErrorMessage from "@components/ErrorMessage"; // Add this import
-import logo from "/AceLogo.png";
+import logo from "@images/AceLogo.png";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 

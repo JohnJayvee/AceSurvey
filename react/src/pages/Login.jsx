@@ -7,7 +7,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Loader as RsuiteLoader } from "rsuite";
 import "rsuite/dist/rsuite.min.css";
 import Bulb from "@components/Bulb";
-import logo from "/AceLogo.png"; // Update path according to your logo location
+import logo from "@images/AceLogo.png"; // Update path according to your logo location
 import AnimatedBackground from "../components/AnimatedBackground";
 import { motion } from "framer-motion";
 import ErrorMessage from "@components/ErrorMessage";

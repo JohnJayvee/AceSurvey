@@ -9,6 +9,7 @@ import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
 import ErrorMessage from "@components/ErrorMessage";
+import logo from '@images/AceLogo.png';
 
 // Use a proper cache with localStorage support
 const surveyCache = {
@@ -259,13 +260,13 @@ export default function SurveyPublicView() {
                                 <div className="w-full md:w-1/2">
                                     <div className="relative h-[300px] rounded-xl overflow-hidden bg-gray-50">
                                         <img
-                                            src={survey.image_url || '/AceLogo.png'}
+                                            src={survey.image_url || logo}
                                             loading="lazy"
                                             className={`w-full h-full transition-transform duration-300 hover:scale-105 ${!survey.image_url ? 'object-contain p-8' : 'object-cover'}`}
                                             alt={survey.title}
                                             onError={(e) => {
                                                 e.target.onerror = null;
-                                                e.target.src = '/AceLogo.png';
+                                                e.target.src = logo;
                                                 e.target.className = 'object-contain w-full h-full p-8';
                                             }}
                                         />

@@ -8,6 +8,9 @@ import { useStateContext } from "@context/ContextProvider";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ClipboardDocumentIcon, QrCodeIcon } from "@heroicons/react/24/outline";
+import acelogo from "@images/AceLogo.png"; // Make sure this file exists
+
+console.log("Acelogo path:", acelogo); // Add this to verify the import
 
 const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
     const handleClosePopup = () => setOpenSharePopup(false);
@@ -97,7 +100,7 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
             logo.onload = checkAllImagesLoaded;
 
             img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
-            logo.src = "/AceLogo.png";
+            logo.src = acelogo;
         }, 100);
     };
 
@@ -134,7 +137,7 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
             level="H"
             includeMargin={true}
             imageSettings={{
-                src: "/AceLogo.png",
+                src: acelogo,
                 height: 50,
                 width: 50,
                 excavate: true,

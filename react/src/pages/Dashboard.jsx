@@ -12,6 +12,7 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';  // Importing Recharts
 import { PieChart, Pie, Cell } from 'recharts'; // Importing PieChart components
+import logo from '@images/AceLogo.png'; // Assuming you have a logo image in your assets
 
 const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF9800', '#F44336'];
 const RADIAN = Math.PI / 180;
@@ -607,13 +608,13 @@ export default function Dashboard() {
                                     <div className="space-y-4">
                                         <div className="relative overflow-hidden transition-all duration-300 transform rounded-lg group hover:scale-[1.02]">
                                             <img
-                                                src={data.latestSurvey.image_url || '/AceLogo.png'}
+                                                src={data.latestSurvey.image_url || logo}
                                                 loading="lazy"
                                                 className="object-contain w-full mx-auto rounded-lg h-72 bg-gray-50"
                                                 alt={data.latestSurvey.title}
                                                 onError={(e) => {
                                                     e.target.onerror = null;
-                                                    e.target.src = '/AceLogo.png';
+                                                    e.target.src = logo;
                                                 }}
                                             />
                                             <div className="absolute inset-0 transition-opacity duration-300 bg-black opacity-0 group-hover:opacity-10"></div>

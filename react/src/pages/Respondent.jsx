@@ -8,6 +8,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
 import { motion } from "framer-motion";
+import logo from "@images/AceLogo.png"; // Adjust the path as necessary
 
 export default function Respondent() {
     const { surveyId, responseId } = useParams();
@@ -182,7 +183,7 @@ export default function Respondent() {
                 >
                     <div className="w-full md:w-1/2">
                         <img
-                            src={responseDetails.image_url || '/AceLogo.png'}
+                            src={responseDetails.image_url || logo}
                             loading="lazy"
                             className="object-contain w-full rounded-md h-80 bg-gray-50"
                             alt={responseDetails.title}

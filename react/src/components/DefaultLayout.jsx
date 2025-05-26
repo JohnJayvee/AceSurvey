@@ -6,8 +6,8 @@ import Toast from "./Toast";
 import UserProfilePopup from "@components/UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
 import Footer from "./Footer";
-import logo from "/AceLogo.png"; // Update path according to your logo location
-import banner from "/AceBanner.png"; // Update path according to your logo location
+import logo from "@images/AceLogo.png"; // Update path according to your logo location
+import banner from "@images/AceBanner.png"; // Update path according to your logo location
 import { motion, AnimatePresence } from "framer-motion";
 import {
     HomeIcon,

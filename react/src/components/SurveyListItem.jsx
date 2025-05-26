@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartTooltip } from "recharts";
 import axios from "@api/axios";
 import { debounce } from 'lodash'; // Add this import
+import logo from "@images/AceLogo.png"; // Update path according to your logo location
 
 // Put these at the top level of your file (outside any component)
 const cache = {};
@@ -114,13 +115,13 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
         <div className="relative flex flex-col p-6 transition-all duration-300 bg-white border border-gray-200 rounded-xl group hover:border-blue-500 hover:shadow-lg animate-fade-in-down">
             <div className="relative overflow-hidden rounded-lg aspect-video bg-gray-50">
                 <img
-                    src={survey.image_url || '/AceLogo.png'}
+                    src={survey.image_url || logo}
                     loading="lazy"
                     alt={survey.title}
                     className="object-contain w-full h-full transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = '/AceLogo.png';
+                        e.target.src = logo;
                     }}
                 />
             </div>

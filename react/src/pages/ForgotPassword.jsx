@@ -3,7 +3,7 @@ import axiosClient from '@api/axios';
 import { Loader as RsuiteLoader } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import 'rsuite/dist/rsuite.min.css';
-import logo from "/AceLogo.png";
+import logo from "@images/AceLogo.png";
 import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from "framer-motion";
 import ErrorMessage from "@components/ErrorMessage";

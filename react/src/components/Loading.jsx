@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import './css/Loading.css';
+import logo from '@images/AceLogo.png'; // Update path according to your logo location
 
 const Loading = () => {
     return (
@@ -20,7 +21,7 @@ const Loading = () => {
                     className="loading-logo-container"
                 >
                     <img
-                        src="/AceLogo.png"
+                        src={logo}
                         loading="lazy"
                         alt="Loading"
                         className="loading-logo"
