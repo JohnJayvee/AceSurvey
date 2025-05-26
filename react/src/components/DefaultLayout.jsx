@@ -1,13 +1,12 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect, useCallback } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { useStateContext } from "@context/ContextProvider";
 import axiosClient from "@api/axios";
-import Toast from "./Toast";
+import Toast from "@components/Toast";
 import UserProfilePopup from "@components/UserProfilePopup";
 import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
-import Footer from "./Footer";
-import logo from "@images/AceLogo.png"; // Update path according to your logo location
-import banner from "@images/AceBanner.png"; // Update path according to your logo location
+import logo from "@images/AceLogo.png";
+import banner from "@images/AceBanner.png";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     HomeIcon,
@@ -18,140 +17,239 @@ import {
     ChevronRightIcon
 } from "@heroicons/react/24/outline";
 
-// Add a cache object at the top level
-const cache = {};
+// Global cache to prevent recreation
+let userCache = null;
 
 export default function DefaultLayout() {
     const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
     const [isUserProfilePopupOpen, setIsUserProfilePopupOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+        try {
+            const saved = localStorage.getItem('sidebar-collapsed');
+            return saved ? JSON.parse(saved) : false;
+        } catch {
+            return false;
+        }
+    });
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const [anchor, setAnchor] = useState(null);
-    const [placement, setPlacement] = useState("bottom-end");
 
-    // Use a ref to prevent duplicate fetches
+    // Refs for cleanup
     const hasFetchedRef = useRef(false);
+    const resizeTimeoutRef = useRef(null);
+    const abortControllerRef = useRef(null);
+    const cleanupRef = useRef([]);
+    const sidebarRef = useRef(null);
+    const contentRef = useRef(null);
 
-    // Toggle mobile menu
-    const toggleMobileMenu = () => {
-        setIsMobileMenuOpen(!isMobileMenuOpen);
-    };
-
-    // Close mobile menu when navigation occurs
-    const closeMobileMenu = () => {
-        setIsMobileMenuOpen(false);
-    };
-
-    // Toggle sidebar collapsed state
-    const toggleSidebar = () => {
-        const newState = !isSidebarCollapsed;
-        setIsSidebarCollapsed(newState);
-        localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
-    };
-
-    // Handle sidebar hover
-    const handleSidebarMouseEnter = () => {
-        if (isSidebarCollapsed) {
-            setIsSidebarHovered(true);
-        }
-    };
-
-    const handleSidebarMouseLeave = () => {
-        setIsSidebarHovered(false);
-    };
-
-    // Determine if sidebar should be expanded (either not collapsed or hovered)
+    // Compute expanded state
     const shouldExpandSidebar = !isSidebarCollapsed || isSidebarHovered;
 
-    // Handle window resize to maintain sidebar state
+    // Direct DOM manipulation for sidebar animation
+    const updateSidebarWidth = useCallback((expanded) => {
+        if (sidebarRef.current && contentRef.current) {
+            const width = expanded ? 256 : 64; // 16rem = 256px, 4rem = 64px
+
+            // Use transform instead of width for better performance
+            sidebarRef.current.style.width = `${width}px`;
+            contentRef.current.style.marginLeft = `${width}px`;
+        }
+    }, []);
+
+    // Optimized event handlers
+    const toggleMobileMenu = useCallback(() => {
+        setIsMobileMenuOpen(prev => !prev);
+    }, []);
+
+    const closeMobileMenu = useCallback(() => {
+        setIsMobileMenuOpen(false);
+    }, []);
+
+    const toggleSidebar = useCallback(() => {
+        setIsSidebarCollapsed(prev => {
+            const newState = !prev;
+            updateSidebarWidth(!newState);
+
+            requestIdleCallback(() => {
+                try {
+                    localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
+                } catch (error) {
+                    console.warn('Failed to save sidebar state:', error);
+                }
+            });
+            return newState;
+        });
+    }, [updateSidebarWidth]);
+
+    const handleSidebarMouseEnter = useCallback(() => {
+        if (isSidebarCollapsed) {
+            setIsSidebarHovered(true);
+            updateSidebarWidth(true);
+        }
+    }, [isSidebarCollapsed, updateSidebarWidth]);
+
+    const handleSidebarMouseLeave = useCallback(() => {
+        if (isSidebarHovered) {
+            setIsSidebarHovered(false);
+            updateSidebarWidth(false);
+        }
+    }, [isSidebarHovered, updateSidebarWidth]);
+
+    const handleClose = useCallback(() => {
+        setIsUserProfilePopupOpen(false);
+        setAnchor(null);
+    }, []);
+
+    const toggleUserProfilePopup = useCallback((event) => {
+        setIsUserProfilePopupOpen(prev => !prev);
+        setAnchor(event.currentTarget);
+    }, []);
+
+    // Initial sidebar setup
+    useLayoutEffect(() => {
+        updateSidebarWidth(shouldExpandSidebar);
+    }, [shouldExpandSidebar, updateSidebarWidth]);
+
+    // Optimized resize handler
     useLayoutEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth >= 768) { // md breakpoint
-                setIsMobileMenuOpen(false);
+            if (resizeTimeoutRef.current) {
+                clearTimeout(resizeTimeoutRef.current);
+            }
+
+            resizeTimeoutRef.current = setTimeout(() => {
+                if (window.innerWidth >= 768) {
+                    setIsMobileMenuOpen(false);
+                }
+            }, 100);
+        };
+
+        window.addEventListener('resize', handleResize, { passive: true });
+
+        const cleanup = () => {
+            window.removeEventListener('resize', handleResize);
+            if (resizeTimeoutRef.current) {
+                clearTimeout(resizeTimeoutRef.current);
             }
         };
 
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        cleanupRef.current.push(cleanup);
+        return cleanup;
     }, []);
 
-    // Load sidebar collapsed state from localStorage
+    // User data fetching
     useEffect(() => {
-        const savedSidebarState = localStorage.getItem('sidebar-collapsed');
-        if (savedSidebarState) {
-            setIsSidebarCollapsed(JSON.parse(savedSidebarState));
-        }
-    }, []);
-
-    useEffect(() => {
-        // First check if we have cached user data
-        if (cache['user']) {
-            console.log("Using cached user data");
-            setCurrentUser(cache['user']);
+        if (!userToken) {
+            hasFetchedRef.current = false;
             return;
         }
 
-        // Skip if already fetched during this component lifecycle
+        if (userCache) {
+            setCurrentUser(userCache);
+            return;
+        }
+
         if (hasFetchedRef.current) return;
         hasFetchedRef.current = true;
 
-        // Using simple Promise with then/catch as per your friend's pattern
-        axiosClient.get("/me")
-            .then(({ data }) => {
-                // Store in cache for future use
-                cache['user'] = data;
-                setCurrentUser(data);
-            })
-            .catch((error) => {
-                console.error("Error fetching user data:", error);
-            });
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        abortControllerRef.current = new AbortController();
+
+        requestIdleCallback(() => {
+            axiosClient.get("/me", { signal: abortControllerRef.current.signal })
+                .then(({ data }) => {
+                    userCache = data;
+                    setCurrentUser(data);
+                })
+                .catch((error) => {
+                    if (error.name !== 'AbortError') {
+                        console.error("Error fetching user data:", error);
+                        hasFetchedRef.current = false;
+                    }
+                });
+        });
+
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, [userToken, setCurrentUser]);
 
-    const onLogout = (ev) => {
+    // Logout handler
+    const onLogout = useCallback(async (ev) => {
         ev.preventDefault();
 
-        // Simple Promise pattern for logout
-        axiosClient.post("logout")
-            .then(() => {
-                // Clear user data
-                setCurrentUser({});
-                setUserToken(null);
-                // Clear cache on logout
-                delete cache['user'];
-                // Reset fetch flag to allow fetching again if user logs back in
-                hasFetchedRef.current = false;
-            })
-            .catch(error => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        const logoutController = new AbortController();
+
+        try {
+            await axiosClient.post("logout", {}, { signal: logoutController.signal });
+
+            setCurrentUser({});
+            setUserToken(null);
+            userCache = null;
+            hasFetchedRef.current = false;
+
+        } catch (error) {
+            if (error.name !== 'AbortError') {
                 console.error("Logout error:", error);
-            });
-    };
+            }
+        }
+    }, [setCurrentUser, setUserToken]);
 
-    const toggleUserProfilePopup = (event) => {
-        setIsUserProfilePopupOpen((prev) => !prev);
-        setAnchor(event.currentTarget);
-    };
-
-    const handleClose = () => {
-        setIsUserProfilePopupOpen(false);
-    };
-
+    // Outside click handler
     useEffect(() => {
+        if (!anchor) return;
+
         const handleOutsideClick = (event) => {
-            if (
-                anchor &&
-                !anchor.contains(event.target) &&
-                !event.target.closest(".action-popup")
-            ) {
+            const target = event.target;
+            if (anchor &&
+                !anchor.contains(target) &&
+                !target.closest(".action-popup") &&
+                !target.closest("[data-popup]")) {
                 setIsUserProfilePopupOpen(false);
+                setAnchor(null);
             }
         };
 
-        document.addEventListener("mousedown", handleOutsideClick);
-        return () => {
+        const timeoutId = setTimeout(() => {
+            document.addEventListener("mousedown", handleOutsideClick, { passive: true });
+        }, 50);
+
+        const cleanup = () => {
+            clearTimeout(timeoutId);
             document.removeEventListener("mousedown", handleOutsideClick);
         };
+
+        cleanupRef.current.push(cleanup);
+        return cleanup;
     }, [anchor]);
+
+    // Master cleanup
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+
+            cleanupRef.current.forEach(cleanup => {
+                try {
+                    cleanup();
+                } catch (error) {
+                    console.warn('Cleanup error:', error);
+                }
+            });
+            cleanupRef.current = [];
+        };
+    }, []);
 
     if (!userToken) {
         return <Navigate to="login" />;
@@ -159,63 +257,34 @@ export default function DefaultLayout() {
 
     return (
         <div className="flex min-h-screen overflow-x-hidden">
-            {/* Desktop Left Sidebar with Hover Expand */}
-            <motion.div
-                initial={{ x: -240, opacity: 0 }}
-                animate={{
-                    x: 0,
-                    opacity: 1,
-                    width: shouldExpandSidebar ? '16rem' : '64px'
-                }}
-                transition={{
-                    duration: 0.25,
-                    ease: "easeInOut",
-                    width: { duration: 0.25, ease: "easeInOut" }
-                }}
-                className="sticky top-0 z-40 flex-col hidden h-screen overflow-hidden bg-white border-r border-gray-200 shadow-sm md:flex"
+            {/* Desktop Sidebar - Pure CSS Performance */}
+            <aside
+                ref={sidebarRef}
+                className="fixed top-0 left-0 z-40 flex-col hidden h-screen overflow-hidden bg-white border-r border-gray-200 shadow-sm md:flex"
                 style={{
-                    minWidth: shouldExpandSidebar ? '16rem' : '64px',
-                    maxWidth: shouldExpandSidebar ? '16rem' : '64px',
-                    flexShrink: 0
+                    width: shouldExpandSidebar ? '256px' : '64px',
+                    transition: 'width 0.2s ease-out',
+                    willChange: 'width'
                 }}
                 onMouseEnter={handleSidebarMouseEnter}
                 onMouseLeave={handleSidebarMouseLeave}
             >
-                <div className={`p-2 border-b border-gray-200 ${!shouldExpandSidebar ? 'flex justify-center' : ''}`}>
-                    <AnimatePresence mode="wait">
-                        {!shouldExpandSidebar ? (
-                            <motion.img
-                                key="small-logo"
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                transition={{ duration: 0.15, delay: 0.1 }}
-                                src={logo}
-                                alt="Ace Survey Logo"
-                                className="w-auto h-12 mx-auto"
-                            />
-                        ) : (
-                            <motion.img
-                                key="large-logo"
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                transition={{ duration: 0.15, delay: 0.1 }}
-                                src={banner}
-                                alt="Ace Survey Logo"
-                                className="w-auto h-12 mx-auto"
-                            />
-                        )}
-                    </AnimatePresence>
+                <div className="flex justify-center flex-shrink-0 p-2 border-b border-gray-200">
+                    <img
+                        src={shouldExpandSidebar ? banner : logo}
+                        alt="Ace Survey"
+                        className="w-auto h-12"
+                        loading="lazy"
+                    />
                 </div>
 
-                <div className={`flex flex-col gap-2 overflow-hidden ${!shouldExpandSidebar ? 'p-2' : 'p-4'}`}>
+                <nav className={`flex flex-col gap-2 flex-1 overflow-hidden ${!shouldExpandSidebar ? 'p-2' : 'p-4'}`}>
                     <NavLink
                         to="/dashboard"
                         className={({ isActive }) =>
-                            `flex items-center transition-all duration-250 rounded-lg ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4 gap-2'
-                            } py-3 text-sm font-medium ${isActive
-                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
+                            `flex items-center rounded-lg py-3 text-sm font-medium ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4'
+                            } ${isActive
+                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
                                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                             }`
                         }
@@ -224,19 +293,11 @@ export default function DefaultLayout() {
                         {({ isActive }) => (
                             <>
                                 <HomeIcon className={`flex-shrink-0 w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
-                                <motion.span
-                                    initial={false}
-                                    animate={{
-                                        opacity: shouldExpandSidebar ? 1 : 0,
-                                        width: shouldExpandSidebar ? "auto" : 0,
-                                        marginLeft: shouldExpandSidebar ? "0.5rem" : 0
-                                    }}
-                                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                                    className={`overflow-hidden whitespace-nowrap ${isActive ? 'text-white underline decoration-2 underline-offset-2' : 'text-inherit'}`}
-                                    style={{ display: shouldExpandSidebar ? 'block' : 'none' }}
-                                >
-                                    Dashboard
-                                </motion.span>
+                                {shouldExpandSidebar && (
+                                    <span className="ml-2 overflow-hidden whitespace-nowrap">
+                                        Dashboard
+                                    </span>
+                                )}
                             </>
                         )}
                     </NavLink>
@@ -244,9 +305,9 @@ export default function DefaultLayout() {
                     <NavLink
                         to="/surveys"
                         className={({ isActive }) =>
-                            `flex items-center transition-all duration-250 rounded-lg ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4 gap-2'
-                            } py-3 text-sm font-medium ${isActive
-                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
+                            `flex items-center rounded-lg py-3 text-sm font-medium ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4'
+                            } ${isActive
+                                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
                                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                             }`
                         }
@@ -255,219 +316,144 @@ export default function DefaultLayout() {
                         {({ isActive }) => (
                             <>
                                 <ClipboardDocumentListIcon className={`flex-shrink-0 w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
-                                <motion.span
-                                    initial={false}
-                                    animate={{
-                                        opacity: shouldExpandSidebar ? 1 : 0,
-                                        width: shouldExpandSidebar ? "auto" : 0,
-                                        marginLeft: shouldExpandSidebar ? "0.5rem" : 0
-                                    }}
-                                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                                    className={`overflow-hidden whitespace-nowrap ${isActive ? 'text-white underline decoration-2 underline-offset-2' : 'text-inherit'}`}
-                                    style={{ display: shouldExpandSidebar ? 'block' : 'none' }}
-                                >
-                                    Surveys
-                                </motion.span>
+                                {shouldExpandSidebar && (
+                                    <span className="ml-2 overflow-hidden whitespace-nowrap">
+                                        Surveys
+                                    </span>
+                                )}
                             </>
                         )}
                     </NavLink>
-                </div>
+                </nav>
 
-                {/* Footer section that only shows when expanded */}
-                <AnimatePresence>
-                    {shouldExpandSidebar && (
+                {shouldExpandSidebar && (
+                    <footer className="flex-shrink-0 p-3 border-t border-gray-200">
+                        <div className="text-xs text-center text-gray-500">
+                            © 2024 Ace Survey
+                        </div>
+                    </footer>
+                )}
+            </aside>
+
+            {/* Mobile Sidebar - Simplified */}
+            <AnimatePresence mode="wait">
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.aside
+                            initial={{ x: -320 }}
+                            animate={{ x: 0 }}
+                            exit={{ x: -320 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-white shadow-xl md:hidden flex flex-col"
+                        >
+                            <div className="p-4 border-b border-gray-200">
+                                <img src={banner} alt="Ace Survey" className="w-auto h-12 mx-auto" loading="lazy" />
+                            </div>
+                            <nav className="flex flex-col flex-1 gap-1 p-3 overflow-y-auto">
+                                <NavLink
+                                    to="/dashboard"
+                                    onClick={closeMobileMenu}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                                        }`
+                                    }
+                                >
+                                    <HomeIcon className="w-5 h-5" />
+                                    <span>Dashboard</span>
+                                </NavLink>
+                                <NavLink
+                                    to="/surveys"
+                                    onClick={closeMobileMenu}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                                        }`
+                                    }
+                                >
+                                    <ClipboardDocumentListIcon className="w-5 h-5" />
+                                    <span>Surveys</span>
+                                </NavLink>
+                            </nav>
+                        </motion.aside>
                         <motion.div
                             initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
+                            animate={{ opacity: 0.5 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2, delay: 0.05 }}
-                            className="p-3 mt-auto overflow-hidden border-t border-gray-200"
-                        >
-                            <div className="text-xs text-center text-gray-500">
-                                © 2024 Ace Survey
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </motion.div>
-
-            {/* Mobile Sidebar Menu - Overlay */}
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <motion.div
-                        initial={{ x: -300, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -300, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="fixed inset-y-0 left-0 z-50 flex flex-col w-3/4 h-full max-w-xs overflow-y-auto bg-white shadow-xl md:hidden"
-                    >
-                        <div className="px-4 py-3 mb-4 border-b border-red-200">
-                            <img
-                                src={banner}
-                                alt="Ace Survey Logo"
-                                className="w-auto h-12 mx-auto"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1 px-3">
-                            <NavLink
-                                to="/dashboard"
-                                onClick={closeMobileMenu}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg
-                                    ${isActive
-                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
-                                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
-                                }
-                            >
-                                <HomeIcon className="w-5 h-5" />
-                                <span>Dashboard</span>
-                            </NavLink>
-                            <NavLink
-                                to="/surveys"
-                                onClick={closeMobileMenu}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg
-                                    ${isActive
-                                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 underline decoration-2 underline-offset-2"
-                                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"}`
-                                }
-                            >
-                                <ClipboardDocumentListIcon className="w-5 h-5" />
-                                <span>Surveys</span>
-                            </NavLink>
-                        </div>
-                    </motion.div>
+                            transition={{ duration: 0.15 }}
+                            className="fixed inset-0 z-40 bg-black md:hidden"
+                            onClick={closeMobileMenu}
+                        />
+                    </>
                 )}
             </AnimatePresence>
 
-            {/* Backdrop for mobile menu */}
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.5 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="fixed inset-0 z-40 bg-black md:hidden"
-                        onClick={closeMobileMenu}
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* Main Content Area with Header and Content */}
-            <div className="flex flex-col flex-grow min-w-0 transition-all duration-300">
-                <motion.div
-                    initial={{ y: -20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm backdrop-blur-lg bg-opacity-90 md:px-6"
-                >
-                    <div className="flex items-center min-w-0 gap-2">
-                        {/* Mobile hamburger menu button */}
+            {/* Main Content - Pure CSS */}
+            <div
+                ref={contentRef}
+                className="flex flex-col flex-1 min-w-0"
+                style={{
+                    marginLeft: shouldExpandSidebar ? '256px' : '64px',
+                    transition: 'margin-left 0.2s ease-out',
+                    willChange: 'margin-left'
+                }}
+            >
+                <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b border-gray-200 shadow-sm bg-white/95 backdrop-blur-sm md:px-6">
+                    <div className="flex items-center gap-3">
                         <button
-                            className="flex-shrink-0 p-2 text-gray-600 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none"
                             onClick={toggleMobileMenu}
+                            className="p-2 text-gray-600 transition-colors duration-150 rounded-lg md:hidden hover:bg-gray-100"
+                            type="button"
+                            aria-label="Toggle mobile menu"
                         >
-                            {isMobileMenuOpen ? (
-                                <XMarkIcon className="w-6 h-6" />
-                            ) : (
-                                <Bars3Icon className="w-6 h-6" />
-                            )}
+                            {isMobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
                         </button>
 
-                        {/* Desktop sidebar toggle button with company name */}
-                        <div className="flex items-center min-w-0 gap-3">
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="hidden p-2 text-gray-600 rounded-lg md:block hover:bg-gray-100 focus:outline-none"
-                                onClick={toggleSidebar}
-                                title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                            >
-                                <AnimatePresence mode="wait">
-                                    {isSidebarCollapsed ? (
-                                        <motion.div
-                                            key="expand"
-                                            initial={{ rotate: -90 }}
-                                            animate={{ rotate: 0 }}
-                                            exit={{ rotate: 90 }}
-                                            transition={{ duration: 0.2 }}
-                                        >
-                                            <ChevronRightIcon className="w-5 h-5" />
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="collapse"
-                                            initial={{ rotate: 90 }}
-                                            animate={{ rotate: 0 }}
-                                            exit={{ rotate: -90 }}
-                                            transition={{ duration: 0.2 }}
-                                        >
-                                            <ChevronLeftIcon className="w-5 h-5" />
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </motion.button>
+                        <button
+                            onClick={toggleSidebar}
+                            className="hidden p-2 text-gray-600 transition-colors duration-150 rounded-lg md:block hover:bg-gray-100"
+                            type="button"
+                            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                        >
+                            {isSidebarCollapsed ? <ChevronRightIcon className="w-5 h-5" /> : <ChevronLeftIcon className="w-5 h-5" />}
+                        </button>
 
-                            {/* Company Name - Shows on both mobile and desktop */}
-                            <div className="min-w-0">
-                                {/* Desktop version */}
-                                <div className="hidden md:block">
-                                    <h5 className="font-semibold text-gray-800 text-md whitespace-nowrap">
-                                        Ace Surveys
-                                    </h5>
-                                    <p className="text-xs text-gray-500 whitespace-nowrap">
-                                        Survey Management Platform
-                                    </p>
-                                </div>
-
-                                {/* Mobile version */}
-                                <div className="block md:hidden">
-                                    <h1 className="text-lg font-semibold text-gray-800 whitespace-nowrap">
-                                        Ace Survey
-                                    </h1>
-                                </div>
+                        <div>
+                            <div className="hidden md:block">
+                                <h1 className="text-lg font-semibold text-gray-800">Ace Surveys</h1>
+                                <p className="text-xs text-gray-500">Survey Management Platform</p>
                             </div>
+                            <h1 className="text-lg font-semibold text-gray-800 md:hidden">Ace Survey</h1>
                         </div>
                     </div>
 
-                    <div className="flex items-center flex-shrink-0 gap-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex items-center gap-3"
+                    <div className="flex items-center gap-3">
+                        <div className="items-center hidden gap-2 px-3 py-2 text-sm rounded-lg md:flex bg-gray-50">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="font-medium">{currentUser.name}</span>
+                        </div>
+                        <button
+                            onClick={toggleUserProfilePopup}
+                            className="relative p-1 transition-transform duration-150 rounded-full hover:scale-105"
+                            type="button"
+                            aria-label="User profile"
                         >
-                            <div className="items-center hidden gap-3 px-4 py-2 text-sm text-gray-600 rounded-lg md:flex bg-gray-50">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <span className="font-medium truncate">{currentUser.name}</span>
-                            </div>
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="relative flex-shrink-0"
-                                onClick={toggleUserProfilePopup}
-                            >
-                                <img
-                                    src={currentUser.avatar || logo}
-                                    alt="Profile"
-                                    className="w-10 h-10 transition-all duration-200 rounded-full ring-2 ring-gray-100 hover:ring-blue-200"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = logo;
-                                    }}
-                                />
-                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                            </motion.button>
-                        </motion.div>
+                            <img
+                                src={currentUser.avatar || logo}
+                                alt="Profile"
+                                className="w-10 h-10 transition-all duration-150 rounded-full ring-2 ring-gray-100 hover:ring-blue-200"
+                                loading="lazy"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = logo;
+                                }}
+                            />
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                        </button>
                     </div>
-                </motion.div>
+                </header>
 
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex-grow p-4 overflow-x-hidden bg-gradient-to-br from-gray-50 to-gray-100 md:p-6"
-                >
+                <main className="flex-1 p-4 overflow-x-hidden md:p-6 bg-gradient-to-br from-gray-50 to-gray-100">
                     <Outlet />
-                </motion.div>
+                </main>
             </div>
 
             <Toast />
@@ -477,17 +463,13 @@ export default function DefaultLayout() {
                     id="user-profile-popup"
                     open={isUserProfilePopupOpen}
                     anchor={anchor}
-                    placement={placement}
+                    placement="bottom-end"
                     offset={8}
                     onClose={handleClose}
                 >
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="action-popup"
-                    >
+                    <div className="action-popup" data-popup>
                         <UserProfilePopup onLogout={onLogout} />
-                    </motion.div>
+                    </div>
                 </BasePopup>
             )}
         </div>
