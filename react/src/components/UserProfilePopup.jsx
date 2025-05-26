@@ -489,6 +489,11 @@ export default function UserProfilePopup({ onLogout }) {
                                     <button
                                         onClick={closeEmailModal}
                                         className="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:bg-gray-100 hover:text-gray-600"
+
+
+
+
+
                                     >
                                         <svg
                                             className="w-5 h-5"
