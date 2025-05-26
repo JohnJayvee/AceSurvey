@@ -314,7 +314,7 @@ export default function UserProfilePopup({ onLogout }) {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                            className="fixed inset-0 flex items-center justify-center backdrop-blur-sm"
                             style={{ zIndex: 9999 }}
                             onClick={closePasswordModal}
                         >
@@ -473,7 +473,7 @@ export default function UserProfilePopup({ onLogout }) {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                            className="fixed inset-0 flex items-center justify-center backdrop-blur-sm"
                             style={{ zIndex: 9999 }}
                             onClick={closeEmailModal}
                         >
