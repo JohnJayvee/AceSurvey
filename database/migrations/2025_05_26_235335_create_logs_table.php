@@ -13,7 +13,8 @@ return new class extends Migration {
             $table->string('action'); // login, logout, signup, etc.
             $table->text('message');
             $table->json('context')->nullable(); // Additional data
-            $table->unsignedBigInteger('user_id')->nullable();
+            // $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->timestamps();
