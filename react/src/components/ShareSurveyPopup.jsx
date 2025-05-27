@@ -37,26 +37,77 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
         p: 0,
     }), [isMobile]);
 
-    const copyToClipboard = () => {
-        if (inputRef.current) {
-            inputRef.current.select();
-            inputRef.current.setSelectionRange(0, 99999);
+    const copyToClipboard = async () => {
+        if (!inputRef.current) return;
 
-            navigator.clipboard.writeText(shareLink)
-                .then(() => {
-                    showToast("Link copied to clipboard!");
-                    setOpenSharePopup(false);
-                })
-                .catch(() => {
-                    const success = document.execCommand("copy");
-                    if (success) {
-                        showToast("Link copied to clipboard!");
-                        setOpenSharePopup(false);
-                    } else {
-                        showToast("Failed to copy. Please copy manually.");
-                    }
-                });
+        // Select the text
+        inputRef.current.select();
+        inputRef.current.setSelectionRange(0, 99999);
+
+        // Check if clipboard API is available and we're in a secure context
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(shareLink);
+                showToast("Link copied to clipboard!");
+                setOpenSharePopup(false);
+                return;
+            } catch (err) {
+                console.warn("Clipboard API failed:", err);
+                // Fall through to legacy method
+            }
         }
+
+        // Fallback for older browsers or non-secure contexts
+        try {
+            const success = document.execCommand("copy");
+            if (success) {
+                showToast("Link copied to clipboard!");
+                setOpenSharePopup(false);
+            } else {
+                // Final fallback - show the text for manual copying
+                showFallbackCopyDialog();
+            }
+        } catch (err) {
+            console.warn("execCommand failed:", err);
+            showFallbackCopyDialog();
+        }
+    };
+
+    // Add this new function for the final fallback
+    const showFallbackCopyDialog = () => {
+        // Create a temporary element to show the link
+        const tempDiv = document.createElement('div');
+        tempDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 10000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-width: 90%;
+            word-break: break-all;
+        `;
+
+        tempDiv.innerHTML = `
+            <div style="margin-bottom: 10px; font-weight: bold;">Please copy manually:</div>
+            <div style="background: #f3f4f6; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-family: monospace;">${shareLink}</div>
+            <button onclick="this.parentElement.remove()" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+        `;
+
+        document.body.appendChild(tempDiv);
+
+        // Auto remove after 10 seconds
+        setTimeout(() => {
+            if (document.body.contains(tempDiv)) {
+                document.body.removeChild(tempDiv);
+            }
+        }, 10000);
+
+        showToast("Please copy the link manually");
     };
 
     const handleDownloadQR = () => {
