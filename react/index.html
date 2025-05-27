@@ -12,31 +12,6 @@
 <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <!-- <script>
-        // Set page load flag
-        if (!localStorage.getItem('PAGE_LOADED')) {
-            localStorage.setItem('PAGE_LOADED', 'true');
-        }
-
-        window.addEventListener('beforeunload', function (e) {
-            const isRefresh = e.persisted ||
-                (window.performance && performance.navigation.type === 1) ||
-                document.hidden;
-
-            // Only clear on actual browser close
-            if (!isRefresh && !localStorage.getItem('TOKEN')) {
-                localStorage.removeItem('TEMP_TOKEN');
-                localStorage.removeItem('SESSION_START');
-            }
-        });
-
-        // Handle visibility change for better tab tracking
-        document.addEventListener('visibilitychange', function () {
-            if (!document.hidden) {
-                localStorage.setItem('PAGE_LOADED', 'true');
-            }
-        });
-    </script> -->
 </body>
 
 </html>
