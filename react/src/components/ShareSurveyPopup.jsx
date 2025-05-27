@@ -28,13 +28,15 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: "min(90%, 600px)",
-        maxHeight: isMobile ? "95vh" : "calc(100vh - 100px)",
+        width: isMobile ? "95%" : "min(90%, 600px)",
+        maxWidth: isMobile ? "95vw" : "600px",
+        maxHeight: isMobile ? "90vh" : "calc(100vh - 100px)",
         overflowY: "auto",
         bgcolor: 'transparent',
         border: 'none',
         outline: 'none',
         p: 0,
+        zIndex: 9999, // Ensure it's above other elements
     }), [isMobile]);
 
     const copyToClipboard = async () => {
@@ -201,9 +203,38 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
             open={openSharePopup}
             onClose={handleClosePopup}
             closeAfterTransition
-            keepMounted={false} // Don't keep DOM elements when closed
+            keepMounted={false}
+            sx={{
+                zIndex: 10000, // Higher than any sidebar
+                '& .MuiBackdrop-root': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    zIndex: 9999,
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: '100vw',
+                    height: '100vh'
+                }
+            }}
+            BackdropProps={{
+                sx: {
+                    zIndex: 9999,
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: '100vw',
+                    height: '100vh'
+                }
+            }}
         >
-            <Box sx={dynamicPopupStyle}>
+            <Box sx={{
+                ...dynamicPopupStyle,
+                zIndex: 10001 // Even higher than backdrop
+            }}>
                 <AnimatePresence mode="wait">
                     {openSharePopup && (
                         <motion.div
@@ -212,8 +243,8 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                             initial="hidden"
                             animate="visible"
                             exit="exit"
-                            layout="position" // This helps with layout stability
-                            className="p-6 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
+                            layout="position"
+                            className="p-4 mx-2 bg-white border-0 shadow-xl sm:p-6 rounded-2xl backdrop-blur-xl sm:mx-0"
                             style={{
                                 willChange: 'transform, opacity',
                                 transformOrigin: 'center',
@@ -221,79 +252,100 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                                 WebkitBackfaceVisibility: 'hidden',
                                 transform: 'translateZ(0)',
                                 WebkitTransform: 'translateZ(0)',
-                                position: 'relative', // Stabilize position
-                                margin: '0 auto', // Center content
-                                maxWidth: '100%', // Prevent overflow
-                                height: 'auto', // Allow natural height
-                                overflow: 'hidden' // Prevent content shifts
+                                position: 'relative',
+                                margin: '0 auto',
+                                maxWidth: '100%',
+                                height: 'auto',
+                                overflow: 'hidden',
+                                width: '100%', // Ensure full width usage
+                                boxSizing: 'border-box', // Include padding in width calculation
+                                zIndex: 10002 // Highest z-index
                             }}
                         >
-                            <div className="relative mb-6">
+                            <div className="relative mb-4 sm:mb-6">
                                 <div className="absolute right-0 -top-2">
                                     <ModalClose
                                         variant="outlined"
                                         onClick={handleClosePopup}
                                         className="transition-transform hover:scale-110"
+                                        sx={{
+                                            zIndex: 10,
+                                            backgroundColor: 'white',
+                                            '&:hover': {
+                                                backgroundColor: '#f3f4f6'
+                                            }
+                                        }}
                                     />
                                 </div>
-                                <h2 className="text-2xl font-bold text-center text-gray-900">
+                                <h2 className="pr-8 text-xl font-bold text-center text-gray-900 sm:text-2xl">
                                     Share Survey
                                 </h2>
-                                <p className="mt-2 text-sm text-center text-gray-500">
+                                <p className="px-2 mt-2 text-xs text-center text-gray-500 sm:text-sm">
                                     Share this survey with others using the link or QR code
                                 </p>
                             </div>
 
-                            <Divider className="mb-6" />
+                            <Divider className="mb-4 sm:mb-6" />
 
-                            {/* Removed nested animation to prevent conflicts */}
-                            <div className="space-y-6">
-                                <div className="p-4 border border-gray-100 rounded-xl bg-gray-50">
+                            <div className="space-y-4 sm:space-y-6">
+                                <div className="p-3 border border-gray-100 sm:p-4 rounded-xl bg-gray-50">
                                     <label className="block mb-2 text-sm font-medium text-gray-700">
                                         Survey Link
                                     </label>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col gap-2 sm:flex-row">
                                         <input
                                             ref={inputRef}
                                             type="text"
                                             value={shareLink}
                                             readOnly
-                                            className="w-full px-4 py-2.5 text-gray-900 transition-all duration-200 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                            className="w-full px-3 sm:px-4 py-2.5 text-sm sm:text-base text-gray-900 transition-all duration-200 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                         />
                                         <button
                                             onClick={copyToClipboard}
-                                            className="flex items-center gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                            className="flex items-center justify-center gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 whitespace-nowrap"
                                         >
-                                            <ClipboardDocumentIcon className="w-5 h-5" />
-                                            <span className="hidden sm:inline">Copy</span>
+                                            <ClipboardDocumentIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                            <span>Copy</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col items-center">
-                                    <div className="mb-4 text-sm font-medium text-gray-700">
+                                    <div className="mb-3 text-sm font-medium text-gray-700 sm:mb-4">
                                         <div className="flex items-center gap-2">
-                                            <QrCodeIcon className="w-5 h-5" />
+                                            <QrCodeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                             <span>Scan QR Code</span>
                                         </div>
                                     </div>
                                     <div
-                                        className="p-6 bg-white border border-gray-100 shadow-lg rounded-xl"
+                                        className="p-3 bg-white border border-gray-100 shadow-lg sm:p-6 rounded-xl"
                                         style={{
-                                            height: '262px', // Fixed height to prevent layout shifts
-                                            width: '262px',  // Fixed width based on QR dimensions
+                                            height: isMobile ? '220px' : '262px',
+                                            width: isMobile ? '220px' : '262px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}
                                     >
-                                        {qrCodeComponent}
+                                        <QRCodeSVG
+                                            ref={qrRef}
+                                            value={shareLink}
+                                            size={isMobile ? 200 : 250}
+                                            level="H"
+                                            includeMargin={true}
+                                            imageSettings={{
+                                                src: acelogo,
+                                                height: isMobile ? 40 : 50,
+                                                width: isMobile ? 40 : 50,
+                                                excavate: true,
+                                            }}
+                                        />
                                     </div>
                                     <button
                                         onClick={handleDownloadQR}
-                                        className="flex items-center gap-2 px-6 py-2.5 mt-6 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        className="flex items-center gap-2 px-4 sm:px-6 py-2.5 mt-4 sm:mt-6 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm sm:text-base"
                                     >
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                         </svg>
                                         Download QR Code

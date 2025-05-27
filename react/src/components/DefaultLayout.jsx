@@ -33,6 +33,13 @@ export default function DefaultLayout() {
         }
     });
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => {
+        try {
+            return typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+        } catch {
+            return false;
+        }
+    });
     const [anchor, setAnchor] = useState(null);
 
     // Refs for cleanup
@@ -48,14 +55,17 @@ export default function DefaultLayout() {
 
     // Direct DOM manipulation for sidebar animation
     const updateSidebarWidth = useCallback((expanded) => {
-        if (sidebarRef.current && contentRef.current) {
+        if (sidebarRef.current && contentRef.current && !isMobile) {
             const width = expanded ? 256 : 64; // 16rem = 256px, 4rem = 64px
 
             // Use transform instead of width for better performance
             sidebarRef.current.style.width = `${width}px`;
             contentRef.current.style.marginLeft = `${width}px`;
+        } else if (contentRef.current && isMobile) {
+            // Reset margin on mobile
+            contentRef.current.style.marginLeft = '0px';
         }
-    }, []);
+    }, [isMobile]);
 
     // Optimized event handlers
     const toggleMobileMenu = useCallback(() => {
@@ -83,18 +93,18 @@ export default function DefaultLayout() {
     }, [updateSidebarWidth]);
 
     const handleSidebarMouseEnter = useCallback(() => {
-        if (isSidebarCollapsed) {
+        if (isSidebarCollapsed && !isMobile) {
             setIsSidebarHovered(true);
             updateSidebarWidth(true);
         }
-    }, [isSidebarCollapsed, updateSidebarWidth]);
+    }, [isSidebarCollapsed, isMobile, updateSidebarWidth]);
 
     const handleSidebarMouseLeave = useCallback(() => {
-        if (isSidebarHovered) {
+        if (isSidebarHovered && !isMobile) {
             setIsSidebarHovered(false);
             updateSidebarWidth(false);
         }
-    }, [isSidebarHovered, updateSidebarWidth]);
+    }, [isSidebarHovered, isMobile, updateSidebarWidth]);
 
     const handleClose = useCallback(() => {
         setIsUserProfilePopupOpen(false);
@@ -111,24 +121,40 @@ export default function DefaultLayout() {
         updateSidebarWidth(shouldExpandSidebar);
     }, [shouldExpandSidebar, updateSidebarWidth]);
 
-    // Optimized resize handler
+    // Optimized resize handler with mobile detection
     useLayoutEffect(() => {
         const handleResize = () => {
-            if (resizeTimeoutRef.current) {
-                clearTimeout(resizeTimeoutRef.current);
-            }
+            try {
+                const mobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+                setIsMobile(mobile);
 
-            resizeTimeoutRef.current = setTimeout(() => {
-                if (window.innerWidth >= 768) {
-                    setIsMobileMenuOpen(false);
+                if (resizeTimeoutRef.current) {
+                    clearTimeout(resizeTimeoutRef.current);
                 }
-            }, 100);
+
+                resizeTimeoutRef.current = setTimeout(() => {
+                    if (mobile) {
+                        setIsMobileMenuOpen(false);
+                        // Reset sidebar hover state on mobile
+                        setIsSidebarHovered(false);
+                    } else {
+                        // Re-apply sidebar width on desktop
+                        updateSidebarWidth(shouldExpandSidebar);
+                    }
+                }, 100);
+            } catch (error) {
+                console.warn('Resize handler error:', error);
+            }
         };
 
-        window.addEventListener('resize', handleResize, { passive: true });
+        if (typeof window !== 'undefined') {
+            window.addEventListener('resize', handleResize, { passive: true });
+        }
 
         const cleanup = () => {
-            window.removeEventListener('resize', handleResize);
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('resize', handleResize);
+            }
             if (resizeTimeoutRef.current) {
                 clearTimeout(resizeTimeoutRef.current);
             }
@@ -136,7 +162,7 @@ export default function DefaultLayout() {
 
         cleanupRef.current.push(cleanup);
         return cleanup;
-    }, []);
+    }, [shouldExpandSidebar, updateSidebarWidth]);
 
     // User data fetching
     useEffect(() => {
@@ -391,7 +417,7 @@ export default function DefaultLayout() {
                 ref={contentRef}
                 className="flex flex-col flex-1 min-w-0"
                 style={{
-                    marginLeft: shouldExpandSidebar ? '256px' : '64px',
+                    marginLeft: isMobile ? '0px' : (shouldExpandSidebar ? '256px' : '64px'),
                     transition: 'margin-left 0.2s ease-out',
                     willChange: 'margin-left'
                 }}
