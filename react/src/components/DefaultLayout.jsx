@@ -299,7 +299,7 @@ export default function DefaultLayout() {
                     <img
                         src={shouldExpandSidebar ? banner : logo}
                         alt="Ace Survey"
-                        className="w-auto h-12"
+                        className="w-auto h-14"
                         loading="lazy"
                     />
                 </div>
@@ -373,7 +373,7 @@ export default function DefaultLayout() {
                             className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-white shadow-xl md:hidden flex flex-col"
                         >
                             <div className="p-4 border-b border-gray-200">
-                                <img src={banner} alt="Ace Survey" className="w-auto h-12 mx-auto" loading="lazy" />
+                                <img src={banner} alt="Ace Survey" className="w-auto mx-auto h-14" loading="lazy" />
                             </div>
                             <nav className="flex flex-col flex-1 gap-1 p-3 overflow-y-auto">
                                 <NavLink
