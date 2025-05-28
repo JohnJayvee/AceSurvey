@@ -17,6 +17,15 @@ import {
     ChevronRightIcon
 } from "@heroicons/react/24/outline";
 
+// Simple polyfill for requestIdleCallback
+const safeRequestIdleCallback = (callback) => {
+    if (typeof window !== 'undefined' && window.requestIdleCallback) {
+        return window.requestIdleCallback(callback);
+    }
+    // Fallback for Safari and other browsers
+    return setTimeout(callback, 1);
+};
+
 // Global cache to prevent recreation
 let userCache = null;
 
@@ -81,7 +90,8 @@ export default function DefaultLayout() {
             const newState = !prev;
             updateSidebarWidth(!newState);
 
-            requestIdleCallback(() => {
+            // Use safe polyfill
+            safeRequestIdleCallback(() => {
                 try {
                     localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
                 } catch (error) {
@@ -185,7 +195,8 @@ export default function DefaultLayout() {
 
         abortControllerRef.current = new AbortController();
 
-        requestIdleCallback(() => {
+        // Use safe polyfill
+        safeRequestIdleCallback(() => {
             axiosClient.get("/me", { signal: abortControllerRef.current.signal })
                 .then(({ data }) => {
                     userCache = data;
