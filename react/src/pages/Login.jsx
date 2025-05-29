@@ -142,8 +142,8 @@ export default function Login() {
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <label className="flex items-center">
+                        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                            <label className="flex items-center justify-center sm:justify-start">
                                 <input
                                     type="checkbox"
                                     checked={keepSignedIn}
@@ -152,12 +152,15 @@ export default function Login() {
                                 />
                                 <span className="ml-2 text-sm text-gray-600">Keep me signed in</span>
                             </label>
-                            <Link
-                                to="/forgot-password"
-                                className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
-                            >
-                                Forgot password?
-                            </Link>
+
+                            <div className="text-center sm:text-right">
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                         </div>
 
                         <motion.button
