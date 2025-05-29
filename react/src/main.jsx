@@ -4,6 +4,26 @@ import "@css/tailwind.css";
 import router from "./router";
 import { RouterProvider } from "react-router-dom";
 import { ContextProvider } from "@context/ContextProvider";
+import { pwaManager } from '@services/pwa'
+
+// Initialize PWA with page control
+pwaManager.init({
+    // 🎯 JUST ADD THE PAGES WHERE YOU WANT INSTALL POPUP
+    installPages: [
+        '/dashboard'
+    ],
+    onNeedRefresh: () => {
+        console.log('Update available')
+    },
+    onOfflineReady: () => {
+        console.log('App ready offline')
+    }
+})
+
+// Request notification permission
+pwaManager.requestNotificationPermission()
+
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
