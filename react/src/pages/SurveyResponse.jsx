@@ -52,6 +52,35 @@ const cache = {};
 const ongoingRequests = {};
 const isFetching = {};
 
+const useWindowSize = () => {
+    const [windowSize, setWindowSize] = useState({
+        width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+        height: typeof window !== 'undefined' ? window.innerHeight : 768,
+    });
+
+    useEffect(() => {
+        function handleResize() {
+            setWindowSize({
+                width: window.innerWidth,
+                height: window.innerHeight,
+            });
+        }
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener("resize", handleResize);
+            handleResize(); // Set initial size
+        }
+
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener("resize", handleResize);
+            }
+        };
+    }, []);
+
+    return windowSize;
+};
+
 export default function SurveyResponse() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -65,6 +94,7 @@ export default function SurveyResponse() {
 
     // Add a ref to track if this component instance has started fetching
     const hasInitiatedFetchRef = useRef(false);
+    const { width } = useWindowSize();
 
     useEffect(() => {
         // Reset component-level flag when ID changes
@@ -403,31 +433,71 @@ export default function SurveyResponse() {
         );
     }
 
+    // Get responsive values
+    const getChartConfig = () => {
+        if (width < 640) {
+            return {
+                outer: 60,
+                inner: 30,
+                height: 200,
+                fontSize: '10px',
+                paddingTop: '8px',
+                iconSize: 6,
+                tooltipPadding: '6px 8px',
+                tooltipFontSize: '11px'
+            };
+        }
+        if (width < 768) {
+            return {
+                outer: 80,
+                inner: 40,
+                height: 250,
+                fontSize: '12px',
+                paddingTop: '12px',
+                iconSize: 8,
+                tooltipPadding: '8px 10px',
+                tooltipFontSize: '12px'
+            };
+        }
+        return {
+            outer: 100,
+            inner: 50,
+            height: 300,
+            fontSize: '14px',
+            paddingTop: '16px',
+            iconSize: 10,
+            tooltipPadding: '10px 12px',
+            tooltipFontSize: '14px'
+        };
+    };
+
+    const chartConfig = getChartConfig();
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="w-full mx-auto lg:w-9/12 xl:w-8/12"
+            className="w-full max-w-full px-4 mx-auto lg:w-9/12 xl:w-8/12 lg:px-0"
         >
             <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 className="flex items-center justify-between w-full mb-6"
             >
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-lg font-bold text-gray-900 truncate sm:text-xl md:text-2xl">
                     {survey.title} Survey Responses
                 </h1>
             </motion.div>
 
-            <div className="flex items-center justify-between w-full px-4 py-3 mb-6 bg-white shadow-sm rounded-xl">
+            <div className="flex flex-col w-full gap-3 px-4 py-3 mb-6 bg-white shadow-sm sm:flex-row sm:items-center sm:justify-between rounded-xl">
                 <Tooltip title="Go Back" placement="right" TransitionComponent={Fade}>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleGoBack}
-                        className="p-2.5 text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+                        className="p-2.5 text-gray-600 transition-colors rounded-lg hover:bg-gray-100 self-start sm:self-center"
                     >
-                        <FaArrowLeft className="w-5 h-5" />
+                        <FaArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </motion.button>
                 </Tooltip>
 
@@ -435,25 +505,25 @@ export default function SurveyResponse() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={downloadCSV}
-                    className="flex items-center gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 bg-green-600 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    className="flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base font-medium text-white transition-all duration-200 bg-green-600 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto"
                 >
-                    <HiDownload className="w-5 h-5" />
-                    <span>Download Responses</span>
+                    <HiDownload className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="whitespace-nowrap">Download</span>
                 </motion.button>
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid gap-4 sm:gap-6">
                 <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="p-6 bg-white shadow-sm rounded-xl bg-gradient-to-r from-blue-600 to-blue-800"
+                    className="p-4 bg-white shadow-sm sm:p-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-800"
                 >
-                    <div className="flex items-center justify-between">
-                        <div className="text-white">
-                            <p className="text-4xl font-bold md:text-5xl">
+                    <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                        <div className="text-center text-white sm:text-left">
+                            <p className="text-3xl font-bold sm:text-4xl md:text-5xl">
                                 {responseCount}
                             </p>
-                            <p className="mt-2 text-blue-100">
+                            <p className="mt-2 text-sm text-blue-100 sm:text-base">
                                 Total Responses
                             </p>
                         </div>
@@ -462,7 +532,7 @@ export default function SurveyResponse() {
                                 src={survey.image_url}
                                 loading="lazy"
                                 alt={survey.title}
-                                className="object-cover w-32 h-32 rounded-lg shadow-lg md:w-40 md:h-40"
+                                className="flex-shrink-0 object-cover w-24 h-24 rounded-lg shadow-lg sm:w-32 sm:h-32 md:w-40 md:h-40"
                             />
                         )}
                     </div>
@@ -472,10 +542,12 @@ export default function SurveyResponse() {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="p-6 bg-white shadow-sm rounded-xl"
+                    className="p-3 overflow-hidden bg-white shadow-sm sm:p-4 md:p-6 rounded-xl"
                 >
-                    <h2 className="mb-6 text-lg font-semibold text-gray-900">Rating Distribution</h2>
-                    <div className="h-[300px]">
+                    <h2 className="mb-3 text-sm font-semibold text-gray-900 sm:mb-4 md:mb-6 sm:text-base md:text-lg">
+                        Rating Distribution
+                    </h2>
+                    <div style={{ height: `${chartConfig.height}px`, width: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -484,9 +556,9 @@ export default function SurveyResponse() {
                                     cy="50%"
                                     labelLine={false}
                                     label={renderCustomizedLabel}
-                                    outerRadius={120}
-                                    innerRadius={60}
-                                    paddingAngle={5}
+                                    outerRadius={chartConfig.outer}
+                                    innerRadius={chartConfig.inner}
+                                    paddingAngle={width < 640 ? 2 : 5}
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
@@ -500,17 +572,17 @@ export default function SurveyResponse() {
                                     ))}
                                 </Pie>
 
-                                {/* Add Legend component here */}
                                 <Legend
                                     layout="horizontal"
                                     verticalAlign="bottom"
                                     align="center"
                                     wrapperStyle={{
-                                        paddingTop: '20px',
-                                        fontSize: '14px'
+                                        paddingTop: chartConfig.paddingTop,
+                                        fontSize: chartConfig.fontSize,
+                                        lineHeight: '1.2'
                                     }}
                                     iconType="circle"
-                                    iconSize={10}
+                                    iconSize={chartConfig.iconSize}
                                 />
 
                                 <RechartsTooltip
@@ -521,16 +593,19 @@ export default function SurveyResponse() {
                                                 <div style={{
                                                     backgroundColor: 'rgba(255, 255, 255, 0.98)',
                                                     border: 'none',
-                                                    borderRadius: '8px',
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                                    padding: '12px'
+                                                    borderRadius: '6px',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                    padding: chartConfig.tooltipPadding,
+                                                    fontSize: chartConfig.tooltipFontSize,
+                                                    maxWidth: '200px'
                                                 }}>
                                                     <p style={{
                                                         color: data.payload.fill || data.color,
                                                         fontWeight: 'bold',
-                                                        fontSize: '15px'
+                                                        margin: 0,
+                                                        whiteSpace: 'nowrap'
                                                     }}>
-                                                        {data.name} : {data.value} responses
+                                                        {data.name}: {data.value}
                                                     </p>
                                                 </div>
                                             );
@@ -539,7 +614,7 @@ export default function SurveyResponse() {
                                     }}
                                     wrapperStyle={{
                                         zIndex: 1000,
-                                        filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+                                        filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
                                     }}
                                 />
                             </PieChart>
@@ -551,53 +626,65 @@ export default function SurveyResponse() {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="p-6 bg-white shadow-sm rounded-xl"
+                    className="p-3 overflow-hidden bg-white shadow-sm sm:p-4 md:p-6 rounded-xl"
                 >
-                    <div className="mb-6">
+                    <div className="mb-4 sm:mb-6">
                         <input
                             type="text"
                             placeholder="Search responses..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-2.5 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200"
+                            className="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200"
                         />
                     </div>
-                    <DataGrid
-                        sx={{
-                            border: 'none',
-                            '& .MuiDataGrid-cell': {
-                                borderColor: '#f1f5f9',
-                            },
-                            '& .MuiDataGrid-columnHeaders': {
-                                backgroundColor: '#f8fafc',
-                                borderRadius: '8px',
-                            },
-                            '& .MuiDataGrid-footerContainer': {
-                                padding: '1rem',
-                                borderTop: '1px solid #f1f5f9',
-                            },
-                            '& .MuiTablePagination-root': {
-                                marginRight: '1rem',
-                            },
-                            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                                margin: 0,
-                            },
-                            [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
-                                outline: 'none',
-                            },
-                            [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]: {
-                                outline: 'none',
-                            },
-                        }}
-                        initialState={{
-                            pagination: { paginationModel: { pageSize: 10 } },
-                        }}
-                        rows={filteredRows}
-                        columns={columns}
-                        pageSizeOptions={[10, 20, 50, 100]}
-                        getRowId={(row) => row.id}
-                        className="pb-4"
-                    />
+                    <div className="overflow-x-auto">
+                        <DataGrid
+                            sx={{
+                                border: 'none',
+                                minWidth: '300px',
+                                '& .MuiDataGrid-cell': {
+                                    borderColor: '#f1f5f9',
+                                    fontSize: width < 640 ? '12px' : '14px',
+                                    padding: width < 640 ? '4px 8px' : '8px 16px',
+                                },
+                                '& .MuiDataGrid-columnHeaders': {
+                                    backgroundColor: '#f8fafc',
+                                    borderRadius: '8px',
+                                    fontSize: width < 640 ? '12px' : '14px',
+                                },
+                                '& .MuiDataGrid-footerContainer': {
+                                    padding: width < 640 ? '0.5rem' : '1rem',
+                                    borderTop: '1px solid #f1f5f9',
+                                },
+                                '& .MuiTablePagination-root': {
+                                    fontSize: width < 640 ? '12px' : '14px',
+                                },
+                                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                                    margin: 0,
+                                    fontSize: width < 640 ? '11px' : '13px',
+                                },
+                                [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
+                                    outline: 'none',
+                                },
+                                [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]: {
+                                    outline: 'none',
+                                },
+                            }}
+                            initialState={{
+                                pagination: { paginationModel: { pageSize: width < 640 ? 5 : 10 } },
+                            }}
+                            rows={filteredRows}
+                            columns={columns.map(col => ({
+                                ...col,
+                                width: width < 640 ? Math.min(col.width || 150, 120) : col.width,
+                                minWidth: width < 640 ? 80 : col.minWidth
+                            }))}
+                            pageSizeOptions={width < 640 ? [5, 10, 20] : [10, 20, 50, 100]}
+                            getRowId={(row) => row.id}
+                            className="pb-2 sm:pb-4"
+                            autoHeight
+                        />
+                    </div>
                 </motion.div>
             </div>
         </motion.div>
