@@ -176,24 +176,46 @@ export default defineConfig({
             scope: '/',
             start_url: '/',
             id: 'com.acesurvey.app',
+            categories: ['productivity', 'business'],
+            lang: 'en',
 
             icons: [
                {
-                  src: 'AceLogo.png',
+                  src: 'AceLogo-64x64.png',
+                  sizes: '64x64',
+                  type: 'image/png',
+                  purpose: 'any'
+               },
+               {
+                  src: 'AceLogo-144x144.png',
+                  sizes: '144x144',
+                  type: 'image/png',
+                  purpose: 'any'
+               },
+               {
+                  src: 'AceLogo-180x180.png',
+                  sizes: '180x180',
+                  type: 'image/png',
+                  purpose: 'any'
+               },
+               {
+                  src: 'AceLogo-192x192.png',
                   sizes: '192x192',
-                  type: 'image/png'
+                  type: 'image/png',
+                  purpose: 'any'
                },
                {
-                  src: 'AceLogo.png',
-                  sizes: '512x512',
-                  type: 'image/png'
-               },
-               {
-                  src: 'AceLogo.png',
+                  src: 'AceLogo-512x512.png',
                   sizes: '512x512',
                   type: 'image/png',
-                  purpose: 'any maskable'
-               }
+                  purpose: 'any'
+               },
+               {
+                  src: 'AceLogo-512x512-maskable.png',
+                  sizes: '512x512',
+                  type: 'image/png',
+                  purpose: 'maskable'
+               },
             ]
          }
       }),
