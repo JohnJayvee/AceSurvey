@@ -19,10 +19,40 @@ import Fade from "@mui/material/Fade";
 import { FaArrowLeft } from "react-icons/fa6";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
-import ErrorMessage from "@components/ErrorMessage"; // Add this import
+import ErrorMessage from "@components/ErrorMessage";
 import logo from "@images/AceLogo.png";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+
+// Add window size hook for responsiveness
+const useWindowSize = () => {
+    const [windowSize, setWindowSize] = useState({
+        width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+        height: typeof window !== 'undefined' ? window.innerHeight : 768,
+    });
+
+    useEffect(() => {
+        function handleResize() {
+            setWindowSize({
+                width: window.innerWidth,
+                height: window.innerHeight,
+            });
+        }
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener("resize", handleResize);
+            handleResize();
+        }
+
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener("resize", handleResize);
+            }
+        };
+    }, []);
+
+    return windowSize;
+};
 
 const cache = {};
 const isFetching = {};
@@ -63,6 +93,7 @@ export default function SurveyView() {
     const { showToast } = useStateContext();
     const navigate = useNavigate();
     const { id } = useParams();
+    const { width } = useWindowSize();
     const [openSharePopup, setOpenSharePopup] = useState(false);
     const [shareLink, setShareLink] = useState("");
     const hasFetched = useRef(false);
@@ -111,9 +142,19 @@ export default function SurveyView() {
         reader.readAsDataURL(file);
     }, 300);
 
-    // Debounce form submission
-    const handleSubmit = debounce((ev) => {
+    // Make sure the form submission is only triggered by the submit button
+    const onSubmit = (ev) => {
         ev.preventDefault();
+        ev.stopPropagation(); // Prevent event bubbling
+        handleSubmit(ev);
+    };
+
+    // Update handleSubmit to be more explicit about when to save
+    const handleSubmit = debounce((ev) => {
+        // Only proceed if this is an actual form submission
+        if (!ev || ev.type !== 'submit') {
+            return;
+        }
 
         const payload = { ...survey };
         if (payload.image) {
@@ -150,12 +191,6 @@ export default function SurveyView() {
         });
     }, 300);
 
-    // Need immediate preventDefault
-    const onSubmit = (ev) => {
-        ev.preventDefault();
-        handleSubmit(ev);
-    };
-
     // Updated delete functions
     const onDeleteClick = (id) => {
         setSurveyToDelete(id);
@@ -187,8 +222,13 @@ export default function SurveyView() {
         onDeleteClick(id);
     }, 300);
 
+    // Update the onQuestionsUpdate function to not trigger automatic saves
     function onQuestionsUpdate(questions) {
-        setSurvey({ ...survey, questions });
+        // Only update local state, don't trigger save
+        setSurvey(prevSurvey => ({
+            ...prevSurvey,
+            questions
+        }));
     }
 
     // Update your fetch logic with your friend's pattern
@@ -272,28 +312,28 @@ export default function SurveyView() {
             {loading && (
                 <div className="px-4 py-8 mx-auto max-w-7xl">
                     <div className="mb-8">
-                        <Skeleton height={40} width={300} />
-                        <Skeleton height={20} width={400} className="mt-2" />
+                        <Skeleton height={40} width={width < 640 ? 250 : 300} />
+                        <Skeleton height={20} width={width < 640 ? 300 : 400} className="mt-2" />
                     </div>
 
                     <div className="p-4 mb-6 bg-white border border-gray-100 shadow-sm rounded-xl">
-                        <div className="flex justify-between">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
                             <Skeleton width={40} height={40} borderRadius={8} />
-                            <div className="flex gap-2">
-                                <Skeleton width={100} height={40} borderRadius={8} />
-                                <Skeleton width={100} height={40} borderRadius={8} />
-                                <Skeleton width={100} height={40} borderRadius={8} />
-                                <Skeleton width={100} height={40} borderRadius={8} />
+                            <div className="flex flex-wrap gap-2">
+                                <Skeleton width={width < 640 ? 80 : 100} height={40} borderRadius={8} />
+                                <Skeleton width={width < 640 ? 80 : 100} height={40} borderRadius={8} />
+                                <Skeleton width={width < 640 ? 80 : 100} height={40} borderRadius={8} />
+                                <Skeleton width={width < 640 ? 80 : 100} height={40} borderRadius={8} />
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-6">
                         <div className="overflow-hidden bg-white shadow-sm rounded-xl">
-                            <div className="p-6 space-y-6 lg:p-8">
+                            <div className="p-4 space-y-6 sm:p-6 lg:p-8">
                                 <div className="grid gap-8 lg:grid-cols-2">
                                     <div className="space-y-4">
-                                        <Skeleton height={200} className="rounded-lg" />
+                                        <Skeleton height={width < 640 ? 150 : 200} className="rounded-lg" />
                                         <Skeleton height={40} className="rounded-lg" />
                                     </div>
 
@@ -305,8 +345,8 @@ export default function SurveyView() {
 
                                         <div className="p-4">
                                             <Skeleton height={24} width={150} className="mb-2" />
-                                            <Skeleton height={100} className="rounded-lg" />
-                                            <Skeleton height={16} width={300} className="mt-2" />
+                                            <Skeleton height={width < 640 ? 80 : 100} className="rounded-lg" />
+                                            <Skeleton height={16} width={width < 640 ? 250 : 300} className="mt-2" />
                                         </div>
 
                                         <div className="p-4">
@@ -323,7 +363,7 @@ export default function SurveyView() {
                             </div>
                         </div>
 
-                        <div className="p-6 bg-white shadow-sm rounded-xl">
+                        <div className="p-4 bg-white shadow-sm sm:p-6 rounded-xl">
                             <Skeleton height={30} width={200} className="mb-4" />
                             {[1, 2, 3].map((i) => (
                                 <div key={i} className="mb-6">
@@ -344,12 +384,12 @@ export default function SurveyView() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-8"
+                        className="mb-6 sm:mb-8"
                     >
-                        <h1 className="text-3xl font-bold text-gray-900">
+                        <h1 className="text-lg font-bold leading-tight text-gray-900 sm:text-xl md:text-2xl lg:text-3xl">
                             {!id ? "Create New Survey" : "Edit Survey"}
                         </h1>
-                        <p className="mt-2 text-sm text-gray-600">
+                        <p className="mt-1 text-xs leading-snug text-gray-600 sm:mt-2 sm:text-sm md:text-base">
                             Fill in the information below to {id ? "update" : "create"} your survey.
                         </p>
                     </motion.div>
@@ -357,38 +397,38 @@ export default function SurveyView() {
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="sticky top-0 z-10 flex justify-between p-4 mb-6 bg-white border border-gray-100 shadow-sm rounded-xl backdrop-blur-xl bg-opacity-90"
+                        className="sticky top-0 z-10 flex flex-col justify-between gap-3 p-3 mb-4 bg-white border border-gray-100 shadow-sm sm:flex-row sm:p-4 sm:mb-6 rounded-xl backdrop-blur-xl bg-opacity-90 sm:gap-4"
                     >
                         <div className="flex items-center space-x-2">
                             <Tooltip title="Go Back" placement="bottom" TransitionComponent={Fade}>
                                 <button
                                     onClick={handleGoBack}
-                                    className="p-2 transition-all duration-200 rounded-lg hover:bg-gray-100 active:bg-gray-200"
+                                    className="p-1.5 sm:p-2 transition-all duration-200 rounded-lg hover:bg-gray-100 active:bg-gray-200"
                                 >
-                                    <FaArrowLeft className="w-5 h-5 text-gray-700" />
+                                    <FaArrowLeft className="w-4 h-4 text-gray-700 sm:w-5 sm:h-5" />
                                 </button>
                             </Tooltip>
                         </div>
 
                         {id && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                 <Tooltip title="Share Survey" placement="bottom" TransitionComponent={Fade}>
                                     <button
                                         onClick={handleOpenShare}
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 transition-all duration-200 rounded-lg bg-blue-50 hover:bg-blue-100"
+                                        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-blue-600 transition-all duration-200 rounded-lg bg-blue-50 hover:bg-blue-100"
                                     >
-                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                        Share
+                                        <ArrowTopRightOnSquareIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        <span className="hidden sm:inline">{width < 768 ? "Share" : "Share"}</span>
                                     </button>
                                 </Tooltip>
 
                                 <Tooltip title="View Responses" placement="bottom" TransitionComponent={Fade}>
                                     <button
                                         onClick={() => handleViewResponses(survey.id)}
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 transition-all duration-200 rounded-lg bg-green-50 hover:bg-green-100"
+                                        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-green-600 transition-all duration-200 rounded-lg bg-green-50 hover:bg-green-100"
                                     >
-                                        <UsersIcon className="w-4 h-4" />
-                                        Responses
+                                        <UsersIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        <span className="hidden sm:inline">{width < 768 ? "Views" : "Responses"}</span>
                                     </button>
                                 </Tooltip>
 
@@ -397,35 +437,36 @@ export default function SurveyView() {
                                         href={`/survey/public/${survey.slug}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 transition-all duration-200 rounded-lg bg-purple-50 hover:bg-purple-100"
+                                        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-purple-600 transition-all duration-200 rounded-lg bg-purple-50 hover:bg-purple-100"
                                     >
-                                        <EyeIcon className="w-4 h-4" />
-                                        Preview
+                                        <EyeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        <span className="hidden sm:inline">{width < 768 ? "View" : "Preview"}</span>
                                     </a>
                                 </Tooltip>
 
                                 <Tooltip title="Delete Survey" placement="bottom" TransitionComponent={Fade}>
                                     <button
                                         onClick={(ev) => handleDeleteClick(survey.id)}
-                                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 transition-all duration-200 rounded-lg bg-red-50 hover:bg-red-100"
+                                        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-red-600 transition-all duration-200 rounded-lg bg-red-50 hover:bg-red-100"
                                     >
-                                        <TrashIcon className="w-4 h-4" />
-                                        Delete
+                                        <TrashIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        <span className="hidden sm:inline">{width < 768 ? "Del" : "Delete"}</span>
                                     </button>
                                 </Tooltip>
                             </div>
                         )}
                     </motion.div>
 
-                    <form onSubmit={onSubmit} className="space-y-6">
+                    <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="overflow-hidden bg-white shadow-sm rounded-xl"
                         >
-                            <div className="p-6 space-y-6 lg:p-8">
-                                <div className="grid gap-8 lg:grid-cols-2">
-                                    <div className="space-y-4">
+                            <div className="p-3 space-y-4 sm:p-4 md:p-6 lg:p-8 sm:space-y-6">
+                                <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
+                                    <div className="space-y-3 sm:space-y-4">
+                                        {/* Image section with better responsive sizing */}
                                         <div className="overflow-hidden rounded-lg aspect-video bg-gray-50">
                                             {survey.image_url ? (
                                                 <img
@@ -439,10 +480,6 @@ export default function SurveyView() {
                                                         src={logo}
                                                         alt="Default Survey"
                                                         className="object-cover w-auto h-full transition-all duration-300 hover:scale-105"
-                                                    // onError={(e) => {
-                                                    //     e.target.onerror = null;
-                                                    //     e.target.src = "/AceLogo.png";
-                                                    // }}
                                                     />
                                                 </div>
                                             )}
@@ -456,18 +493,18 @@ export default function SurveyView() {
                                             />
                                             <button
                                                 type="button"
-                                                className="relative flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                                className="relative flex items-center justify-center w-full gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                             >
-                                                <PhotoIcon className="w-5 h-5" />
+                                                <PhotoIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                                 Choose Image
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-6">
-                                        {/* Survey Title Input */}
-                                        <div className="relative p-4 group">
-                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                    <div className="space-y-4 sm:space-y-6">
+                                        {/* Survey Title Input with better responsive sizing */}
+                                        <div className="relative p-3 sm:p-4 group">
+                                            <label className="inline-flex items-center mb-1.5 sm:mb-2 text-xs sm:text-sm md:text-base font-semibold text-gray-900">
                                                 <span>Survey Title</span>
                                                 <span className="ml-1 text-red-500">*</span>
                                             </label>
@@ -476,20 +513,20 @@ export default function SurveyView() {
                                                     type="text"
                                                     value={survey.title}
                                                     onChange={(ev) => setSurvey({ ...survey, title: ev.target.value })}
-                                                    className="w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                    className="w-full px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                                     placeholder="Enter survey title"
                                                 />
-                                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none sm:pr-3">
+                                                    <svg className="w-3 h-3 text-gray-400 sm:w-4 sm:h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Survey Description Input */}
-                                        <div className="relative p-4 group">
-                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                        {/* Survey Description Input with better responsive sizing */}
+                                        <div className="relative p-3 sm:p-4 group">
+                                            <label className="inline-flex items-center mb-1.5 sm:mb-2 text-xs sm:text-sm md:text-base font-semibold text-gray-900">
                                                 <span>Description</span>
                                                 <span className="ml-1 text-red-500">*</span>
                                             </label>
@@ -497,24 +534,24 @@ export default function SurveyView() {
                                                 <textarea
                                                     value={survey.description || ""}
                                                     onChange={(ev) => setSurvey({ ...survey, description: ev.target.value })}
-                                                    rows={4}
-                                                    className="w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                    rows={width < 640 ? 2 : width < 768 ? 3 : 4}
+                                                    className="w-full px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                                     placeholder="Describe your survey"
                                                 />
-                                                <div className="absolute pointer-events-none top-3 right-3">
-                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="absolute pointer-events-none top-2 sm:top-3 right-2 sm:right-3">
+                                                    <svg className="w-3 h-3 text-gray-400 sm:w-4 sm:h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                                                     </svg>
                                                 </div>
                                             </div>
-                                            <p className="mt-2 text-sm text-gray-500">
+                                            <p className="mt-1 text-xs leading-tight text-gray-500 sm:mt-2">
                                                 Provide a clear description of your survey's purpose and objectives
                                             </p>
                                         </div>
 
-                                        {/* Expire Date Input */}
-                                        <div className="relative p-4 group">
-                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                        {/* Expire Date Input with better responsive sizing */}
+                                        <div className="relative p-3 sm:p-4 group">
+                                            <label className="inline-flex items-center mb-1.5 sm:mb-2 text-xs sm:text-sm md:text-base font-semibold text-gray-900">
                                                 <span>Expire Date</span>
                                                 <span className="ml-1 text-red-500">*</span>
                                             </label>
@@ -523,43 +560,43 @@ export default function SurveyView() {
                                                     type="date"
                                                     value={survey.expire_date}
                                                     onChange={(ev) => setSurvey({ ...survey, expire_date: ev.target.value })}
-                                                    className="w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                    className="w-full px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                                     min={new Date().toISOString().split('T')[0]}
                                                     style={{ colorScheme: 'light' }}
                                                 />
-                                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none sm:pr-3">
+                                                    <svg className="w-3 h-3 text-gray-400 sm:w-4 sm:h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
                                                 </div>
                                             </div>
                                             {isSurveyExpired(survey.expire_date) && (
-                                                <div className="flex items-center gap-2 mt-2 text-sm text-red-600">
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 text-xs text-red-600">
+                                                    <svg className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>This survey has expired and is closed to responses</span>
+                                                    <span className="leading-tight">This survey has expired and is closed to responses</span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Status Toggle */}
-                                        <div className="relative p-4 transition-all duration-200 bg-white border border-gray-100 rounded-lg hover:border-blue-200">
-                                            <label className="inline-flex items-center mb-2 text-base font-semibold text-gray-900">
+                                        {/* Status Toggle with better responsive sizing */}
+                                        <div className="relative p-3 transition-all duration-200 bg-white border border-gray-100 rounded-lg sm:p-4 hover:border-blue-200">
+                                            <label className="inline-flex items-center mb-1.5 sm:mb-2 text-xs sm:text-sm md:text-base font-semibold text-gray-900">
                                                 <span>Survey Status</span>
                                             </label>
-                                            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-3 rounded-lg bg-gray-50 gap-2.5 sm:gap-0">
                                                 <div>
-                                                    <p className="text-sm font-medium text-gray-900">
+                                                    <p className="text-xs font-medium leading-tight text-gray-900 sm:text-sm">
                                                         {survey.status && !isSurveyExpired(survey.expire_date)
                                                             ? "Currently accepting responses"
                                                             : "Not accepting responses"}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs text-gray-500 leading-tight mt-0.5">
                                                         Toggle to enable or disable survey responses
                                                     </p>
                                                 </div>
-                                                <div className="flex items-center">
+                                                <div className="flex items-center justify-center sm:justify-end">
                                                     <label className="relative inline-flex items-center cursor-pointer">
                                                         <input
                                                             type="checkbox"
@@ -575,13 +612,9 @@ export default function SurveyView() {
                                                             className="sr-only peer"
                                                             disabled={isSurveyExpired(survey.expire_date)}
                                                         />
-                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer
-                                                            peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600
-                                                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border
-                                                            after:rounded-full after:h-5 after:w-5 after:transition-all peer-disabled:bg-gray-100
-                                                            peer-disabled:after:bg-gray-300">
+                                                        <div className="w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-disabled:bg-gray-100 peer-disabled:after:bg-gray-300">
                                                         </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-700 peer-checked:text-blue-600 peer-disabled:text-gray-400">
+                                                        <span className="ml-2 text-xs font-medium text-gray-700 sm:ml-3 sm:text-sm peer-checked:text-blue-600 peer-disabled:text-gray-400">
                                                             {survey.status && !isSurveyExpired(survey.expire_date) ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </label>
@@ -593,15 +626,16 @@ export default function SurveyView() {
                             </div>
                         </motion.div>
 
-                        {/* Place ErrorMessage here, after the first card */}
-                        {error && <div className="my-4">
+                        {/* Error message with responsive sizing */}
+                        {error && <div className="my-3 sm:my-4">
                             <ErrorMessage error={error} onClear={clearError} />
                         </div>}
 
+                        {/* Questions section with responsive sizing */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-6 bg-white shadow-sm rounded-xl"
+                            className="p-3 bg-white shadow-sm sm:p-4 md:p-6 rounded-xl"
                         >
                             <SurveyQuestions
                                 questions={survey.questions}
@@ -609,9 +643,7 @@ export default function SurveyView() {
                             />
                         </motion.div>
 
-                        {/* Remove this duplicate ErrorMessage */}
-                        {/* {error && <ErrorMessage error={error} onClear={clearError} />} */}
-
+                        {/* Submit button with responsive sizing */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -619,7 +651,7 @@ export default function SurveyView() {
                         >
                             <button
                                 type="submit"
-                                className="px-6 py-2 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                             >
                                 {id ? "Update Survey" : "Create Survey"}
                             </button>
@@ -628,7 +660,7 @@ export default function SurveyView() {
 
                     {/* Add the delete confirmation modal */}
                     {showDeleteModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black bg-opacity-50">
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -643,16 +675,16 @@ export default function SurveyView() {
                                 <p className="mb-6 text-sm text-center text-gray-500">
                                     Are you sure you want to delete this survey? This action cannot be undone.
                                 </p>
-                                <div className="flex justify-center gap-3">
+                                <div className="flex flex-col justify-center gap-3 sm:flex-row">
                                     <button
                                         onClick={cancelDelete}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                        className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg sm:w-auto hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={confirmDelete}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                        className="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg sm:w-auto hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                     >
                                         Yes, delete
                                     </button>
