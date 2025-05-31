@@ -219,6 +219,27 @@ export default function Surveys() {
       };
    }, [getSurveys]);
 
+   // Add this to your Surveys.jsx component
+   useEffect(() => {
+      const handleSurveyUpdate = (event) => {
+         const { action } = event.detail;
+
+         console.log('Survey update event received in Surveys page:', action);
+
+         // Clear page cache
+         setPageCache({});
+
+         // Force refresh surveys list
+         getSurveys("/survey", true); // Force refresh
+      };
+
+      window.addEventListener('surveyUpdated', handleSurveyUpdate);
+
+      return () => {
+         window.removeEventListener('surveyUpdated', handleSurveyUpdate);
+      };
+   }, [getSurveys]);
+
    const breadcrumbLinks = [
       { to: "/dashboard", label: "Home" },
       { to: "", label: "Survey List" },

@@ -67,7 +67,12 @@ const cacheManager = {
             }
          });
 
-         // Also clear any global survey caches
+         // Clear analytics cache
+         if (window.cache && window.cache['survey-analytics']) {
+            delete window.cache['survey-analytics'];
+         }
+
+         // Clear global survey caches
          if (window.surveysCache) window.surveysCache = {};
          if (window.pageCache) window.pageCache = {};
 
@@ -77,6 +82,13 @@ const cacheManager = {
                localStorage.removeItem(key);
             }
          });
+
+         // Clear any React Query caches if you're using it
+         if (window.queryClient) {
+            window.queryClient.invalidateQueries(['surveys']);
+         }
+
+         console.log('All survey caches cleared');
       } else if (pattern) {
          delete cache[pattern];
       }
@@ -86,6 +98,8 @@ const cacheManager = {
       Object.keys(cache).forEach(key => delete cache[key]);
       if (window.surveysCache) window.surveysCache = {};
       if (window.pageCache) window.pageCache = {};
+      if (window.cache) window.cache = {};
+      console.log('All caches cleared');
    }
 };
 
@@ -162,7 +176,6 @@ export default function SurveyView() {
       }
       delete payload.image_url;
 
-      // Your friend's pattern uses simple Promise chains
       let res = null;
       if (id) {
          res = axiosClient.put(`/survey/${id}`, payload);
@@ -172,7 +185,35 @@ export default function SurveyView() {
 
       res.then((res) => {
          console.log(res);
+
+         // Clear all survey-related caches
+         cacheManager.clear('surveys');
+
+         // Clear the specific survey from cache
+         if (id && cache[id]) {
+            delete cache[id];
+         }
+
+         // Dispatch survey update event for other components
+         window.dispatchEvent(new CustomEvent('surveyUpdated', {
+            detail: {
+               surveyId: id || res.data.data.id,
+               action: id ? 'update' : 'create',
+               surveyData: res.data.data
+            }
+         }));
+
+         // Clear any analytics caches
+         if (window.cache && window.cache['survey-analytics']) {
+            delete window.cache['survey-analytics'];
+         }
+
+         // Clear global caches if they exist
+         if (window.surveysCache) window.surveysCache = {};
+         if (window.pageCache) window.pageCache = {};
+
          navigate("/surveys");
+
          if (id) {
             showToast("The survey was updated");
          } else {

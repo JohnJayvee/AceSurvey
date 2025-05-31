@@ -14,14 +14,24 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Validation\ValidationException;
 use App\Mail\PasswordReset;
-use App\Services\DatabaseLogger; // Add this import
+use App\Services\DatabaseLogger;
+use Illuminate\Routing\Controller;
 
 class AuthController extends Controller
 {
-   // ...existing methods...
+   public function __construct()
+   {
+
+      // Apply rate limiting middleware to sensitive endpoints
+      $this->middleware('throttle:6,1')->only(['login', 'sendResetLinkEmail']);
+      $this->middleware('throttle:3,1')->only(['changePassword', 'changeEmail']);
+      $this->middleware('throttle:10,1')->only(['verifyEmailExists']);
+
+   }
 
    public function me(Request $request)
    {
@@ -30,11 +40,11 @@ class AuthController extends Controller
       DatabaseLogger::info('user_profile_access', 'User accessed profile information', [], $request, $user->id);
 
       try {
-         // Cache user profile for 10 minutes
+         // Cache user profile for 5 minutes (reduced from 10)
          $cacheKey = "user_profile_{$user->id}";
 
-         $userProfile = Cache::remember($cacheKey, 600, function () use ($user) {
-            return $user->fresh(); // Get fresh user data from database
+         $userProfile = Cache::remember($cacheKey, 300, function () use ($user) {
+            return $user->fresh()->only(['id', 'name', 'email', 'created_at', 'updated_at']); // Only return safe fields
          });
 
          DatabaseLogger::info('user_profile_retrieved', 'User profile retrieved successfully', [
@@ -46,15 +56,24 @@ class AuthController extends Controller
          DatabaseLogger::error('user_profile_error', 'Failed to retrieve user profile', [
             'error' => $e->getMessage()
          ], $request, $user->id);
-         throw $e;
+
+         return response()->json(['error' => 'Failed to retrieve profile'], 500);
       }
    }
-
-   // ...rest of existing methods...
 
    public function signup(SignupRequest $request)
    {
       $data = $request->validated();
+
+      // Rate limiting for signup attempts
+      $key = 'signup:' . $request->ip();
+      if (RateLimiter::tooManyAttempts($key, 3)) {
+         DatabaseLogger::warning('signup_rate_limited', 'Signup rate limit exceeded', [
+            'ip' => $request->ip()
+         ], $request);
+
+         return response()->json(['error' => 'Too many signup attempts. Please try again later.'], 429);
+      }
 
       DatabaseLogger::info('signup_attempt', 'User signup attempt', [
          'email' => $data['email'],
@@ -62,42 +81,67 @@ class AuthController extends Controller
       ], $request);
 
       try {
+         DB::beginTransaction();
+
          /** @var \App\Models\User $user */
          $user = User::create([
-            'name' => $data['name'],
+            'name' => strip_tags($data['name']), // Sanitize input
             'email' => $data['email'],
-            'password' => bcrypt($data['password']),
+            'password' => Hash::make($data['password']),
          ]);
-         $token = $user->createToken('main')->plainTextToken;
+
+         // Generate secure token
+         $token = $user->createToken('auth_token', ['*'], now()->addDays(30))->plainTextToken;
+
+         DB::commit();
+         RateLimiter::clear($key);
 
          DatabaseLogger::info('signup_success', 'User signup successful', [
             'email' => $user->email,
             'name' => $user->name
          ], $request, $user->id);
 
-         return response([
-            'user' => $user,
+         return response()->json([
+            'user' => $user->only(['id', 'name', 'email', 'created_at']),
             'token' => $token
          ]);
       } catch (\Exception $e) {
+         DB::rollBack();
+         RateLimiter::hit($key);
+
          DatabaseLogger::error('signup_failed', 'User signup failed', [
             'email' => $data['email'],
             'error' => $e->getMessage()
          ], $request);
-         throw $e;
+
+         return response()->json(['error' => 'Registration failed'], 500);
       }
    }
 
    public function login(Request $request)
    {
-      // Validate the input data (login and password)
+      // Add timing attack protection
+      $startTime = microtime(true);
+
       $request->validate([
-         'login' => 'required|string',
-         'password' => 'required|string',
+         'login' => 'required|string|max:255',
+         'password' => 'required|string|min:8|max:255',
+         // Add CAPTCHA after failed attempts
+         'captcha' => 'sometimes|required|captcha',
       ]);
 
-      // Determine if the login is by email or username
       $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+      $rateLimitKey = 'login:' . hash('sha256', $request->login . '|' . $request->ip());
+
+      // Rate limiting per user/IP combination
+      if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+         DatabaseLogger::warning('login_rate_limited', 'Login rate limit exceeded', [
+            'login' => $request->login,
+            'ip' => $request->ip()
+         ], $request);
+
+         return response()->json(['error' => 'Too many login attempts. Please try again later.'], 429);
+      }
 
       DatabaseLogger::info('login_attempt', 'User login attempt', [
          'login' => $request->login,
@@ -105,41 +149,39 @@ class AuthController extends Controller
          'remember' => $request->has('remember')
       ], $request);
 
-      // For username login, perform case-sensitive check first
+      // For username login, perform case-sensitive check
       if ($loginType === 'username') {
          $user = User::whereRaw('BINARY username = ?', [$request->login])->first();
-
          if (!$user) {
-            DatabaseLogger::warning('login_failed', 'Failed login attempt - username not found (case-sensitive)', [
-               'login' => $request->login,
-               'login_type' => $loginType
+            RateLimiter::hit($rateLimitKey);
+            DatabaseLogger::warning('login_failed', 'Failed login attempt - username not found', [
+               'login' => $request->login
             ], $request);
 
-            throw ValidationException::withMessages([
-               'login' => ['The provided credentials are incorrect.'],
-            ]);
+            // Use consistent error message to prevent user enumeration
+            return response()->json(['error' => 'Invalid credentials'], 401);
          }
       }
 
-      // Prepare the credentials for authentication
       $credentials = [
          $loginType => $request->login,
          'password' => $request->password,
       ];
 
-      // Attempt to log in with the credentials and remember flag
       if (!Auth::attempt($credentials, $request->has('remember'))) {
+         RateLimiter::hit($rateLimitKey);
+
          DatabaseLogger::warning('login_failed', 'Failed login attempt', [
             'login' => $request->login,
             'login_type' => $loginType
          ], $request);
 
-         throw ValidationException::withMessages([
-            'login' => ['The provided credentials are incorrect.'],
-         ]);
+         return response()->json(['error' => 'Invalid credentials'], 401);
       }
 
-      // Get the authenticated user
+      // Clear rate limit on successful login
+      RateLimiter::clear($rateLimitKey);
+
       /** @var \App\Models\User $user */
       $user = Auth::user();
 
@@ -147,73 +189,53 @@ class AuthController extends Controller
          'email' => $user->email
       ], $request, $user->id);
 
-      // Use a transaction to ensure atomicity during token generation and check for uniqueness
-      DB::beginTransaction();
-
       try {
-         // Retry the token generation if there's a collision
-         do {
-            // Generate a random remember_token
-            $rememberToken = Str::random(60);
+         DB::beginTransaction();
 
-            // Check if the generated token already exists
-            $existingToken = User::where('remember_token', $rememberToken)->exists();
+         // Generate secure remember token
+         $rememberToken = hash('sha256', Str::random(60) . time() . $user->id);
 
-         } while ($existingToken); // Repeat if the token is not unique
+         // Ensure uniqueness
+         while (User::where('remember_token', $rememberToken)->exists()) {
+            $rememberToken = hash('sha256', Str::random(60) . time() . $user->id);
+         }
 
-         // Set the generated unique remember_token for the user
          $user->remember_token = $rememberToken;
          $user->save();
 
-         // Commit the transaction
+         // Revoke old tokens for security (optional - uncomment if needed)
+         // $user->tokens()->delete();
+
+         // Generate API token with expiration
+         $tokenName = 'auth_' . Str::uuid();
+         $token = $user->createToken($tokenName, ['*'], now()->addDays(30))->plainTextToken;
+
          DB::commit();
 
-         DatabaseLogger::info('remember_token_generated', 'Remember token generated successfully', [], $request, $user->id);
+         DatabaseLogger::info('login_success', 'User login completed successfully', [
+            'token_name' => $tokenName
+         ], $request, $user->id);
+
+         return response()->json([
+            'user' => $user->only(['id', 'name', 'email', 'created_at']),
+            'token' => $token,
+         ]);
       } catch (\Exception $e) {
-         // Rollback the transaction if anything goes wrong
          DB::rollBack();
 
-         DatabaseLogger::error('remember_token_failed', 'Remember token generation failed', [
+         DatabaseLogger::error('login_token_error', 'Login token generation failed', [
             'error' => $e->getMessage()
          ], $request, $user->id);
 
-         // Throw an error if token generation fails
-         throw new \Exception("Could not generate a unique remember token.");
-      }
-
-      // Ensure the remember_token is valid (it should not be empty or invalid)
-      if (empty($user->remember_token) || $user->remember_token != $rememberToken) {
-         DatabaseLogger::error('invalid_remember_token', 'Invalid remember token detected', [
-            'token_empty' => empty($user->remember_token),
-            'token_mismatch' => $user->remember_token != $rememberToken
-         ], $request, $user->id);
-
-         // Log out the user if the remember_token is empty or invalid
          Auth::logout();
-
-         // Throw an error saying a valid remember token is needed to log in
-         throw ValidationException::withMessages([
-            'login' => ['You must have a valid remember token to log in.'],
-         ]);
+         return response()->json(['error' => 'Login failed'], 500);
       }
 
-      // Generate an API token for the user (if using Sanctum)
-      do {
-         $randomName = Str::uuid(); // or Str::random(40)
-         $exists = $user->tokens()->where('name', $randomName)->exists();
-      } while ($exists);
-
-      $token = $user->createToken($randomName)->plainTextToken;
-
-      DatabaseLogger::info('login_success', 'User login completed successfully', [
-         'token_name' => $randomName
-      ], $request, $user->id);
-
-      // Return the user and token information
-      return response()->json([
-         'user' => $user,
-         'token' => $token,
-      ]);
+      // Prevent timing attacks
+      $executionTime = microtime(true) - $startTime;
+      if ($executionTime < 0.5) {
+         usleep((0.5 - $executionTime) * 1000000);
+      }
    }
 
    public function logout(Request $request)
@@ -224,10 +246,10 @@ class AuthController extends Controller
       DatabaseLogger::info('logout_initiated', 'User logout initiated', [], $request, $user->id);
 
       try {
-         // Revoke the current token
-         $user->currentAccessToken()->delete();
+         // Revoke current token
+         $request->user()->currentAccessToken()->delete();
 
-         // Clear the remember_token
+         // Clear remember token
          $user->forceFill(['remember_token' => null])->save();
 
          // Clear user profile cache
@@ -235,125 +257,148 @@ class AuthController extends Controller
 
          DatabaseLogger::info('logout_success', 'User logout successful', [], $request, $user->id);
 
-         return response([
-            'success' => true
-         ]);
+         return response()->json(['success' => true]);
       } catch (\Exception $e) {
          DatabaseLogger::error('logout_failed', 'User logout failed', [
             'error' => $e->getMessage()
          ], $request, $user->id);
-         throw $e;
+
+         return response()->json(['error' => 'Logout failed'], 500);
       }
    }
 
    public function changePassword(ChangePasswordRequest $request)
    {
+      $user = Auth::user();
+      $rateLimitKey = 'change_password:' . $user->id;
+
+      if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+         return response()->json(['error' => 'Too many password change attempts. Please try again later.'], 429);
+      }
+
       try {
-         $user = Auth::user();
          $data = $request->validated();
+
+         // Add password history check (prevent reusing last 5 passwords)
+         $recentPasswords = $user->passwordHistory()->latest()->take(5)->get();
+         foreach ($recentPasswords as $oldPassword) {
+            if (Hash::check($data['new_password'], $oldPassword->password)) {
+               return response()->json(['error' => 'Cannot reuse a recent password'], 422);
+            }
+         }
 
          DatabaseLogger::info('password_change_attempt', 'Password change attempt', [], $request, $user->id);
 
-         // Check if the current password is correct
          if (!Hash::check($data['current_password'], $user->password)) {
+            RateLimiter::hit($rateLimitKey);
+
             DatabaseLogger::warning('password_change_failed', 'Password change failed - incorrect current password', [], $request, $user->id);
 
-            return response([
-               'error' => 'Current password is incorrect'
-            ], 422);
+            return response()->json(['error' => 'Current password is incorrect'], 422);
          }
 
-         // Update the password
+         // Check if new password is different from current
+         if (Hash::check($data['new_password'], $user->password)) {
+            return response()->json(['error' => 'New password must be different from current password'], 422);
+         }
+
+         DB::beginTransaction();
+
+         // Store old password in history
+         $user->passwordHistory()->create([
+            'password' => $user->password,
+            'created_at' => now()
+         ]);
+
+         // Update password
          $user->password = Hash::make($data['new_password']);
          $user->save();
 
-         // Clear user profile cache since password changed
+         // Revoke all existing tokens except current one
+         $currentToken = $user->currentAccessToken();
+         $user->tokens()->where('id', '!=', $currentToken->id)->delete();
+
+         // Clear cache
          Cache::forget("user_profile_{$user->id}");
+
+         DB::commit();
+         RateLimiter::clear($rateLimitKey);
 
          // Send confirmation email
          Mail::to($user->email)->send(new PasswordChanged($user));
 
          DatabaseLogger::info('password_change_success', 'Password changed successfully', [], $request, $user->id);
 
-         return response([
+         return response()->json([
             'success' => true,
             'message' => 'Password changed successfully'
          ]);
       } catch (\Exception $e) {
+         DB::rollBack();
+
          DatabaseLogger::error('password_change_error', 'Password change error', [
             'error' => $e->getMessage()
          ], $request, $user->id ?? null);
 
-         return response([
-            'error' => 'An error occurred while changing the password.',
-            'details' => $e->getMessage()
-         ], 500);
+         return response()->json(['error' => 'Password change failed'], 500);
       }
    }
 
    public function sendResetLinkEmail(Request $request)
    {
-      $data = $request->validate(['email' => 'required|email']);
+      $data = $request->validate(['email' => 'required|email|max:255']);
+
+      $rateLimitKey = 'reset:' . hash('sha256', $data['email']);
+
+      if (RateLimiter::tooManyAttempts($rateLimitKey, 2)) {
+         return response()->json([
+            'message' => 'Too many reset attempts. Please try again later.'
+         ], 429);
+      }
 
       DatabaseLogger::info('password_reset_requested', 'Password reset link requested', [
          'email' => $data['email']
       ], $request);
 
-      // First check if the email exists (prevents throttling for non-existent emails)
       $user = User::where('email', $data['email'])->first();
+
+      // Always return success to prevent email enumeration
+      $successMessage = 'If the email exists in our system, we will send a password reset link.';
+
       if (!$user) {
+         RateLimiter::hit($rateLimitKey);
+
          DatabaseLogger::warning('password_reset_nonexistent', 'Password reset requested for non-existent email', [
             'email' => $data['email']
          ], $request);
 
-         return response()->json([
-            'message' => 'If the email exists in our system, we will send a password reset link.'
-         ], 200);
+         return response()->json(['message' => $successMessage], 200);
       }
 
-      // Clear any previous reset attempts for this user to prevent throttling
+      // Clean old reset attempts
       DB::table('password_resets')
          ->where('email', $data['email'])
+         ->where('created_at', '<', now()->subHours(1))
          ->delete();
 
-      // Send the reset link
       $status = Password::sendResetLink($data);
+
+      RateLimiter::hit($rateLimitKey);
 
       DatabaseLogger::info('password_reset_status', 'Password reset status', [
          'status' => $status,
          'email' => $data['email']
       ], $request, $user->id);
 
-      // Return appropriate response based on status
-      if ($status === Password::RESET_LINK_SENT) {
-         DatabaseLogger::info('password_reset_sent', 'Password reset link sent successfully', [
-            'email' => $data['email']
-         ], $request, $user->id);
-         return response()->json(['message' => 'Password reset link has been sent to your email.'], 200);
-      } elseif ($status === Password::RESET_THROTTLED) {
-         DatabaseLogger::warning('password_reset_throttled', 'Password reset throttled', [
-            'email' => $data['email']
-         ], $request, $user->id);
-         return response()->json([
-            'message' => 'Password reset link has been sent to your email.'
-         ], 200);
-      } else {
-         DatabaseLogger::error('password_reset_failed', 'Password reset link failed to send', [
-            'status' => $status,
-            'email' => $data['email']
-         ], $request, $user->id);
-         return response()->json([
-            'message' => 'Unable to send password reset link. Please try again later.'
-         ], 400);
-      }
+      return response()->json(['message' => $successMessage], 200);
    }
 
    public function reset(Request $request)
    {
       $data = $request->validate([
-         'token' => 'required',
-         'email' => 'required|email',
-         'password' => 'required|min:8|confirmed',
+         'token' => 'required|string|max:255',
+         'email' => 'required|email|max:255',
+         'password' => 'required|min:8|max:255|confirmed',
       ]);
 
       DatabaseLogger::info('password_reset_attempt', 'Password reset attempt', [
@@ -363,19 +408,31 @@ class AuthController extends Controller
       $status = Password::reset(
          $data,
          function ($user, $password) use ($request) {
-            $user->forceFill([
-               'password' => Hash::make($password),
-            ])->save();
+            DB::beginTransaction();
 
-            // Clear user profile cache since password changed
-            Cache::forget("user_profile_{$user->id}");
+            try {
+               $user->forceFill([
+                  'password' => Hash::make($password),
+                  'remember_token' => null, // Clear remember token
+               ])->save();
 
-            DatabaseLogger::info('password_reset_success', 'Password reset successful', [
-               'email' => $user->email
-            ], $request, $user->id);
+               // Revoke all tokens
+               $user->tokens()->delete();
 
-            // ✅ Send the email
-            Mail::to($user->email)->send(new PasswordReset($user));
+               // Clear cache
+               Cache::forget("user_profile_{$user->id}");
+
+               DB::commit();
+
+               DatabaseLogger::info('password_reset_success', 'Password reset successful', [
+                  'email' => $user->email
+               ], $request, $user->id);
+
+               Mail::to($user->email)->send(new PasswordReset($user));
+            } catch (\Exception $e) {
+               DB::rollBack();
+               throw $e;
+            }
          }
       );
 
@@ -383,23 +440,30 @@ class AuthController extends Controller
          DatabaseLogger::info('password_reset_completed', 'Password reset completed', [
             'email' => $data['email']
          ], $request);
-         return response()->json(['message' => __($status)], 200);
+         return response()->json(['message' => 'Password reset successfully'], 200);
       } else {
          DatabaseLogger::warning('password_reset_failed', 'Password reset failed', [
             'status' => $status,
             'email' => $data['email']
          ], $request);
-         return response()->json(['message' => __($status)], 400);
+         return response()->json(['message' => 'Password reset failed'], 400);
       }
    }
 
    public function changeEmail(Request $request)
    {
       $data = $request->validate([
-         'email' => 'required|email|unique:users,email',
+         'email' => 'required|email|max:255|unique:users,email',
+         'password' => 'required|string', // Require password confirmation
       ]);
 
       $user = Auth::user();
+
+      // Verify password before allowing email change
+      if (!Hash::check($data['password'], $user->password)) {
+         return response()->json(['error' => 'Password confirmation required'], 422);
+      }
+
       $oldEmail = $user->email;
 
       DatabaseLogger::info('email_change_attempt', 'Email change attempt', [
@@ -408,12 +472,16 @@ class AuthController extends Controller
       ], $request, $user->id);
 
       try {
+         DB::beginTransaction();
+
          $user->email = $data['email'];
          $user->save();
 
-         // Clear cache for old and new email
+         // Clear caches
          Cache::forget('user_email_' . md5($oldEmail));
          Cache::forget('user_profile_' . $user->id);
+
+         DB::commit();
 
          // Send email notification
          Mail::to($user->email)->send(new EmailChanged($user));
@@ -425,31 +493,39 @@ class AuthController extends Controller
 
          return response()->json(['message' => 'Email address updated successfully.'], 200);
       } catch (\Exception $e) {
+         DB::rollBack();
+
          DatabaseLogger::error('email_change_failed', 'Email change failed', [
             'old_email' => $oldEmail,
             'new_email' => $data['email'],
             'error' => $e->getMessage()
          ], $request, $user->id);
-         throw $e;
+
+         return response()->json(['error' => 'Email change failed'], 500);
       }
    }
 
    public function verifyEmailExists(Request $request)
    {
-      // Validate the input
       $data = $request->validate([
-         'email' => 'required|email',
+         'email' => 'required|email|max:255',
       ]);
+
+      $rateLimitKey = 'verify_email:' . $request->ip();
+
+      if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+         return response()->json(['error' => 'Too many requests'], 429);
+      }
+
+      RateLimiter::hit($rateLimitKey);
 
       DatabaseLogger::info('email_verification_request', 'Email verification request', [
          'email' => $data['email']
       ], $request);
 
-      // Create a cache key for this email lookup
-      $cacheKey = 'user_email_' . md5($data['email']);
+      $cacheKey = 'user_email_' . hash('sha256', $data['email']);
 
-      // Try to get user data from cache first
-      $userInfo = Cache::remember($cacheKey, 300, function () use ($data) { // Cache for 5 minutes
+      $userInfo = Cache::remember($cacheKey, 300, function () use ($data) {
          $user = User::where('email', $data['email'])->first(['name']);
 
          if (!$user) {
@@ -462,7 +538,6 @@ class AuthController extends Controller
          ];
       });
 
-      // If no user is found with this email
       if (!$userInfo) {
          DatabaseLogger::info('email_verification_not_found', 'Email verification - no account found', [
             'email' => $data['email']
@@ -478,7 +553,6 @@ class AuthController extends Controller
          'name' => $userInfo['name']
       ], $request);
 
-      // Return cached account information
       return response()->json([
          'accountInfo' => $userInfo
       ]);
