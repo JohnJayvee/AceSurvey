@@ -5,13 +5,13 @@ const SurveyHeader = ({ title, onGoBack, onDownload }) => {
    return (
       <div className="flex items-center justify-between w-full mb-6">
          <div className="flex items-center gap-4">
-            <button
+            {/* <button
                onClick={onGoBack}
                className="flex items-center justify-center w-10 h-10 text-gray-600 transition-colors bg-white rounded-lg hover:bg-gray-50 hover:text-gray-800"
                aria-label="Go back"
             >
                <ArrowLeftIcon className="w-5 h-5" />
-            </button>
+            </button> */}
             <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
                {title} Survey Responses
             </h1>
