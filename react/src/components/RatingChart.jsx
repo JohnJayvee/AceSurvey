@@ -13,19 +13,19 @@ const RatingChart = ({ ratingsData, width }) => {
    const getChartConfig = (screenWidth) => {
       if (screenWidth < 640) {
          return {
-            outerRadius: 60,
-            innerRadius: 30,
-            height: 200,
-            fontSize: 9,
+            outerRadius: 50,
+            innerRadius: 25,
+            height: 180,
+            fontSize: 8,
             minPercentageForLabel: 15 // Only show labels for segments >= 15%
          };
       }
       if (screenWidth < 768) {
          return {
-            outerRadius: 80,
-            innerRadius: 40,
-            height: 250,
-            fontSize: 11,
+            outerRadius: 70,
+            innerRadius: 35,
+            height: 220,
+            fontSize: 10,
             minPercentageForLabel: 12 // Only show labels for segments >= 12%
          };
       }
@@ -92,8 +92,8 @@ const RatingChart = ({ ratingsData, width }) => {
    const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage, value, index }) => {
       const percentageNum = parseFloat(percentage);
 
-      // Show labels for any segment with data
-      if (value === 0) {
+      // Show labels only for segments with sufficient size or on larger screens
+      if (value === 0 || (width < 640 && percentageNum < config.minPercentageForLabel)) {
          return null;
       }
 
@@ -104,8 +104,8 @@ const RatingChart = ({ ratingsData, width }) => {
       const x = cx + radius * Math.cos(-midAngle * RADIAN);
       const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-      // Use smaller font size for very small segments
-      const fontSize = percentageNum < 5 ? config.fontSize - 2 : config.fontSize;
+      // Use smaller font size for very small segments or mobile
+      const fontSize = percentageNum < 5 || width < 640 ? config.fontSize - 1 : config.fontSize;
 
       return (
          <text
@@ -138,14 +138,14 @@ const RatingChart = ({ ratingsData, width }) => {
          </div>
 
          {!hasData ? (
-            <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="flex items-center justify-center h-48 text-gray-500 sm:h-64">
                <div className="text-center">
-                  <div className="mb-2 text-4xl">📊</div>
-                  <p className="text-sm">No rating data available</p>
+                  <div className="mb-2 text-2xl sm:text-4xl">📊</div>
+                  <p className="text-xs sm:text-sm">No rating data available</p>
                </div>
             </div>
          ) : (
-            <div style={{ height: config.height }}>
+            <div className="h-48 sm:h-56 md:h-64 lg:h-72">
                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                      <Pie
@@ -169,27 +169,27 @@ const RatingChart = ({ ratingsData, width }) => {
                         ))}
                      </Pie>
                      <Tooltip content={<CustomTooltip />} />
-                     <Legend content={<CustomLegend />} />
+                     {/* <Legend content={<CustomLegend />} /> */}
                   </PieChart>
                </ResponsiveContainer>
             </div>
          )}
 
-         {/* {hasData && (
-            <div className="grid grid-cols-2 gap-2 mt-4 text-xs sm:grid-cols-5">
+         {hasData && (
+            <div className="grid grid-cols-1 gap-2 mt-4 text-xs sm:grid-cols-5 sm:gap-2">
                {dataWithPercentages.map((item, index) => (
-                  <div key={index} className="p-2 text-center transition-colors rounded bg-gray-50 hover:bg-gray-100">
+                  <div key={index} className="p-2 text-center transition-colors rounded bg-gray-50 hover:bg-gray-100 sm:p-2">
                      <div
-                        className="w-4 h-4 mx-auto mb-1 rounded-full"
+                        className="w-4 h-4 mx-auto mb-1 rounded-full sm:w-4 sm:h-4"
                         style={{ backgroundColor: COLORS[item.rating] }}
                      />
-                     <div className="font-medium text-gray-900">{item.value}</div>
-                     <div className="text-gray-600 truncate">{item.name}</div>
-                     <div className="font-semibold text-blue-600">{item.percentage}%</div>
+                     <div className="text-sm font-medium text-gray-900 sm:text-sm">{item.value}</div>
+                     <div className="text-sm text-gray-600 truncate">{item.name}</div>
+                     <div className="text-sm font-semibold text-blue-600">{item.percentage}%</div>
                   </div>
                ))}
             </div>
-         )} */}
+         )}
 
          {/* Show note about labels - updated message */}
          {hasData && (
