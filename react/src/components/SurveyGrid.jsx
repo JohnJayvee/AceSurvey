@@ -1,0 +1,83 @@
+import React from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import { DocumentIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
+import { Link } from "react-router-dom";
+import SurveyListItem from "@components/SurveyListItem";
+import PaginationLinks from "@components/PaginationLinks";
+
+export default function SurveyGrid({
+   surveys,
+   meta,
+   searchTerm,
+   onDeleteClick,
+   onPageClick,
+   refreshing
+}) {
+   if (surveys.length === 0) {
+      return (
+         <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-xl"
+         >
+            <DocumentIcon className="w-16 h-16 text-gray-400" />
+            <h3 className="mt-4 text-lg font-medium text-gray-900">
+               {searchTerm ? "No surveys found" : "No surveys yet"}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+               {searchTerm
+                  ? "Try adjusting your search terms"
+                  : "Get started by creating your first survey"}
+            </p>
+            {!searchTerm && (
+               <Link
+                  to="/surveys/create"
+                  className="flex items-center gap-2 px-4 py-2 mt-4 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+               >
+                  <PlusCircleIcon className="w-5 h-5" />
+                  Create Survey
+               </Link>
+            )}
+         </motion.div>
+      );
+   }
+
+   return (
+      <motion.div
+         initial={{ opacity: 0 }}
+         animate={{ opacity: 1 }}
+         className={refreshing ? 'opacity-60' : ''}
+      >
+         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <AnimatePresence>
+               {surveys.map((survey, index) => (
+                  <motion.div
+                     key={survey.id}
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0, scale: 0.9 }}
+                     transition={{ delay: index * 0.05 }}
+                     layout
+                  >
+                     <SurveyListItem
+                        survey={survey}
+                        onDeleteClick={onDeleteClick}
+                     />
+                  </motion.div>
+               ))}
+            </AnimatePresence>
+         </div>
+
+         {surveys.length > 0 && meta.links && meta.links.length > 3 && (
+            <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               transition={{ delay: 0.3 }}
+               className="mt-8"
+            >
+               <PaginationLinks meta={meta} onPageClick={onPageClick} />
+            </motion.div>
+         )}
+      </motion.div>
+   );
+}
