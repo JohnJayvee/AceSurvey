@@ -4,35 +4,36 @@ import axiosClient from "@api/axios";
 import PublicQuestionView from "@components/PublicQuestionView";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import { InformationCircleIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from "framer-motion";
 import { debounce } from 'lodash';
 import ErrorMessage from "@components/ErrorMessage";
 import logo from '@images/AceLogo.png';
 
-// Use a proper cache with localStorage support
-const surveyCache = {
-   data: {},
+// Utility: Cache management
+class SurveyCache {
+   constructor() {
+      this.data = {};
+   }
+
    set(key, value) {
       this.data[key] = value;
-      // Also save to localStorage for persistence between sessions
       try {
          localStorage.setItem(`survey_${key}`, JSON.stringify(value));
       } catch (e) {
          console.warn('Could not save to localStorage:', e);
       }
-   },
+   }
+
    get(key) {
-      // Try to get from memory first
       if (this.data[key]) return this.data[key];
 
-      // Otherwise try localStorage
       try {
          const item = localStorage.getItem(`survey_${key}`);
          if (item) {
             const parsed = JSON.parse(item);
-            this.data[key] = parsed; // Update in-memory cache
+            this.data[key] = parsed;
             return parsed;
          }
       } catch (e) {
@@ -40,112 +41,313 @@ const surveyCache = {
       }
       return null;
    }
+}
+
+const surveyCache = new SurveyCache();
+
+// Constants
+const INITIAL_SURVEY_STATE = {
+   id: null,
+   questions: [],
+   title: '',
+   description: '',
+   status: false,
+   expire_date: new Date().toISOString(),
+   image_url: null
 };
 
-export default function SurveyPublicView() {
-   const { slug } = useParams();
-   const [survey, setSurvey] = useState({
-      id: null,
-      questions: [],
-      title: '',
-      description: '',
-      status: false,
-      expire_date: new Date().toISOString(),
-      image_url: null
-   });
-   const [answers, setAnswers] = useState({});
+const MOTION_VARIANTS = {
+   fadeIn: {
+      initial: { opacity: 0, y: 20 },
+      animate: { opacity: 1, y: 0 }
+   },
+   scaleIn: {
+      initial: { scale: 0 },
+      animate: { scale: 1 }
+   }
+};
+
+// Components
+const LoadingSkeleton = () => (
+   <div className="w-full min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
+         {/* Header skeleton */}
+         <motion.div
+            {...MOTION_VARIANTS.fadeIn}
+            className="p-6 mb-6 bg-white border-0 shadow-lg rounded-2xl backdrop-blur-xl"
+         >
+            <div className="flex flex-col gap-6 md:flex-row">
+               <div className="w-full md:w-1/2">
+                  <Skeleton height={400} className="rounded-xl" />
+               </div>
+               <div className="w-full space-y-4 md:w-1/2">
+                  <Skeleton height={48} className="w-3/4" />
+                  <div className="flex gap-2">
+                     <Skeleton height={28} width={80} className="rounded-full" />
+                     <Skeleton height={28} width={120} className="rounded-full" />
+                  </div>
+                  <Skeleton count={3} height={20} />
+                  <Skeleton height={120} className="rounded-xl" />
+               </div>
+            </div>
+         </motion.div>
+
+         {/* Questions skeleton */}
+         <div className="space-y-4">
+            {[1, 2, 3].map((index) => (
+               <QuestionSkeleton key={index} />
+            ))}
+         </div>
+
+         {/* Submit button skeleton */}
+         <motion.div
+            {...MOTION_VARIANTS.fadeIn}
+            transition={{ delay: 0.4 }}
+            className="flex justify-end mt-6"
+         >
+            <Skeleton height={48} width={140} className="rounded-xl" />
+         </motion.div>
+      </div>
+   </div>
+);
+
+// Example: Enhanced loading skeleton for questions
+const QuestionSkeleton = () => (
+   <motion.div
+      {...MOTION_VARIANTS.fadeIn}
+      className="p-6 bg-white shadow-lg rounded-2xl backdrop-blur-xl"
+   >
+      <Skeleton height={24} width="60%" className="mb-4" />
+      <Skeleton height={20} width="40%" className="mb-3" />
+      <div className="space-y-2">
+         <Skeleton height={40} />
+         <Skeleton height={40} />
+         <Skeleton height={40} />
+      </div>
+   </motion.div>
+);
+
+const ErrorDisplay = ({ error }) => (
+   <div className="w-full min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="flex flex-col items-center p-10">
+         <motion.div
+            {...MOTION_VARIANTS.scaleIn}
+            transition={{ type: "spring", stiffness: 100 }}
+            className="p-4 mt-16 bg-red-100 rounded-full"
+         >
+            <ExclamationTriangleIcon className="w-24 h-24 text-red-500" />
+         </motion.div>
+         <motion.div
+            {...MOTION_VARIANTS.fadeIn}
+            transition={{ delay: 0.2 }}
+            className="p-8 mt-6 text-center bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl max-w-[40rem]"
+         >
+            <h1 className="text-2xl font-bold text-gray-900">{error}</h1>
+            <p className="mt-4 text-gray-600">
+               Please check the survey link and try again.
+            </p>
+            <button
+               onClick={() => window.history.back()}
+               className="px-6 py-2 mt-6 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+               Go Back
+            </button>
+         </motion.div>
+      </div>
+   </div>
+);
+
+const StatusBadge = ({ status }) => (
+   <span className={`px-3 py-1 text-sm font-medium rounded-full ${status
+      ? "bg-green-100 text-green-700 ring-1 ring-green-600/20"
+      : "bg-red-100 text-red-700 ring-1 ring-red-600/20"
+      }`}>
+      {status ? "Active" : "Closed"}
+   </span>
+);
+
+const ExpirationBadge = ({ expireDate }) => (
+   <span className="flex items-center gap-2 px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-full ring-1 ring-gray-600/10">
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      Expires: {new Date(expireDate).toLocaleDateString()}
+   </span>
+);
+
+const SurveyImage = ({ imageUrl, title }) => (
+   <div className="relative h-[300px] rounded-xl overflow-hidden bg-gray-50">
+      <img
+         src={imageUrl || logo}
+         loading="lazy"
+         className={`w-full h-full transition-transform duration-300 hover:scale-105 ${!imageUrl ? 'object-contain p-8' : 'object-cover'
+            }`}
+         alt={title}
+         onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = logo;
+            e.target.className = 'object-contain w-full h-full p-8';
+         }}
+      />
+   </div>
+);
+
+const SurveyHeader = ({ survey }) => (
+   <motion.div
+      {...MOTION_VARIANTS.fadeIn}
+      className="p-8 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
+   >
+      <div className="flex flex-col gap-8 md:flex-row">
+         <div className="w-full md:w-1/2">
+            <SurveyImage imageUrl={survey.image_url} title={survey.title} />
+         </div>
+         <div className="w-full space-y-4 md:w-1/2">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
+               {survey.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+               <StatusBadge status={survey.status} />
+               <ExpirationBadge expireDate={survey.expire_date} />
+            </div>
+            <p className="p-4 leading-relaxed text-gray-600 bg-gray-50 rounded-xl">
+               {survey.description}
+            </p>
+         </div>
+      </div>
+   </motion.div>
+);
+
+const SuccessMessage = () => (
+   <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="p-8 text-center bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
+   >
+      <motion.div
+         {...MOTION_VARIANTS.scaleIn}
+         transition={{ type: "spring", stiffness: 100 }}
+         className="p-2 mx-auto mb-6 bg-green-100 rounded-full w-fit"
+      >
+         <CheckCircleIcon className="w-16 h-16 text-green-500" />
+      </motion.div>
+      <h2 className="mb-3 text-2xl font-bold text-gray-900">Thank You!</h2>
+      <p className="text-gray-600">
+         Your response has been successfully recorded.
+      </p>
+      <button
+         onClick={() => window.location.reload()}
+         className="px-6 py-2 mt-6 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+         Submit Another Response
+      </button>
+   </motion.div>
+);
+
+const QuestionsList = ({ questions, onAnswerChange }) => (
+   <div className="space-y-4">
+      {questions.map((question, index) => (
+         <motion.div
+            key={question.id}
+            {...MOTION_VARIANTS.fadeIn}
+            transition={{ delay: index * 0.1 }}
+         >
+            <PublicQuestionView
+               question={question}
+               index={index}
+               answerChanged={(val) => onAnswerChange(question, val)}
+            />
+         </motion.div>
+      ))}
+   </div>
+);
+
+const SubmitButton = ({ isSubmitting, onSubmit }) => (
+   <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.3 }}
+      className="flex justify-end"
+   >
+      <button
+         className={`px-6 py-3 text-base font-medium text-white transition-all duration-300 bg-blue-600 rounded-xl hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
+         type="button"
+         disabled={isSubmitting}
+         onClick={onSubmit}
+      >
+         {isSubmitting ? 'Submitting...' : 'Submit Survey'}
+      </button>
+   </motion.div>
+);
+
+// Custom Hooks
+const useSurveyData = (slug) => {
+   const [survey, setSurvey] = useState(INITIAL_SURVEY_STATE);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
-   const [submissionError, setSubmissionError] = useState(null);
-   const [surveyFinished, setSurveyFinished] = useState(false);
-   const [isSubmitting, setIsSubmitting] = useState(false);
 
-   // Function to fetch survey data
    const fetchSurvey = useCallback(async () => {
-      // Check cache first
-      const cachedData = surveyCache.get(slug);
-      if (cachedData) {
-         console.log("Using cached survey data for slug:", slug);
-         setSurvey(cachedData);
-         setLoading(false);
-         return;
-      }
-
       setLoading(true);
       setError(null);
 
       try {
-         console.log("Attempting to fetch survey with slug:", slug);
-         const response = await axiosClient.get(`survey/get-by-slug/${slug}`);
-         console.log("Raw API response:", response);
-
-         // Check if data structure is as expected
-         if (!response.data || !response.data.data) {
-            throw new Error("API response format is not as expected");
+         // Check cache first
+         const cachedData = surveyCache.get(slug);
+         if (cachedData) {
+            setSurvey(cachedData);
+            setLoading(false);
+            return;
          }
 
-         console.log("Survey data received for slug:", slug);
+         console.log('Fetching survey with slug:', slug);
 
-         // Cache the data
+         // Use axiosClient instead of fetch
+         const response = await axiosClient.get(`survey/get-by-slug/${slug}`);
+         console.log('Survey fetch response:', response);
+
+         if (!response.data?.data) {
+            throw new Error("Invalid API response format");
+         }
+
          surveyCache.set(slug, response.data.data);
          setSurvey(response.data.data);
       } catch (error) {
          console.error("Error fetching survey:", error);
-
-         // More detailed error logging
-         if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            console.error("Error response data:", error.response.data);
-            console.error("Error response status:", error.response.status);
-            console.error("Error response headers:", error.response.headers);
-         } else if (error.request) {
-            // The request was made but no response was received
-            console.error("No response received:", error.request);
-         } else {
-            // Something happened in setting up the request that triggered an Error
-            console.error("Request setup error:", error.message);
-         }
-
-         setError(
-            (error.response?.data?.message) ||
-            (typeof error === 'string' ? error : error.message) ||
-            "An error occurred while loading the survey."
-         );
+         setError(error.message || "Failed to load survey");
       } finally {
          setLoading(false);
       }
    }, [slug]);
 
-   // Load survey data
-   useEffect(() => {
-      fetchSurvey();
-   }, [fetchSurvey]);
+   return { survey, loading, error, fetchSurvey };
+};
 
-   // Handle answer changes
+const useSurveySubmission = (surveyId) => {
+   const [answers, setAnswers] = useState({});
+   const [submissionError, setSubmissionError] = useState(null);
+   const [surveyFinished, setSurveyFinished] = useState(false);
+   const [isSubmitting, setIsSubmitting] = useState(false);
+
    const handleAnswerChange = useCallback((question, value) => {
-      setAnswers(prev => ({
-         ...prev,
-         [question.id]: value
-      }));
+      setAnswers(prev => ({ ...prev, [question.id]: value }));
    }, []);
 
-   // Submit the survey
    const handleSubmit = useCallback(async (e) => {
-      if (e) e.preventDefault();
+      if (e) {
+         e.preventDefault();
+         e.stopPropagation();
+      }
 
-      if (isSubmitting) return;
+      if (isSubmitting || !surveyId) return;
+
+      console.log('Submitting survey with answers:', answers);
+
       setIsSubmitting(true);
       setSubmissionError(null);
 
-      if (!survey?.id) {
-         setSubmissionError("Cannot submit survey: Survey data not fully loaded.");
-         setIsSubmitting(false);
-         return;
-      }
-
       try {
-         await axiosClient.post(`/survey/${survey.id}/answer`, { answers });
+         const response = await axiosClient.post(`survey/${surveyId}/answer`, { answers });
+         console.log('Survey submitted successfully:', response);
          setSurveyFinished(true);
       } catch (error) {
          console.error("Error submitting survey:", error);
@@ -156,88 +358,40 @@ export default function SurveyPublicView() {
       } finally {
          setIsSubmitting(false);
       }
-   }, [answers, survey?.id, isSubmitting]);
+   }, [answers, surveyId, isSubmitting]);
 
-   // Debounced submit handler
-   const debouncedSubmit = useCallback(
-      debounce((e) => handleSubmit(e), 300),
-      [handleSubmit]
-   );
+   return {
+      answers,
+      submissionError,
+      setSubmissionError,
+      surveyFinished,
+      isSubmitting,
+      handleAnswerChange,
+      handleSubmit
+   };
+};
 
-   // Loading state
-   if (loading) {
-      return (
-         <div className="w-full min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-            <div className="w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
-               <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-6 mb-6 bg-white border-0 shadow-lg rounded-2xl backdrop-blur-xl"
-               >
-                  <div className="flex flex-col gap-6 md:flex-row">
-                     <div className="w-full md:w-1/2">
-                        <Skeleton height={400} className="rounded-xl" />
-                     </div>
-                     <div className="w-full space-y-4 md:w-1/2">
-                        <Skeleton height={48} className="w-3/4" />
-                        <Skeleton count={2} height={24} />
-                        <Skeleton height={120} className="rounded-xl" />
-                     </div>
-                  </div>
-               </motion.div>
-               {[1, 2, 3].map((index) => (
-                  <motion.div
-                     key={index}
-                     initial={{ opacity: 0, y: 20 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     transition={{ delay: index * 0.1 }}
-                     className="p-6 mb-4 bg-white shadow-lg rounded-2xl backdrop-blur-xl"
-                  >
-                     <Skeleton height={32} width={200} className="mb-4" />
-                     <Skeleton count={4} height={24} className="mb-2" />
-                  </motion.div>
-               ))}
-            </div>
-         </div>
-      );
-   }
+// Main Component
+export default function SurveyPublicView() {
+   const { slug } = useParams();
+   const { survey, loading, error, fetchSurvey } = useSurveyData(slug);
+   const {
+      submissionError,
+      setSubmissionError,
+      surveyFinished,
+      isSubmitting,
+      handleAnswerChange,
+      handleSubmit
+   } = useSurveySubmission(survey.id);
 
-   // Error state
-   if (error) {
-      return (
-         <div className="w-full min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-            <div className="flex flex-col items-center p-10">
-               <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 100 }}
-                  className="p-4 mt-16 bg-red-100 rounded-full"
-               >
-                  <ExclamationTriangleIcon className="w-24 h-24 text-red-500" />
-               </motion.div>
-               <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="p-8 mt-6 text-center bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl max-w-[40rem]"
-               >
-                  <h1 className="text-2xl font-bold text-gray-900">
-                     {error}
-                  </h1>
-                  <p className="mt-4 text-gray-600">
-                     Please check the survey link and try again.
-                  </p>
-                  <button
-                     onClick={() => window.history.back()}
-                     className="px-6 py-2 mt-6 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                     Go Back
-                  </button>
-               </motion.div>
-            </div>
-         </div>
-      );
-   }
+   useEffect(() => {
+      if (slug) {
+         fetchSurvey();
+      }
+   }, [fetchSurvey, slug]);
+
+   if (loading) return <LoadingSkeleton />;
+   if (error) return <ErrorDisplay error={error} />;
 
    return (
       <div className="relative w-full min-h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -245,129 +399,32 @@ export default function SurveyPublicView() {
             <AnimatedBackground />
          </div>
          <div className="relative z-10 w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
-            <form onSubmit={(e) => {
-               e.preventDefault();
-               debouncedSubmit();
-            }}>
-               <div className="space-y-6">
-                  {/* Survey Header Card */}
-                  <motion.div
-                     initial={{ opacity: 0, y: 20 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     className="p-8 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
-                  >
-                     <div className="flex flex-col gap-8 md:flex-row">
-                        <div className="w-full md:w-1/2">
-                           <div className="relative h-[300px] rounded-xl overflow-hidden bg-gray-50">
-                              <img
-                                 src={survey.image_url || logo}
-                                 loading="lazy"
-                                 className={`w-full h-full transition-transform duration-300 hover:scale-105 ${!survey.image_url ? 'object-contain p-8' : 'object-cover'}`}
-                                 alt={survey.title}
-                                 onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = logo;
-                                    e.target.className = 'object-contain w-full h-full p-8';
-                                 }}
-                              />
-                           </div>
-                        </div>
-                        <div className="w-full space-y-4 md:w-1/2">
-                           <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
-                              {survey.title}
-                           </h1>
-                           <div className="flex flex-wrap items-center gap-3">
-                              <span className={`px-3 py-1 text-sm font-medium rounded-full
-                                            ${survey.status
-                                    ? "bg-green-100 text-green-700 ring-1 ring-green-600/20"
-                                    : "bg-red-100 text-red-700 ring-1 ring-red-600/20"}`}>
-                                 {survey.status ? "Active" : "Closed"}
-                              </span>
-                              <span className="flex items-center gap-2 px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-full ring-1 ring-gray-600/10">
-                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                 </svg>
-                                 Expires: {new Date(survey.expire_date).toLocaleDateString()}
-                              </span>
-                           </div>
-                           <p className="p-4 leading-relaxed text-gray-600 bg-gray-50 rounded-xl">
-                              {survey.description}
-                           </p>
-                        </div>
-                     </div>
-                  </motion.div>
+            <div className="space-y-6">
+               <SurveyHeader survey={survey} />
 
-                  {surveyFinished ? (
-                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="p-8 text-center bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
-                     >
-                        <motion.div
-                           initial={{ scale: 0 }}
-                           animate={{ scale: 1 }}
-                           transition={{ type: "spring", stiffness: 100 }}
-                           className="p-2 mx-auto mb-6 bg-green-100 rounded-full w-fit"
-                        >
-                           <CheckCircleIcon className="w-16 h-16 text-green-500" />
-                        </motion.div>
-                        <h2 className="mb-3 text-2xl font-bold text-gray-900">
-                           Thank You!
-                        </h2>
-                        <p className="text-gray-600">
-                           Your response has been successfully recorded.
-                        </p>
-                        <button
-                           onClick={() => window.location.reload()}
-                           className="px-6 py-2 mt-6 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                           Submit Another Response
-                        </button>
-                     </motion.div>
-                  ) : (
-                     <>
-                        <div className="space-y-4">
-                           {(survey.questions || []).map((question, index) => (
-                              <motion.div
-                                 key={question.id}
-                                 initial={{ opacity: 0, y: 20 }}
-                                 animate={{ opacity: 1, y: 0 }}
-                                 transition={{ delay: index * 0.1 }}
-                              >
-                                 <PublicQuestionView
-                                    question={question}
-                                    index={index}
-                                    answerChanged={(val) => handleAnswerChange(question, val)}
-                                 />
-                              </motion.div>
-                           ))}
+               {surveyFinished ? (
+                  <SuccessMessage />
+               ) : (
+                  <>
+                     <QuestionsList
+                        questions={survey.questions || []}
+                        onAnswerChange={handleAnswerChange}
+                     />
+                     {submissionError && (
+                        <div className="mb-4">
+                           <ErrorMessage
+                              error={submissionError}
+                              onClear={() => setSubmissionError(null)}
+                           />
                         </div>
-                        {submissionError && (
-                           <div className="mb-4">
-                              <ErrorMessage
-                                 error={submissionError}
-                                 onClear={() => setSubmissionError(null)}
-                              />
-                           </div>
-                        )}
-                        <motion.div
-                           initial={{ opacity: 0 }}
-                           animate={{ opacity: 1 }}
-                           transition={{ delay: 0.3 }}
-                           className="flex justify-end"
-                        >
-                           <button
-                              className={`px-6 py-3 text-base font-medium text-white transition-all duration-300 bg-blue-600 rounded-xl hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-                              type="submit"
-                              disabled={isSubmitting}
-                           >
-                              {isSubmitting ? 'Submitting...' : 'Submit Survey'}
-                           </button>
-                        </motion.div>
-                     </>
-                  )}
-               </div>
-            </form>
+                     )}
+                     <SubmitButton
+                        isSubmitting={isSubmitting}
+                        onSubmit={handleSubmit}
+                     />
+                  </>
+               )}
+            </div>
          </div>
       </div>
    );
