@@ -10,6 +10,7 @@ use App\Services\SurveyService;
 use App\Services\DatabaseLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use App\Models\SurveyQuestionAnswer;
 use App\Services\SurveyCacheService;
 use App\Services\SurveyImageService;
 use App\Http\Resources\SurveyResource;
@@ -461,5 +462,184 @@ class SurveyController extends Controller
       }
 
       return response()->json($responseData)->withHeaders($this->getSecurityHeaders());
+   }
+
+   public function totalDepartmentRatings($surveyAnswerId, Request $request)
+   {
+      $user = $request->user();
+
+      DatabaseLogger::info('ratings_department_view', 'User viewing department ratings', [
+         'survey_answer_id' => $surveyAnswerId
+      ], $request, $user->id);
+
+      // Cache department ratings for 30 seconds
+      $cacheKey = "dept_ratings_{$surveyAnswerId}_{$user->id}";
+
+      $ratingsData = Cache::remember($cacheKey, 30, function () use ($user, $surveyAnswerId) {
+         // Initialize ratings array
+         $ratings = [
+            '5' => ['count' => 0, 'percentage' => 0],
+            '4' => ['count' => 0, 'percentage' => 0],
+            '3' => ['count' => 0, 'percentage' => 0],
+            '2' => ['count' => 0, 'percentage' => 0],
+            '1' => ['count' => 0, 'percentage' => 0]
+         ];
+
+         // Get all answers for this specific survey answer
+         $answers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($user, $surveyAnswerId) {
+            $query->where('survey_id', $surveyAnswerId)
+               ->whereHas('survey', function ($q) use ($user) {
+                  $q->where('user_id', $user->id);
+               });
+         })->get();
+
+         if ($answers->isEmpty()) {
+            return [
+               'message' => 'No ratings found for this survey answer',
+               'ratings' => $ratings
+            ];
+         }
+
+         foreach ($answers as $answer) {
+            $answerValue = strip_tags($answer->answer);
+            $decoded = json_decode($answerValue, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+               continue;
+            }
+
+            $cleanAnswer = trim($answerValue);
+            if (preg_match('/^([1-5])/', $cleanAnswer, $matches)) {
+               $rating = $matches[1];
+               $ratings[$rating]['count']++;
+            }
+         }
+
+         $validAnswers = array_sum(array_column($ratings, 'count'));
+         if ($validAnswers > 0) {
+            foreach ($ratings as $rating => $data) {
+               $ratings[$rating]['percentage'] = round(($data['count'] / $validAnswers) * 100, 2);
+            }
+         }
+
+         return ['ratings' => $ratings];
+      });
+
+      return response()->json($ratingsData)->withHeaders($this->getSecurityHeaders());
+   }
+
+   public function responses(Survey $survey, Request $request)
+   {
+      $user = $request->user();
+
+      // Authorization check
+      if ($user->id !== $survey->user_id) {
+         DatabaseLogger::warning('survey_responses_access_denied', 'Unauthorized survey responses access attempt', [
+            'survey_id' => $survey->id,
+            'survey_owner_id' => $survey->user_id
+         ], $request, $user->id);
+
+         return response()->json(['error' => 'Unauthorized'], 403)
+            ->withHeaders($this->getSecurityHeaders());
+      }
+
+      DatabaseLogger::info('survey_responses_view', 'User viewing survey responses', [
+         'survey_id' => $survey->id,
+         'survey_title' => $survey->title
+      ], $request, $user->id);
+
+      // Cache survey responses for 5 minutes
+      $cacheKey = "survey_responses_{$survey->id}";
+
+      $transformedResponses = Cache::remember($cacheKey, 300, function () use ($survey) {
+         // Fetch questions with proper security
+         $questions = $survey->questions()->select('id', 'question', 'type')->get();
+
+         // Define special questions for PII identification
+         $specialQuestions = [
+            'Full name',
+            'Name',
+            'First name',
+            'Last name',
+            'Email',
+            'Email address',
+            'Phone',
+            'Phone number',
+            'Contact',
+            'Address',
+            'Location'
+         ];
+
+         // Fetch responses with proper pagination
+         $responses = SurveyAnswer::where('survey_id', $survey->id)
+            ->with([
+               'answers' => function ($query) {
+                  $query->select('id', 'survey_question_id', 'survey_answer_id', 'answer', 'created_at')
+                     ->orderBy('created_at', 'desc');
+               }
+            ])
+            ->limit(1000) // Prevent memory issues
+            ->get();
+
+         return $responses->map(function ($response) use ($questions, $specialQuestions) {
+            $allAnswers = collect();
+
+            foreach ($response->answers as $answer) {
+               $question = $questions->firstWhere('id', $answer->survey_question_id);
+
+               if ($question) {
+                  // Sanitize answer for display
+                  $sanitizedAnswer = strip_tags($answer->answer);
+
+                  $answerData = [
+                     'id' => $answer->id,
+                     'question' => strip_tags($question->question),
+                     'answer' => $sanitizedAnswer,
+                     'created_at' => $answer->created_at,
+                     'is_special' => in_array($question->question, $specialQuestions)
+                  ];
+
+                  $allAnswers->push($answerData);
+               }
+            }
+
+            return [
+               'id' => $response->id,
+               'answers' => $allAnswers,
+            ];
+         });
+      });
+
+      return response()->json([
+         'success' => true,
+         'data' => $transformedResponses
+      ])->withHeaders($this->getSecurityHeaders());
+   }
+
+   public function countResponses(Survey $survey, Request $request)
+   {
+      $user = $request->user();
+
+      // Authorization check
+      if ($user->id !== $survey->user_id) {
+         DatabaseLogger::warning('survey_count_access_denied', 'Unauthorized survey response count access attempt', [
+            'survey_id' => $survey->id,
+            'survey_owner_id' => $survey->user_id
+         ], $request, $user->id);
+
+         return response()->json(['error' => 'Unauthorized'], 403)
+            ->withHeaders($this->getSecurityHeaders());
+      }
+
+      DatabaseLogger::info('survey_count_view', 'User viewing survey response count', [
+         'survey_id' => $survey->id,
+         'survey_title' => $survey->title
+      ], $request, $user->id);
+
+      // Cache response count for 5 minutes
+      $count = Cache::remember("survey_response_count_{$survey->id}", 300, function () use ($survey) {
+         return SurveyAnswer::where('survey_id', $survey->id)->count();
+      });
+
+      return response()->json(['count' => $count])->withHeaders($this->getSecurityHeaders());
    }
 }
