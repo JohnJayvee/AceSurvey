@@ -1,4 +1,4 @@
-# AceSurvey AI Agent Instructions
+# AceSurvey Instructions
 
 ## Architecture Overview
 
