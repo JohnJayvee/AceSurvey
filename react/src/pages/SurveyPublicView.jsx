@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "@api/axios";
 import PublicQuestionView from "@components/PublicQuestionView";
@@ -285,38 +285,92 @@ const useSurveyData = (slug) => {
    const [survey, setSurvey] = useState(INITIAL_SURVEY_STATE);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
+   const isMountedRef = useRef(true);
+   const abortControllerRef = useRef(null);
+   const fetchingRef = useRef(false);
 
    const fetchSurvey = useCallback(async () => {
+      // Prevent multiple simultaneous requests
+      if (fetchingRef.current) return;
+      fetchingRef.current = true;
+
       setLoading(true);
       setError(null);
 
       try {
          // Check cache first
          const cachedData = surveyCache.get(slug);
-         if (cachedData) {
+         if (cachedData && isMountedRef.current) {
             setSurvey(cachedData);
             setLoading(false);
+            fetchingRef.current = false;
             return;
          }
 
          console.log('Fetching survey with slug:', slug);
 
-         // Use axiosClient instead of fetch
-         const response = await axiosClient.get(`survey/get-by-slug/${slug}`);
+         // Create new abort controller for this request
+         abortControllerRef.current = new AbortController();
+
+         // Use axiosClient with abort signal
+         const response = await axiosClient.get(`survey/get-by-slug/${slug}`, {
+            signal: abortControllerRef.current.signal
+         });
          console.log('Survey fetch response:', response);
+
+         if (!isMountedRef.current) return;
 
          if (!response.data?.data) {
             throw new Error("Invalid API response format");
          }
 
          surveyCache.set(slug, response.data.data);
-         setSurvey(response.data.data);
+         if (isMountedRef.current) {
+            setSurvey(response.data.data);
+         }
       } catch (error) {
+         // Don't update state if request was cancelled or component unmounted
+         if (error.name === 'CanceledError') {
+            console.log('Request cancelled');
+            return;
+         }
+
+         if (!isMountedRef.current) {
+            return;
+         }
+
          console.error("Error fetching survey:", error);
-         setError(error.message || "Failed to load survey");
+
+         // Check if it's a 404 error (expired or invalid link)
+         if (error.response?.status === 404) {
+            setError("This survey has expired or the link is invalid");
+         } else if (error.response?.status === 429) {
+            setError("Too many requests. Please try again later");
+         } else {
+            setError(error.message || "Failed to load survey");
+         }
       } finally {
-         setLoading(false);
+         if (isMountedRef.current) {
+            setLoading(false);
+         }
+         fetchingRef.current = false;
       }
+   }, [slug]);
+
+   // Fetch survey on mount and slug change
+   useEffect(() => {
+      if (!slug) return;
+
+      isMountedRef.current = true;
+      fetchSurvey();
+
+      return () => {
+         isMountedRef.current = false;
+         // Cancel any pending request when component unmounts
+         if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+         }
+      };
    }, [slug]);
 
    return { survey, loading, error, fetchSurvey };
@@ -383,12 +437,6 @@ export default function SurveyPublicView() {
       handleAnswerChange,
       handleSubmit
    } = useSurveySubmission(survey.id);
-
-   useEffect(() => {
-      if (slug) {
-         fetchSurvey();
-      }
-   }, [fetchSurvey, slug]);
 
    if (loading) return <LoadingSkeleton />;
    if (error) return <ErrorDisplay error={error} />;
