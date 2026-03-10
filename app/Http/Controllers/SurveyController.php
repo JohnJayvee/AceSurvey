@@ -642,4 +642,36 @@ class SurveyController extends Controller
 
       return response()->json(['count' => $count])->withHeaders($this->getSecurityHeaders());
    }
+
+   public function getLinks()
+   {
+      if ($this->rateLimitService->checkLimit('get_links', request()->ip(), 100)) {
+         return $this->errorResponse('Too many requests', 429);
+      }
+
+      DatabaseLogger::info('get_links_access', 'Public access to survey links', [
+         'ip' => request()->ip()
+      ], request());
+
+      try {
+         $cacheKey = 'public_survey_links_v2';
+         $links = $this->cacheService->remember($cacheKey, 1800, function () {
+            return Survey::where('status', true)
+               ->where('expire_date', '>', now())
+               ->select('slug', 'title')
+               ->get()
+               ->map(function ($survey) {
+                  return [
+                     'title' => strip_tags($survey->title),
+                     'link' => 'http://localhost:3000/survey/public/' . $survey->slug
+                  ];
+               });
+         });
+
+         return response()->json($links)->withHeaders($this->getSecurityHeaders());
+
+      } catch (\Exception $e) {
+         return $this->handleError('get_links_error', 'Failed to retrieve survey links', $e, request());
+      }
+   }
 }
