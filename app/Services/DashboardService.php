@@ -39,7 +39,7 @@ class DashboardService
 
    public function getAnalyticsData(int $userId): array
    {
-      $surveyStats = Survey::select(['id', 'title', 'created_at', 'expire_date', 'status'])
+      $surveyStats = Survey::select(['id', 'title', 'created_at', 'updated_at', 'expire_date', 'status'])
          ->withCount('answers')
          ->where('user_id', $userId)
          ->get()
@@ -49,6 +49,7 @@ class DashboardService
                'title' => strip_tags($survey->title),
                'answers' => (int) $survey->answers_count,
                'created_at' => $survey->created_at->format('Y-m-d H:i:s'),
+               'updated_at' => $survey->updated_at->format('Y-m-d H:i:s'),
             ];
          });
 
@@ -68,15 +69,17 @@ class DashboardService
             'answers' => $stat['answers'],
             'questions' => (int) $questionsCount,
             'created_at' => $stat['created_at'],
+            'updated_at' => $stat['updated_at'],
          ];
-      });
+      })->sortByDesc('updated_at')
+         ->values();
 
-      $totalSurveys = $surveyStats->count();
+      $totalSurveys = $combinedStats->count();
       $totalAnswers = $surveyStats->sum('answers');
 
       return [
          'analytics' => [
-            'surveyStats' => $combinedStats->values(),
+            'surveyStats' => $combinedStats,
             'totalAnswers' => (int) $totalAnswers,
             'totalSurveys' => (int) $totalSurveys,
          ],

@@ -22,6 +22,7 @@ export const processRatingsData = (ratings) => {
 };
 
 export const generateMonthlyData = (surveyStats) => {
+   const currentYear = new Date().getFullYear();
    const months = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
@@ -34,12 +35,14 @@ export const generateMonthlyData = (surveyStats) => {
    }));
 
    surveyStats?.forEach((surveyStat) => {
-      const surveyDate = new Date(surveyStat.created_at);
+      const surveyDate = new Date(surveyStat.updated_at);
       if (isNaN(surveyDate.getTime())) return;
 
-      const surveyMonth = surveyDate.getMonth();
-      chartData[surveyMonth].surveys += 1;
-      chartData[surveyMonth].responses += surveyStat.answers;
+      if (surveyDate.getFullYear() === currentYear) {
+         const surveyMonth = surveyDate.getMonth();
+         chartData[surveyMonth].surveys += 1;
+         chartData[surveyMonth].responses += surveyStat.answers;
+      }
    });
 
    return chartData;

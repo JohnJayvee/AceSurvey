@@ -224,14 +224,15 @@ export default function SurveyListItem({ survey, onDeleteClick }) {
 
       // Filter analytics data for this specific survey
       const surveyAnalytics = analyticsData.filter(item => {
-         // Match by both title and ID for better accuracy
-         return item.title === survey.title || item.survey_id === survey.id;
+         // Match by title (backend uses id, no survey_id)
+         return item.title === survey.title || item.id === survey.id;
       });
 
+      const currentYear = new Date().getFullYear();
       surveyAnalytics.forEach(item => {
          try {
-            const date = new Date(item.created_at);
-            if (!isNaN(date.getTime())) {
+            const date = new Date(item.updated_at);
+            if (!isNaN(date.getFullYear()) && date.getFullYear() === currentYear) {
                const monthIndex = date.getMonth();
                const responses = parseInt(item.answers) || 0;
                monthlyData[monthIndex].response += responses;
