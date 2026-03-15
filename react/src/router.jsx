@@ -15,6 +15,8 @@ const Respondent = React.lazy(() => import("@pages/Respondent"));
 const ForgotPassword = React.lazy(() => import("@pages/ForgotPassword"));
 const ResetPassword = React.lazy(() => import("@pages/ResetPassword"));
 const NotFound = React.lazy(() => import("@pages/NotFound"));
+const Qr = React.lazy(() => import("@pages/Qr"))
+const SurveySelection = React.lazy(() => import("@pages/SurveySelection"));
 
 // Import the custom loading spinner with animation
 import Loading from '@components/Loading';
@@ -58,6 +60,13 @@ const DynamicTitle = ({ children }) => {
       } else if (path === "/404") {
          title = "404 - Page Not Found";
       }
+      else if (path === "/qr") {
+         title = "QR Code";
+      }
+      else if (path === "/survey-selection") {
+         title = "Select Survey";
+      }
+
 
       document.title = title;
    }, [location]);
@@ -104,6 +113,8 @@ const router = createBrowserRouter([
             path: "/surveys/:surveyId/responses/:responseId",
             element: <Respondent />,
          },
+
+
       ],
    },
    {
@@ -132,6 +143,14 @@ const router = createBrowserRouter([
             path: "/reset-password/:token",
             element: <ResetPassword />,
          },
+         {
+            path: "/qr",
+            element: <Qr />,
+         },
+         {
+            path: "/survey-selection",
+            element: <SurveySelection />,
+         }
       ],
    },
    {
