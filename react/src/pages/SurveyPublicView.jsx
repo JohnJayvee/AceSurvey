@@ -7,8 +7,9 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from "framer-motion";
-import { debounce } from 'lodash';
+
 import ErrorMessage from "@components/ErrorMessage";
+import SimpleProgressBar from "@components/SimpleProgressBar";
 import logo from '@images/AceLogo.png';
 
 // Utility: Cache management
@@ -383,7 +384,16 @@ const useSurveySubmission = (surveyId) => {
    const [isSubmitting, setIsSubmitting] = useState(false);
 
    const handleAnswerChange = useCallback((question, value) => {
-      setAnswers(prev => ({ ...prev, [question.id]: value }));
+      // Live update - add/remove answers dynamically
+      setAnswers(prev => {
+         const newAnswers = { ...prev };
+         if (value && value !== '' && value !== null && value !== undefined) {
+            newAnswers[question.id] = value;
+         } else {
+            delete newAnswers[question.id];
+         }
+         return newAnswers;
+      });
    }, []);
 
    const handleSubmit = useCallback(async (e) => {
@@ -430,6 +440,7 @@ export default function SurveyPublicView() {
    const { slug } = useParams();
    const { survey, loading, error, fetchSurvey } = useSurveyData(slug);
    const {
+      answers,
       submissionError,
       setSubmissionError,
       surveyFinished,
@@ -449,6 +460,8 @@ export default function SurveyPublicView() {
          <div className="relative z-10 w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
             <div className="space-y-6">
                <SurveyHeader survey={survey} />
+
+               <SimpleProgressBar current={Object.keys(answers).length} total={(survey.questions || []).length} />
 
                {surveyFinished ? (
                   <SuccessMessage />
