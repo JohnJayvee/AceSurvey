@@ -1,19 +1,31 @@
-﻿import { useCallback } from "react";
-import { buildSurveyCSV } from "../utils/csvUtils";
+import { useCallback, useRef, useState } from 'react';
+import axiosClient from '@api/axios';
 
-export const useCSVDownload = (survey, responses) => {
-   const downloadCSV = useCallback(() => {
-      if (!responses.data?.length || !survey.questions) return;
-      const blob = new Blob(['\uFEFF', buildSurveyCSV(survey, responses)], { type: 'text/csv;charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = (survey.title || 'survey') + '_responses.csv';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => window.URL.revokeObjectURL(url), 0);
-   }, [survey, responses]);
-   return { downloadCSV };
+export const useCSVDownload = (survey) => {
+   const [exporting, setExporting] = useState(false);
+   const [exportError, setExportError] = useState('');
+   const pending = useRef(false);
+   const downloadCSV = useCallback(async () => {
+      if (!survey?.id || pending.current) return;
+      pending.current = true;
+      setExporting(true);
+      setExportError('');
+      try {
+         const { data } = await axiosClient.get('/survey/' + survey.id + '/export', { responseType: 'blob', cache: false, timeout: 120000 });
+         const url = URL.createObjectURL(data);
+         const link = document.createElement('a');
+         link.href = url;
+         link.download = (survey.title || 'survey').replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').slice(0, 120) + '_responses.csv';
+         document.body.appendChild(link);
+         link.click();
+         link.remove();
+         setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } catch (error) {
+         setExportError(error.response?.status === 403 ? 'You do not have permission to export this survey.' : 'Export failed. Please try again.');
+      } finally {
+         pending.current = false;
+         setExporting(false);
+      }
+   }, [survey]);
+   return { downloadCSV, exporting, exportError };
 };
-

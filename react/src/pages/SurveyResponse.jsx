@@ -24,7 +24,7 @@ export default function SurveyResponse() {
 
    const { width } = useWindowSize();
    const { survey, responses, responseCount, ratingsData, loading, error } = useSurveyData(id);
-   const { downloadCSV } = useCSVDownload(survey, responses);
+   const { downloadCSV, exporting, exportError } = useCSVDownload(survey);
 
    const handleGoBack = () => navigate(-1);
 
@@ -49,7 +49,9 @@ export default function SurveyResponse() {
             title={survey.title}
             onGoBack={handleGoBack}
             onDownload={downloadCSV}
+            exporting={exporting}
          />
+         {exportError && <p role="alert" className="p-3 mb-4 text-red-700 bg-red-50 rounded-lg">{exportError}</p>}
 
          <div className="grid gap-4 sm:gap-6">
             <SurveyStats

@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureAccountActive::cla
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/survey/{survey}/responses', [SurveyController::class, 'responses'])->name('survey.responses');
+    Route::get('/survey/{survey}/export', \App\Http\Controllers\SurveyExportController::class);
     Route::get('/survey/{survey}/responses/count', [SurveyController::class, 'countResponses'])->name('survey.countResponses');
     Route::get('/survey/{survey}/responses/{responseId}/details', [SurveyController::class, 'getResponseDetails'])->name('survey.getResponseDetails');
     Route::get('/total-ratings', [SurveyController::class, 'totalRatings'])->name('totalRatings');
