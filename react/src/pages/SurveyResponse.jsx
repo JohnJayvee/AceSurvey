@@ -26,7 +26,7 @@ export default function SurveyResponse() {
    const { survey, responses, responseCount, ratingsData, loading, error } = useSurveyData(id);
    const { downloadCSV, exporting, exportError } = useCSVDownload(survey);
 
-   const handleGoBack = () => navigate(-1);
+   const handleGoBack = () => navigate('/surveys');
 
    const handleViewDetail = (surveyId, responseId) => {
       navigate(`/surveys/${surveyId}/responses/${responseId}`);
