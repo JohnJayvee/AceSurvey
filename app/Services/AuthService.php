@@ -49,7 +49,7 @@ class AuthService
          $token = $this->generateAuthToken($user);
 
          return [
-            'user' => $user->only(['id', 'name', 'email', 'created_at']),
+            'user' => $user->only(['id', 'name', 'email', 'is_admin', 'created_at']),
             'token' => $token,
          ];
       });

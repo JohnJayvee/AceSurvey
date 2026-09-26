@@ -74,9 +74,12 @@ class SurveyController extends Controller
       try {
          $cacheKey = $this->cacheService->createSurveyListCacheKey($user->id, $search, $page, $perPage);
 
-         $result = $this->cacheService->remember($cacheKey, 300, function () use ($user, $search, $perPage) {
-            return $this->surveyService->getSurveysByUser($user->id, $search, $perPage);
-         });
+         // Admin lists span every owner, so do not reuse an owner-scoped cache.
+         $result = $user->is_admin
+            ? $this->surveyService->getSurveysByUser($user->id, $search, $perPage, true)
+            : $this->cacheService->remember($cacheKey, 300, function () use ($user, $search, $perPage) {
+               return $this->surveyService->getSurveysByUser($user->id, $search, $perPage);
+            });
 
          DatabaseLogger::info('surveys_index_success', 'Surveys list retrieved successfully', [
             'search' => $search,
@@ -152,7 +155,7 @@ class SurveyController extends Controller
    {
       $user = $request->user();
 
-      if (!$this->surveyService->isUserAuthorized($survey, $user->id)) {
+      if (!$user->is_admin && !$this->surveyService->isUserAuthorized($survey, $user->id)) {
          DatabaseLogger::warning('survey_access_denied', 'Unauthorized survey access attempt', [
             'survey_id' => $survey->id,
             'survey_owner_id' => $survey->user_id
@@ -419,7 +422,7 @@ class SurveyController extends Controller
 
       // Find survey and check authorization
       $survey = Survey::findOrFail($surveyId);
-      if ($user->id !== $survey->user_id) {
+      if (!$user->is_admin && (int) $user->id !== (int) $survey->user_id) {
          return response()->json(['error' => 'Unauthorized'], 403)
             ->withHeaders($this->getSecurityHeaders());
       }
@@ -488,7 +491,7 @@ class SurveyController extends Controller
    {
       $user = $request->user();
       $survey = Survey::findOrFail($surveyAnswerId);
-      if (!$this->surveyService->isUserAuthorized($survey, $user->id)) {
+      if (!$user->is_admin && !$this->surveyService->isUserAuthorized($survey, $user->id)) {
          return $this->errorResponse('Unauthorized', 403);
       }
 
@@ -513,7 +516,7 @@ class SurveyController extends Controller
          $answers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($user, $surveyAnswerId) {
             $query->where('survey_id', $surveyAnswerId)
                ->whereHas('survey', function ($q) use ($user) {
-                  $q->where('user_id', $user->id);
+                  if (!$user->is_admin) { $q->where('user_id', $user->id); }
                });
          })->get();
 
@@ -556,7 +559,7 @@ class SurveyController extends Controller
       $user = $request->user();
 
       // Authorization check
-      if ($user->id !== $survey->user_id) {
+      if (!$user->is_admin && (int) $user->id !== (int) $survey->user_id) {
          DatabaseLogger::warning('survey_responses_access_denied', 'Unauthorized survey responses access attempt', [
             'survey_id' => $survey->id,
             'survey_owner_id' => $survey->user_id
@@ -646,7 +649,7 @@ class SurveyController extends Controller
       $user = $request->user();
 
       // Authorization check
-      if ($user->id !== $survey->user_id) {
+      if (!$user->is_admin && (int) $user->id !== (int) $survey->user_id) {
          DatabaseLogger::warning('survey_count_access_denied', 'Unauthorized survey response count access attempt', [
             'survey_id' => $survey->id,
             'survey_owner_id' => $survey->user_id

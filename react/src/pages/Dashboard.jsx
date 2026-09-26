@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { PlusIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import { useStateContext } from "@context/ContextProvider";
 import { useDashboardData } from "@hooks/useDashboardData";
 import DashboardStats from "@components/dashboard/DashboardStats";
 import SurveyPerformanceCharts from "@components/dashboard/SurveyPerformanceCharts";
@@ -7,117 +8,22 @@ import LatestSurveyCard from "@components/dashboard/LatestSurveyCard";
 import RatingDistributionChart from "@components/dashboard/RatingDistributionChart";
 import SurveyAnalyticsChart from "@components/dashboard/SurveyAnalyticsChart";
 import LatestResponsesList from "@components/dashboard/LatestResponsesList";
-import Footer from "@components/Footer.jsx";
-import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 
 export default function Dashboard() {
    const navigate = useNavigate();
+   const { currentUser } = useStateContext();
    const { data, loading, error } = useDashboardData();
-
-   const handleViewResponses = (surveyId) => {
-      navigate(`/surveys/${surveyId}/responses`);
-   };
-
-   const handleViewDetail = (surveyId, responseId) => {
-      navigate(`/surveys/${surveyId}/responses/${responseId}`);
-   };
-
-   if (loading) {
-      return (
-         <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
-            <div className="space-y-8">
-               {/* Performance Charts Section Skeleton - Matches your layout */}
-               <div className="flex flex-col w-full gap-5 mx-auto text-gray-700 lg:flex-row xl:w-3/4">
-                  <div className="w-full">
-                     <Skeleton height={400} className="rounded-lg" />
-                  </div>
-                  <div className="w-full">
-                     <Skeleton height={400} className="rounded-lg" />
-                  </div>
-               </div>
-
-               {/* Main Dashboard Content Skeleton - Matches your actual layout */}
-               <div className="flex flex-col w-full gap-5 mx-auto text-gray-700 lg:flex-row xl:w-3/4">
-                  {/* Left Column Skeleton - lg:w-3/4 */}
-                  <div className="flex flex-col w-full space-y-4 lg:w-3/4">
-                     {/* Stats Cards Skeleton */}
-                     <div className="flex gap-4">
-                        <div className="w-full">
-                           <Skeleton height={120} className="rounded-lg" />
-                        </div>
-                        <div className="w-full">
-                           <Skeleton height={120} className="rounded-lg" />
-                        </div>
-                     </div>
-                     {/* Latest Survey Card Skeleton */}
-                     <div>
-                        <Skeleton height={600} className="rounded-lg" />
-                     </div>
-                  </div>
-
-                  {/* Right Column Skeleton - lg:w-2/3 */}
-                  <div className="w-full space-y-5 lg:w-2/3">
-                     <Skeleton height={400} className="rounded-lg" />
-                     <Skeleton height={400} className="rounded-lg" />
-                     <Skeleton height={400} className="rounded-lg" />
-                  </div>
-               </div>
-
-               {/* Footer Skeleton */}
-               <Skeleton height={100} className="rounded-lg" />
-            </div>
-         </SkeletonTheme>
-      );
-   }
-
-   if (error) {
-      return (
-         <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-               <h2 className="mb-2 text-xl font-bold text-red-600">Error Loading Dashboard</h2>
-               <p className="text-gray-600">{error}</p>
-            </div>
-         </div>
-      );
-   }
-
-   return (
-      <div className="space-y-8">
-         {/* Performance Charts Section */}
-         <div className="flex flex-col w-full gap-5 mx-auto text-gray-700 lg:flex-row xl:w-3/4">
-            <SurveyPerformanceCharts
-               topSurveys={data.topSurveys}
-               bottomSurveys={data.bottomSurveys}
-            />
-         </div>
-
-         {/* Main Dashboard Content */}
-         <div className="flex flex-col w-full gap-5 mx-auto text-gray-700 lg:flex-row xl:w-3/4">
-            {/* Left Column - Stats and Latest Survey */}
-            <div className="flex flex-col w-full space-y-4 lg:w-3/4">
-               <DashboardStats
-                  totalSurveys={data.totalSurveys}
-                  totalAnswers={data.totalAnswers}
-               />
-               <LatestSurveyCard
-                  survey={data.latestSurvey}
-                  onViewResponses={handleViewResponses}
-               />
-            </div>
-
-            {/* Right Column - Analytics */}
-            <div className="w-full space-y-5 lg:w-2/3">
-               <RatingDistributionChart data={data.ratingsData} />
-               <SurveyAnalyticsChart data={data.chartData} />
-               <LatestResponsesList
-                  responses={data.latestAnswers}
-                  onViewDetail={handleViewDetail}
-               />
-            </div>
-         </div>
-
-         <Footer />
-      </div>
-   );
+   return <div className="ace-dashboard">
+      <div className="ace-page-heading"><div><span className="ace-eyebrow">YOUR WORKSPACE AT A GLANCE</span><h1>Welcome back{currentUser.name ? ', ' + currentUser.name.split(' ')[0] : ''}.</h1><p>Here’s what your community is telling you.</p></div><Link className="ace-button" to="/surveys/create"><PlusIcon />Create survey</Link></div>
+      {error ? <div className="ace-empty" role="alert"><h2>We couldn’t load your overview</h2><p>{error}</p><button className="ace-button ace-button-secondary" onClick={() => window.location.reload()}>Try again</button></div> : <>
+         <DashboardStats totalSurveys={data.totalSurveys} totalAnswers={data.totalAnswers} loading={loading} />
+         {loading ? <div className="ace-dashboard-grid" aria-label="Loading dashboard" aria-busy="true"><div className="ace-skeleton" /><div className="ace-skeleton" /></div> : <>
+            <div className="ace-dashboard-grid"><SurveyAnalyticsChart data={data.chartData} /><RatingDistributionChart data={data.ratingsData} /></div>
+            <div className="ace-section-heading"><h2>Keep the conversation going</h2><Link to="/surveys">All surveys<ArrowUpRightIcon /></Link></div>
+            <div className="ace-dashboard-grid"><LatestSurveyCard survey={data.latestSurvey} onViewResponses={id => navigate('/surveys/' + id + '/responses')} /><LatestResponsesList responses={data.latestAnswers} onViewDetail={(id, responseId) => navigate('/surveys/' + id + '/responses/' + responseId)} /></div>
+            <div className="ace-section-heading"><h2>Survey performance</h2><span>Ranked by response count</span></div>
+            <div className="ace-performance-grid"><SurveyPerformanceCharts topSurveys={data.topSurveys} bottomSurveys={data.bottomSurveys} /></div>
+         </>}
+      </>}
+   </div>;
 }

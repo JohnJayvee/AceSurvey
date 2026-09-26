@@ -81,7 +81,7 @@ const SurveyActions = ({
                </Tooltip>
 
                {/* Delete Survey Button */}
-               <Tooltip title="Delete Survey" placement="bottom" TransitionComponent={Fade}>
+               {survey.can_manage !== false && <Tooltip title="Delete Survey" placement="bottom" TransitionComponent={Fade}>
                   <button
                      onClick={() => onDelete(survey.id)}
                      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-red-600 transition-all duration-200 rounded-lg bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
@@ -89,7 +89,7 @@ const SurveyActions = ({
                      <TrashIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                      <span className="hidden sm:inline">{width < 768 ? "Del" : "Delete"}</span>
                   </button>
-               </Tooltip>
+               </Tooltip>}
             </div>
          )}
       </motion.div>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axiosClient from "@api/axios";
 import PublicQuestionView from "@components/PublicQuestionView";
 import Skeleton from 'react-loading-skeleton';
@@ -160,28 +160,13 @@ const SurveyImage = ({ imageUrl, title }) => (
 );
 
 const SurveyHeader = ({ survey }) => (
-   <motion.div
-      {...MOTION_VARIANTS.fadeIn}
-      className="p-8 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
-   >
-      <div className="flex flex-col gap-8 md:flex-row">
-         <div className="w-full md:w-1/2">
-            <SurveyImage imageUrl={survey.image_url} title={survey.title} />
-         </div>
-         <div className="w-full space-y-4 md:w-1/2">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
-               {survey.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-3">
-               <StatusBadge status={survey.status} />
-               <ExpirationBadge expireDate={survey.expire_date} />
-            </div>
-            <p className="p-4 leading-relaxed text-gray-600 bg-gray-50 rounded-xl">
-               {survey.description}
-            </p>
-         </div>
-      </div>
-   </motion.div>
+   <header className="ace-public-header">
+      {survey.image_url && <img className="ace-public-header-image" src={survey.image_url} alt="" />}
+      <span className="ace-eyebrow">YOUR PERSPECTIVE MATTERS</span>
+      <h1>{survey.title}</h1>
+      <p>{survey.description || 'Thank you for taking a moment to share your experience. Your feedback helps us improve.'}</p>
+      <div className="mt-5"><span className="ace-status active">{survey.questions?.length || 0} questions</span><ExpirationBadge expireDate={survey.expire_date} /></div>
+   </header>
 );
 
 const SuccessMessage = () => (
@@ -368,11 +353,9 @@ export default function SurveyPublicView() {
    if (error) return <ErrorDisplay error={error} />;
 
    return (
-      <div className="relative w-full min-h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-         <div className="absolute inset-0 opacity-40">
-            <AnimatedBackground />
-         </div>
-         <div className="relative z-10 w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
+      <div className="ace-public">
+<div className="ace-public-topbar"><Link className="ace-brand" to="/survey-selection"><img src={logo} alt="" /><span>AceSurvey</span></Link><span>Small moments. Meaningful feedback.</span></div>
+         <div className="ace-public-content">
             <div className="space-y-6">
                <SurveyHeader survey={survey} />
 

@@ -5,7 +5,7 @@ export default {
    theme: {
       fontFamily: {
          display: ["DS-Digital", "sans-serif"],
-         body: ["Open Sans", "sans-serif"],
+         body: ["Segoe UI", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       extend: {
          fontSize: {
@@ -36,7 +36,9 @@ export default {
             "48p": "48%",
          },
          colors: {
-            primary: "#1A97F5",
+            primary: "#107e72",
+            blue: { 50: '#f0f8f5', 100: '#e1f1eb', 200: '#c3e2d5', 300: '#99ccba', 400: '#68b098', 500: '#35977f', 600: '#107e72', 700: '#146357', 800: '#194f46', 900: '#193e37' },
+            indigo: { 50: '#f1f6f5', 100: '#e5efed', 200: '#c7ded8', 300: '#9ac3b8', 400: '#6ba595', 500: '#448a78', 600: '#2d7162', 700: '#265c50', 800: '#234c42', 900: '#203e37' },
             secondary: {
                100: "#E2E2D5",
                200: "#888883",

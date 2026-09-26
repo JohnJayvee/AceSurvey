@@ -1,490 +1,88 @@
-import React, { useEffect, useState, useRef, useLayoutEffect, useCallback } from "react";
-import { Navigate, NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { Navigate, NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useStateContext } from "@context/ContextProvider";
 import axiosClient from "@api/axios";
 import Toast from "@components/Toast";
 import UserProfilePopup from "@components/UserProfilePopup";
-import { Unstable_Popup as BasePopup } from "@mui/base/Unstable_Popup";
+import { HomeIcon, ClipboardDocumentListIcon, Bars3Icon, XMarkIcon, PlusIcon, ArrowUpRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import logo from "@images/AceLogo.png";
-import banner from "@images/AceBanner.png";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-   HomeIcon,
-   ClipboardDocumentListIcon,
-   Bars3Icon,
-   XMarkIcon,
-   ChevronLeftIcon,
-   ChevronRightIcon
-} from "@heroicons/react/24/outline";
-
-// Simple polyfill for requestIdleCallback
-const safeRequestIdleCallback = (callback) => {
-   if (typeof window !== 'undefined' && window.requestIdleCallback) {
-      return window.requestIdleCallback(callback);
-   }
-   // Fallback for Safari and other browsers
-   return setTimeout(callback, 1);
-};
-
-
-
 
 export default function DefaultLayout() {
-   const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
-   const [isUserProfilePopupOpen, setIsUserProfilePopupOpen] = useState(false);
-   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-      try {
-         const saved = localStorage.getItem('sidebar-collapsed');
-         return saved ? JSON.parse(saved) : false;
-      } catch {
-         return false;
-      }
-   });
-   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
-   const [isMobile, setIsMobile] = useState(() => {
-      try {
-         return typeof window !== 'undefined' ? window.innerWidth < 768 : false;
-      } catch {
-         return false;
-      }
-   });
-   const [anchor, setAnchor] = useState(null);
+   const { currentUser, userToken, setCurrentUser, setUserToken, showToast } = useStateContext();
+   const [menuOpen, setMenuOpen] = useState(false);
+   const [profileOpen, setProfileOpen] = useState(false);
+   const profile = useRef(null);
+   const location = useLocation();
 
-   // Refs for cleanup
-
-   const resizeTimeoutRef = useRef(null);
-   const abortControllerRef = useRef(null);
-   const cleanupRef = useRef([]);
-   const sidebarRef = useRef(null);
-   const contentRef = useRef(null);
-
-   // Compute expanded state
-   const shouldExpandSidebar = !isSidebarCollapsed || isSidebarHovered;
-
-   // Direct DOM manipulation for sidebar animation
-   const updateSidebarWidth = useCallback((expanded) => {
-      if (sidebarRef.current && contentRef.current && !isMobile) {
-         const width = expanded ? 256 : 64; // 16rem = 256px, 4rem = 64px
-
-         // Use transform instead of width for better performance
-         sidebarRef.current.style.width = `${width}px`;
-         contentRef.current.style.marginLeft = `${width}px`;
-      } else if (contentRef.current && isMobile) {
-         // Reset margin on mobile
-         contentRef.current.style.marginLeft = '0px';
-      }
-   }, [isMobile]);
-
-   // Optimized event handlers
-   const toggleMobileMenu = useCallback(() => {
-      setIsMobileMenuOpen(prev => !prev);
-   }, []);
-
-   const closeMobileMenu = useCallback(() => {
-      setIsMobileMenuOpen(false);
-   }, []);
-
-   const toggleSidebar = useCallback(() => {
-      setIsSidebarCollapsed(prev => {
-         const newState = !prev;
-         updateSidebarWidth(!newState);
-
-         // Use safe polyfill
-         safeRequestIdleCallback(() => {
-            try {
-               localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
-            } catch (error) {
-               console.warn('Failed to save sidebar state:', error);
-            }
-         });
-         return newState;
-      });
-   }, [updateSidebarWidth]);
-
-   const handleSidebarMouseEnter = useCallback(() => {
-      if (isSidebarCollapsed && !isMobile) {
-         setIsSidebarHovered(true);
-         updateSidebarWidth(true);
-      }
-   }, [isSidebarCollapsed, isMobile, updateSidebarWidth]);
-
-   const handleSidebarMouseLeave = useCallback(() => {
-      if (isSidebarHovered && !isMobile) {
-         setIsSidebarHovered(false);
-         updateSidebarWidth(false);
-      }
-   }, [isSidebarHovered, isMobile, updateSidebarWidth]);
-
-   const handleClose = useCallback(() => {
-      setIsUserProfilePopupOpen(false);
-      setAnchor(null);
-   }, []);
-
-   const toggleUserProfilePopup = useCallback((event) => {
-      setIsUserProfilePopupOpen(prev => !prev);
-      setAnchor(event.currentTarget);
-   }, []);
-
-   // Initial sidebar setup
-   useLayoutEffect(() => {
-      updateSidebarWidth(shouldExpandSidebar);
-   }, [shouldExpandSidebar, updateSidebarWidth]);
-
-   // Optimized resize handler with mobile detection
-   useLayoutEffect(() => {
-      const handleResize = () => {
-         try {
-            const mobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
-            setIsMobile(mobile);
-
-            if (resizeTimeoutRef.current) {
-               clearTimeout(resizeTimeoutRef.current);
-            }
-
-            resizeTimeoutRef.current = setTimeout(() => {
-               if (mobile) {
-                  setIsMobileMenuOpen(false);
-                  // Reset sidebar hover state on mobile
-                  setIsSidebarHovered(false);
-               } else {
-                  // Re-apply sidebar width on desktop
-                  updateSidebarWidth(shouldExpandSidebar);
-               }
-            }, 100);
-         } catch (error) {
-            console.warn('Resize handler error:', error);
-         }
-      };
-
-      if (typeof window !== 'undefined') {
-         window.addEventListener('resize', handleResize, { passive: true });
-      }
-
-      const cleanup = () => {
-         if (typeof window !== 'undefined') {
-            window.removeEventListener('resize', handleResize);
-         }
-         if (resizeTimeoutRef.current) {
-            clearTimeout(resizeTimeoutRef.current);
-         }
-      };
-
-      cleanupRef.current.push(cleanup);
-      return cleanup;
-   }, [shouldExpandSidebar, updateSidebarWidth]);
-
-   // User data fetching
    useEffect(() => {
-      if (!userToken) {
-
-         return;
-      }
-
+      if (!userToken) return;
       const controller = new AbortController();
-      abortControllerRef.current = controller;
-      axiosClient.get('/me', { signal: controller.signal })
-         .then(({ data }) => {
-            if (!controller.signal.aborted) setCurrentUser(data);
-         })
-         .catch(error => {
-            if (!controller.signal.aborted) console.error('Error fetching user data:', error);
-         });
+      axiosClient.get('/me', { signal: controller.signal }).then(({ data }) => {
+         if (!controller.signal.aborted) setCurrentUser(data);
+      }).catch(() => {});
       return () => controller.abort();
    }, [userToken, setCurrentUser]);
 
-   // Logout handler
-   const onLogout = useCallback(async (ev) => {
-      ev.preventDefault();
-
-      if (abortControllerRef.current) {
-         abortControllerRef.current.abort();
-      }
-
-      const logoutController = new AbortController();
-
-      try {
-         await axiosClient.post("logout", {}, { signal: logoutController.signal });
-
-         setCurrentUser({});
-         setUserToken(null);
-
-
-
-      } catch (error) {
-         if (error.name !== 'AbortError') {
-            console.error("Logout error:", error);
-         }
-      }
-   }, [setCurrentUser, setUserToken]);
-
-   // Outside click handler
+   useEffect(() => { setMenuOpen(false); setProfileOpen(false); }, [location.pathname]);
    useEffect(() => {
-      if (!anchor) return;
-
-      const handleOutsideClick = (event) => {
-         const target = event.target;
-         if (anchor &&
-            !anchor.contains(target) &&
-            !target.closest(".action-popup") &&
-            !target.closest("[data-popup]")) {
-            setIsUserProfilePopupOpen(false);
-            setAnchor(null);
-         }
+      const close = event => {
+         if (event.type === 'keydown') {
+            if (event.key === 'Escape') { setMenuOpen(false); setProfileOpen(false); }
+         } else if (profile.current && !profile.current.contains(event.target)) setProfileOpen(false);
       };
-
-      const timeoutId = setTimeout(() => {
-         document.addEventListener("mousedown", handleOutsideClick, { passive: true });
-      }, 50);
-
-      const cleanup = () => {
-         clearTimeout(timeoutId);
-         document.removeEventListener("mousedown", handleOutsideClick);
-      };
-
-      cleanupRef.current.push(cleanup);
-      return cleanup;
-   }, [anchor]);
-
-   // Master cleanup
-   useEffect(() => {
-      return () => {
-         if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-         }
-
-         cleanupRef.current.forEach(cleanup => {
-            try {
-               cleanup();
-            } catch (error) {
-               console.warn('Cleanup error:', error);
-            }
-         });
-         cleanupRef.current = [];
-      };
+      document.addEventListener('pointerdown', close);
+      document.addEventListener('keydown', close);
+      return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close); };
    }, []);
 
-   if (!userToken) {
-      return <Navigate to="login" />;
-   }
+   const onLogout = async event => {
+      event.preventDefault();
+      try {
+         await axiosClient.post('/logout');
+         setUserToken(null);
+      } catch {
+         showToast('Could not sign out. Please try again.', 'error');
+      }
+   };
 
+   if (!userToken) return <Navigate to="/login" replace />;
+   const page = location.pathname === '/users' ? 'Users' : location.pathname === '/logs' ? 'Activity logs' : location.pathname.includes('/responses') ? 'Responses' : location.pathname.includes('/surveys') ? 'Surveys' : 'Overview';
    return (
-      <div className="flex min-h-screen overflow-x-hidden">
-         {/* Desktop Sidebar - Pure CSS Performance */}
-         <aside
-            ref={sidebarRef}
-            className="fixed top-0 left-0 z-40 flex-col hidden h-screen overflow-hidden bg-white border-r border-gray-200 shadow-sm md:flex"
-            style={{
-               width: shouldExpandSidebar ? '256px' : '64px',
-               transition: 'width 0.2s ease-out',
-               willChange: 'width'
-            }}
-            onMouseEnter={handleSidebarMouseEnter}
-            onMouseLeave={handleSidebarMouseLeave}
-         >
-            <div className="flex justify-center flex-shrink-0 p-2 border-b border-gray-200">
-               <img
-                  src={shouldExpandSidebar ? banner : logo}
-                  alt="Ace Survey"
-                  className="w-auto h-14"
-                  loading="lazy"
-               />
-            </div>
-
-            <nav className={`flex flex-col gap-2 flex-1 overflow-hidden ${!shouldExpandSidebar ? 'p-2' : 'p-4'}`}>
-               <NavLink
-                  to="/dashboard"
-                  className={({ isActive }) =>
-                     `flex items-center rounded-lg py-3 text-sm font-medium ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4'
-                     } ${isActive
-                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                     }`
-                  }
-                  title={!shouldExpandSidebar ? "Dashboard" : ""}
-               >
-                  {({ isActive }) => (
-                     <>
-                        <HomeIcon className={`flex-shrink-0 w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
-                        {shouldExpandSidebar && (
-                           <span className="ml-2 overflow-hidden whitespace-nowrap">
-                              Dashboard
-                           </span>
-                        )}
-                     </>
-                  )}
-               </NavLink>
-
-               <NavLink
-                  to="/surveys"
-                  className={({ isActive }) =>
-                     `flex items-center rounded-lg py-3 text-sm font-medium ${!shouldExpandSidebar ? 'px-2 justify-center' : 'px-4'
-                     } ${isActive
-                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                     }`
-                  }
-                  title={!shouldExpandSidebar ? "Surveys" : ""}
-               >
-                  {({ isActive }) => (
-                     <>
-                        <ClipboardDocumentListIcon className={`flex-shrink-0 w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
-                        {shouldExpandSidebar && (
-                           <span className="ml-2 overflow-hidden whitespace-nowrap">
-                              Surveys
-                           </span>
-                        )}
-                     </>
-                  )}
-               </NavLink>
+      <div className="ace-workspace">
+         <a className="ace-skip" href="#main-content">Skip to content</a>
+         {menuOpen && <button className="ace-nav-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
+         <aside className={'ace-sidebar ' + (menuOpen ? 'is-open' : '')} aria-label="Main navigation">
+            <Link className="ace-brand" to="/dashboard"><img src={logo} alt="" /><span>AceSurvey<span className="ace-brand-caption">FEEDBACK WORKSPACE</span></span></Link>
+            <button className="ace-mobile-close" aria-label="Close navigation" onClick={() => setMenuOpen(false)}><XMarkIcon /></button>
+            <div className="ace-nav-label">WORKSPACE</div>
+            <nav className="ace-nav">
+               <NavLink to="/dashboard"><HomeIcon />Overview</NavLink>
+               <NavLink to="/surveys"><ClipboardDocumentListIcon />Surveys</NavLink>
+               {currentUser.is_admin && <NavLink to="/logs"><ClipboardDocumentListIcon />Activity logs</NavLink>}
+               {currentUser.is_admin && <NavLink to="/users"><ClipboardDocumentListIcon />Users</NavLink>}
             </nav>
-
-            {shouldExpandSidebar && (
-               <footer className="flex-shrink-0 p-3 border-t border-gray-200">
-                  <div className="text-xs text-center text-gray-500">
-                     © 2024 Ace Survey
-                  </div>
-               </footer>
-            )}
+            <Link className="ace-sidebar-create" to="/surveys/create"><PlusIcon />Create a survey</Link>
+            <div className="ace-sidebar-bottom">
+               <div className="ace-sidebar-note"><span className="ace-small-orbit" />Every response<br /><strong>starts a conversation.</strong><p>Listen closely. Make better decisions.</p></div>
+               <Link to="/survey-selection" className="ace-public-link">Open survey hub<ArrowUpRightIcon /></Link>
+               <div className="ace-sidebar-foot">AceSurvey · Your feedback, in focus</div>
+            </div>
          </aside>
-
-         {/* Mobile Sidebar - Simplified */}
-         <AnimatePresence mode="wait">
-            {isMobileMenuOpen && (
-               <>
-                  <motion.aside
-                     initial={{ x: -320 }}
-                     animate={{ x: 0 }}
-                     exit={{ x: -320 }}
-                     transition={{ duration: 0.15, ease: "easeOut" }}
-                     className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-white shadow-xl md:hidden flex flex-col"
-                  >
-                     <div className="p-4 border-b border-gray-200">
-                        <img src={banner} alt="Ace Survey" className="w-auto mx-auto h-14" loading="lazy" />
-                     </div>
-                     <nav className="flex flex-col flex-1 gap-1 p-3 overflow-y-auto">
-                        <NavLink
-                           to="/dashboard"
-                           onClick={closeMobileMenu}
-                           className={({ isActive }) =>
-                              `flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
-                              }`
-                           }
-                        >
-                           <HomeIcon className="w-5 h-5" />
-                           <span>Dashboard</span>
-                        </NavLink>
-                        <NavLink
-                           to="/surveys"
-                           onClick={closeMobileMenu}
-                           className={({ isActive }) =>
-                              `flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
-                              }`
-                           }
-                        >
-                           <ClipboardDocumentListIcon className="w-5 h-5" />
-                           <span>Surveys</span>
-                        </NavLink>
-                     </nav>
-                  </motion.aside>
-                  <motion.div
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 0.5 }}
-                     exit={{ opacity: 0 }}
-                     transition={{ duration: 0.15 }}
-                     className="fixed inset-0 z-40 bg-black md:hidden"
-                     onClick={closeMobileMenu}
-                  />
-               </>
-            )}
-         </AnimatePresence>
-
-         {/* Main Content - Pure CSS */}
-         <div
-            ref={contentRef}
-            className="flex flex-col flex-1 min-w-0"
-            style={{
-               marginLeft: isMobile ? '0px' : (shouldExpandSidebar ? '256px' : '64px'),
-               transition: 'margin-left 0.2s ease-out',
-               willChange: 'margin-left'
-            }}
-         >
-            <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b border-gray-200 shadow-sm bg-white/95 backdrop-blur-sm md:px-6">
-               <div className="flex items-center gap-3">
-                  <button
-                     onClick={toggleMobileMenu}
-                     className="p-2 text-gray-600 transition-colors duration-150 rounded-lg md:hidden hover:bg-gray-100"
-                     type="button"
-                     aria-label="Toggle mobile menu"
-                  >
-                     {isMobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
+         <div className="ace-main">
+            <header className="ace-topbar">
+               <div className="ace-topbar-left"><button className="ace-mobile-toggle" aria-label="Open navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Bars3Icon /></button><span className="ace-breadcrumb">Workspace <span>/</span> <strong>{page}</strong></span></div>
+               <div className="ace-profile-wrap" ref={profile}>
+                  <button className="ace-profile-button" aria-expanded={profileOpen} aria-label="Account settings" onClick={() => setProfileOpen(!profileOpen)}>
+                     <span className="ace-avatar">{(currentUser.name || 'A').slice(0, 1).toUpperCase()}</span>
+                     <span className="ace-profile-name">{currentUser.name || 'Your account'}<small>Personal workspace</small></span><ChevronDownIcon />
                   </button>
-
-                  <button
-                     onClick={toggleSidebar}
-                     className="hidden p-2 text-gray-600 transition-colors duration-150 rounded-lg md:block hover:bg-gray-100"
-                     type="button"
-                     aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                  >
-                     {isSidebarCollapsed ? <ChevronRightIcon className="w-5 h-5" /> : <ChevronLeftIcon className="w-5 h-5" />}
-                  </button>
-
-                  <div>
-                     <div className="hidden md:block">
-                        <h1 className="text-lg font-semibold text-gray-800">Ace Surveys</h1>
-                        <p className="text-xs text-gray-500">Survey Management Platform</p>
-                     </div>
-                     <h1 className="text-lg font-semibold text-gray-800 md:hidden">Ace Survey</h1>
-                  </div>
-               </div>
-
-               <div className="flex items-center gap-3">
-                  <div className="items-center hidden gap-2 px-3 py-2 text-sm rounded-lg md:flex bg-gray-50">
-                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                     <span className="font-medium">{currentUser.name}</span>
-                  </div>
-                  <button
-                     onClick={toggleUserProfilePopup}
-                     className="relative p-1 transition-transform duration-150 rounded-full hover:scale-105"
-                     type="button"
-                     aria-label="User profile"
-                  >
-                     <img
-                        src={currentUser.avatar || logo}
-                        alt="Profile"
-                        className="w-10 h-10 transition-all duration-150 rounded-full ring-2 ring-gray-100 hover:ring-blue-200"
-                        loading="lazy"
-                        onError={(e) => {
-                           e.target.onerror = null;
-                           e.target.src = logo;
-                        }}
-                     />
-                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                  </button>
+                  {profileOpen && <div className="ace-profile-panel"><UserProfilePopup onLogout={onLogout} /></div>}
                </div>
             </header>
-
-            <main className="flex-1 p-4 overflow-x-hidden md:p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-               <Outlet />
-            </main>
+            <main id="main-content" className="ace-page-content"><Outlet /></main>
+            <footer className="ace-workspace-footer"><span>© {new Date().getFullYear()} AceSurvey</span><span>Thoughtful questions. Meaningful answers.</span></footer>
          </div>
-
          <Toast />
-
-         {isUserProfilePopupOpen && (
-            <BasePopup
-               id="user-profile-popup"
-               open={isUserProfilePopupOpen}
-               anchor={anchor}
-               placement="bottom-end"
-               offset={8}
-               onClose={handleClose}
-            >
-               <div className="action-popup" data-popup>
-                  <UserProfilePopup onLogout={onLogout} />
-               </div>
-            </BasePopup>
-         )}
       </div>
    );
 }

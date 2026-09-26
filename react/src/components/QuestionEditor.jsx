@@ -223,6 +223,8 @@ export default function QuestionEditor({
                         className="flex-1 px-4 py-2 text-sm text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200"
                      />
                      <motion.button
+                        type="button"
+                        aria-label="Delete option"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => deleteOption(op)}
@@ -234,6 +236,7 @@ export default function QuestionEditor({
                ))}
 
                <motion.button
+                  type="button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={addOption}
@@ -249,6 +252,8 @@ export default function QuestionEditor({
 
          <div className="flex justify-end gap-2">
             <motion.button
+               type="button"
+               aria-label="Add question below"
                whileHover={{ scale: 1.05 }}
                whileTap={{ scale: 0.95 }}
                onClick={() => addQuestion(index + 1)}
@@ -257,6 +262,8 @@ export default function QuestionEditor({
                <PlusCircleIcon className="w-6 h-6" />
             </motion.button>
             <motion.button
+               type="button"
+               aria-label="Delete question"
                whileHover={{ scale: 1.05 }}
                whileTap={{ scale: 0.95 }}
                onClick={() => deleteQuestion(question)}

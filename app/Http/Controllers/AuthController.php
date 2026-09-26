@@ -48,7 +48,7 @@ class AuthController extends Controller
          $cacheKey = "user_profile_{$user->id}";
 
          $userProfile = Cache::remember($cacheKey, 300, function () use ($user) {
-            return $user->fresh()->only(['id', 'name', 'email', 'created_at', 'updated_at']);
+            return $user->fresh()->only(['id', 'name', 'email', 'is_admin', 'created_at', 'updated_at']);
          });
 
          DatabaseLogger::info('user_profile_retrieved', 'User profile retrieved successfully', [
@@ -90,7 +90,7 @@ class AuthController extends Controller
          ], $request, $user->id);
 
          return response()->json([
-            'user' => $user->only(['id', 'name', 'email', 'created_at']),
+            'user' => $user->only(['id', 'name', 'email', 'is_admin', 'created_at']),
             'token' => $token
          ]);
       } catch (\Exception $e) {

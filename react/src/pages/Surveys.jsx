@@ -10,6 +10,7 @@ import DeleteModal from "@components/DeleteModal";
 import { motion } from "framer-motion";
 import { useSurveys } from "@hooks/useSurveys";
 import { useDeleteModal } from "@hooks/useDeleteModal";
+import { useStateContext } from '@context/ContextProvider';
 
 const LoadingSkeleton = () => (
    <motion.div
@@ -59,6 +60,7 @@ const ErrorState = ({ error, onRetry }) => (
 );
 
 export default function Surveys() {
+   const { currentUser } = useStateContext();
    const {
       filteredSurveys,
       meta,
@@ -103,17 +105,17 @@ export default function Surveys() {
       <motion.div
          initial={{ opacity: 0 }}
          animate={{ opacity: 1 }}
-         className="w-full mx-auto xl:w-11/12"
+         className="ace-surveys-page"
       >
          {/* Header Section */}
          <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex flex-col gap-6 mb-8 md:flex-row md:items-center md:justify-between"
+            className="ace-page-heading"
          >
             <div className="flex flex-col justify-center">
-               <h1 className="text-2xl font-bold text-gray-900">Survey List</h1>
-               <Breadcrumbs links={breadcrumbLinks} />
+               <span className="ace-eyebrow">ASK. LISTEN. UNDERSTAND.</span><h1>{currentUser.is_admin ? 'All surveys' : 'Your surveys'}</h1><p>{currentUser.is_admin ? 'Browse surveys created across all accounts.' : 'A home for every question and every perspective.'}</p>
+
             </div>
 
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -129,6 +131,7 @@ export default function Surveys() {
                   <button
                      onClick={refresh}
                      disabled={loading || refreshing}
+                     aria-label="Refresh surveys"
                      className="p-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                   >
                      <ArrowPathIcon className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -139,7 +142,7 @@ export default function Surveys() {
                      className="flex items-center justify-center gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 hover:text-white focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                      <PlusCircleIcon className="w-5 h-5" />
-                     <span className="hidden md:inline-block">Create New Survey</span>
+                     <span className="inline-block">Create survey</span>
                   </Link>
                </div>
             </div>

@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useMemo } from "react";
 import { Box } from "@mui/material";
 import Modal from "@mui/material/Modal";
-import ModalClose from "@mui/joy/ModalClose";
+import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import { useMediaQuery } from "@mui/material";
 import { useStateContext } from "@context/ContextProvider";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardDocumentIcon, QrCodeIcon } from "@heroicons/react/24/outline";
+import { ClipboardDocumentIcon, QrCodeIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import acelogo from "@images/AceLogo.png"; // Make sure this file exists
 
 console.log("Acelogo path:", acelogo); // Add this to verify the import
@@ -264,8 +264,8 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                   >
                      <div className="relative mb-4 sm:mb-6">
                         <div className="absolute right-0 -top-2">
-                           <ModalClose
-                              variant="outlined"
+                           <IconButton
+                              aria-label="Close share survey"
                               onClick={handleClosePopup}
                               className="transition-transform hover:scale-110"
                               sx={{
@@ -275,7 +275,9 @@ const ShareSurveyPopup = ({ openSharePopup, setOpenSharePopup, shareLink }) => {
                                     backgroundColor: '#f3f4f6'
                                  }
                               }}
-                           />
+                           >
+                              <XMarkIcon className="w-5 h-5" />
+                           </IconButton>
                         </div>
                         <h2 className="pr-8 text-xl font-bold text-center text-gray-900 sm:text-2xl">
                            Share Survey

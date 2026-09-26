@@ -17,6 +17,8 @@ class SurveyResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'can_manage' => $request->user() && (int) $request->user()->id === (int) $this->user_id,
+            'answers_count' => $this->whenCounted('answers'),
             'title' => $this->title,
             'slug' => $this->slug,
             'image_url' => $this->image ? URL::to($this->image) : null,

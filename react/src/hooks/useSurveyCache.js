@@ -3,6 +3,15 @@ import { useCallback } from 'react';
 // In-memory cache for survey data
 const cache = {};
 const isFetching = {};
+let cacheAccount;
+const syncAccount = () => {
+   const token = localStorage.getItem('TOKEN');
+   if (token !== cacheAccount) {
+      Object.keys(cache).forEach(key => delete cache[key]);
+      Object.keys(isFetching).forEach(key => delete isFetching[key]);
+      cacheAccount = token;
+   }
+};
 
 const cacheManager = {
    clear: (pattern) => {
@@ -49,14 +58,17 @@ const cacheManager = {
    },
 
    get: (key) => {
+      syncAccount();
       return cache[key];
    },
 
    set: (key, data) => {
+      syncAccount();
       cache[key] = data;
    },
 
    has: (key) => {
+      syncAccount();
       return key in cache;
    },
 

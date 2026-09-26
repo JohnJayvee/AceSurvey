@@ -18,6 +18,10 @@ Route::post('reset', [AuthController::class, 'reset'])->name('password.reset');
 Route::post('/verify-email-exists', [AuthController::class, 'verifyEmailExists']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/admin/users', [\App\Http\Controllers\AdminUserController::class, 'index']);
+    Route::post('/admin/users', [\App\Http\Controllers\AdminUserController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/logs', [\App\Http\Controllers\LogController::class, 'index']);
+    Route::get('/logs/{log}', [\App\Http\Controllers\LogController::class, 'show']);
     Route::get('/survey-analytics', [DashboardController::class, 'analytics']);
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

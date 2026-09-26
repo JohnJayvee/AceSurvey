@@ -1,11 +1,17 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap");
-
-body {
-    margin: 0;
-    padding: 0;
-    font-family: "Open Sans", sans-serif;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root { font-family: "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; color: #20313d; background: #f5f7f8; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; --ace-accent: #107e72; --ace-ink: #172c38; --ace-muted: #778590; --ace-line: #e6ebed; }
+  body { margin: 0; min-width: 320px; }
+  button, input, textarea, select { font: inherit; }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: not-allowed; opacity: .6; }
+  a { text-decoration: none; }
+  h1, h2, h3, h4 { letter-spacing: -.025em; }
+  :focus-visible { outline: 3px solid #62b9ad; outline-offset: 4px; }
+  ::selection { background: #c9e9e2; color: #163a35; }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-thumb { background: #c8d2d8; border-radius: 8px; }
+}

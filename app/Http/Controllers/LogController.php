@@ -9,7 +9,16 @@ class LogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Log::with('user:id,name,email')->latest();
+        abort_unless($request->user()?->is_admin, 403);
+        $request->validate([
+            'level' => 'nullable|in:info,warning,error',
+            'action' => 'nullable|string|max:255',
+            'user_id' => 'nullable|integer|min:1',
+            'from' => 'nullable|date_format:Y-m-d',
+            'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+            'page' => 'nullable|integer|min:1',
+        ]);
+        $query = Log::with('user:id,name,email')->latest()->orderByDesc('id');
 
         // Filter by level
         if ($request->filled('level')) {
@@ -40,8 +49,9 @@ class LogController extends Controller
         return response()->json($logs);
     }
 
-    public function show(Log $log)
+    public function show(Log $log, Request $request)
     {
+        abort_unless($request->user()?->is_admin, 403);
         return response()->json($log->load('user:id,name,email'));
     }
 }

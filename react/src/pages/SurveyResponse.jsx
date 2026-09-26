@@ -43,7 +43,7 @@ export default function SurveyResponse() {
       <motion.div
          initial={{ opacity: 0 }}
          animate={{ opacity: 1 }}
-         className="w-full max-w-full px-4 mx-auto lg:w-9/12 xl:w-8/12 lg:px-0"
+         className="ace-responses-page"
       >
          <SurveyHeader
             title={survey.title}

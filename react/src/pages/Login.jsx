@@ -82,7 +82,7 @@ export default function Login() {
                (accum, next) => [...accum, ...next],
                []
             );
-            errorMessage = finalErrors.join("<br>");
+            errorMessage = finalErrors.join("\n");
          }
       }
 
@@ -100,6 +100,7 @@ export default function Login() {
    // Main submit handler
    const handleSubmit = async (ev) => {
       ev.preventDefault();
+      if (uiState.loading) return;
       clearError();
       setLoading(true);
 
@@ -118,7 +119,7 @@ export default function Login() {
 
    return (
       <div className="relative flex flex-col justify-between min-h-screen">
-         <AnimatedBackground />
+
 
          <motion.div
             className="absolute z-10 top-10 right-10"
@@ -158,12 +159,14 @@ export default function Login() {
                   <div className="space-y-4">
                      <div>
                         <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
-                           Username
+                           Email or username
                         </label>
                         <input
                            id="username"
                            type="text"
-                           placeholder="Enter your username"
+                           placeholder="you@example.com"
+                           autoComplete="username"
+                           required
                            value={formData.login}
                            onChange={handleInputChange('login')}
                            className={INPUT_CLASS}
@@ -177,6 +180,8 @@ export default function Login() {
                         <div className="relative">
                            <input
                               id="password"
+                              autoComplete="current-password"
+                              required
                               type={uiState.showPassword ? "text" : "password"}
                               placeholder="Enter your password"
                               value={formData.password}
@@ -245,4 +250,3 @@ export default function Login() {
       </div>
    );
 }
-

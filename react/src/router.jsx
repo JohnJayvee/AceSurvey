@@ -8,6 +8,8 @@ const Signup = React.lazy(() => import("@pages/Signup"));
 const DefaultLayout = React.lazy(() => import("@components/DefaultLayout"));
 const Dashboard = React.lazy(() => import("@pages/Dashboard"));
 const Surveys = React.lazy(() => import("@pages/Surveys"));
+const Logs = React.lazy(() => import("@pages/Logs"));
+const Users = React.lazy(() => import("@pages/Users"));
 const SurveyView = React.lazy(() => import("@pages/SurveyView"));
 const SurveyPublicView = React.lazy(() => import("@pages/SurveyPublicView"));
 const SurveyResponse = React.lazy(() => import("@pages/SurveyResponse"));
@@ -40,6 +42,10 @@ const DynamicTitle = ({ children }) => {
          title = "Dashboard";
       } else if (path === "/surveys") {
          title = "Surveys";
+      } else if (path === "/logs") {
+         title = "Activity Logs";
+      } else if (path === "/users") {
+         title = "Users";
       } else if (path === "/surveys/create") {
          title = "Survey Create";
       } else if (path.startsWith("/survey/public/")) {
@@ -85,6 +91,8 @@ const router = createBrowserRouter([
          </Suspense>
       ),
       children: [
+         { path: "/logs", element: <Logs /> },
+         { path: "/users", element: <Users /> },
          {
             index: true,
             element: <Navigate to="/dashboard" replace />,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Divider from "@mui/material/Divider";
 import { VscSignOut } from "react-icons/vsc";
 import { FaUnlockAlt, FaUserCircle, FaEnvelope } from "react-icons/fa";
@@ -7,7 +7,7 @@ import { useStateContext } from "@context/ContextProvider";
 import axiosClient from "@api/axios";
 import logo from "@images/AceLogo.png";
 import { motion, AnimatePresence } from "framer-motion";
-import { debounce } from "lodash";
+
 
 const inputClassName =
    "relative block w-full px-4 py-2.5 mt-1 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200";
@@ -15,11 +15,6 @@ const buttonClassName =
    "relative z-10 flex items-center justify-center w-full gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 rounded-lg focus:ring-2 focus:ring-offset-2";
 const eyeIconClassName =
    "absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 z-20";
-
-// Add these at the top level, outside the component
-const cache = {};
-let isUserFetching = false;
-let userPromise = null;
 
 export default function UserProfilePopup({ onLogout }) {
    const { currentUser, setCurrentUser, showToast } = useStateContext();
@@ -37,101 +32,39 @@ export default function UserProfilePopup({ onLogout }) {
    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
    const [showNewPassword, setShowNewPassword] = useState(false); // State to toggle new password visibility
    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
-   const hasFetched = useRef(false);
 
-   // Apply friend's pattern to user data fetching
+
    useEffect(() => {
-      // Clear cache on component mount to ensure consistent rendering
-      if (cache['user']) {
-         delete cache['user'];
-      }
+      setCurrentEmail(currentUser.email || '');
+   }, [currentUser.email]);
 
-      // Reset fetching state
-      isUserFetching = false;
-      userPromise = null;
-
-      // Skip if already fetched by this component
-      if (hasFetched.current) return;
-      hasFetched.current = true;
-
-      // Start a new request and track it globally
-      isUserFetching = true;
-
-      // Create and store the promise for other components to use
-      userPromise = axiosClient.get("/me")
-         .then(({ data }) => {
-            // Store in cache for future components
-            cache['user'] = data;
-            isUserFetching = false;
-            return data;
-         })
-         .catch(error => {
-            console.error("Error fetching user data:", error);
-            isUserFetching = false;
-            throw error;
-         });
-
-      // Use the promise for this component
-      userPromise.then(data => {
-         setCurrentUser(data);
-         setCurrentEmail(data.email);
-      }).catch(error => {
-         console.error("Error setting user data:", error);
-      });
-   }, [setCurrentUser]);
-
-   // Debounce the password change function
-   const handleChangePassword = debounce(async (e) => {
+   // Submit account changes once while a request is pending.
+   const handleChangePassword = async (e) => {
       e.preventDefault();
+      if (loadingPassword) return;
       setLoadingPassword(true);
 
       try {
-         const response = await axiosClient.post("/change-password", {
+         await axiosClient.post("/change-password", {
             current_password: currentPassword,
             new_password: newPassword,
             new_password_confirmation: newPasswordConfirmation,
          });
 
-         // Show success message
-         showToast("Password changed successfully. Logging out in 5 seconds...");
+         showToast('Password changed successfully.');
          closePasswordModal();
-
-         // Create a flag to prevent multiple redirects
-         let hasRedirected = false;
-
-         setTimeout(() => {
-            if (hasRedirected) return;
-            hasRedirected = true;
-
-            // Clear storage
-            try {
-               localStorage.clear();
-               sessionStorage.clear();
-               if (cache['user']) {
-                  delete cache['user'];
-               }
-            } catch (e) {
-               console.error('Error clearing storage:', e);
-            }
-
-            // Redirect with multiple fallbacks
-            try {
-               window.location.href = '/login';
-            } catch (e) {
-               window.location.replace('/login');
-            }
-         }, 5000);
 
       } catch (error) {
          handleErrorResponse(error);
       } finally {
          setLoadingPassword(false);
       }
-   }, 300);
+   };
 
    // Debounce the email change function
-   const handleChangeEmail = debounce((e) => {
+   const handleChangeEmail = (e) => {
       e.preventDefault();
+      if (loadingEmail) return;
       setLoadingEmail(true);
 
       if (!newEmail || !newEmailConfirmation) {
@@ -162,11 +95,7 @@ export default function UserProfilePopup({ onLogout }) {
             setMessage(response.data.message);
             showToast("Email changed successfully");
 
-            // Update cache with new email
-            if (cache['user']) {
-               cache['user'].email = newEmail;
-            }
-
+            setCurrentUser(prev => ({ ...prev, email: newEmail }));
             closeEmailModal();
          })
          .catch(error => {
@@ -175,7 +104,7 @@ export default function UserProfilePopup({ onLogout }) {
          .finally(() => {
             setLoadingEmail(false);
          });
-   }, 300);
+   };
 
    const handleErrorResponse = (error) => {
       const { response } = error;

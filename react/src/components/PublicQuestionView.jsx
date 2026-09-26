@@ -15,7 +15,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
          initial={{ opacity: 0, y: 20 }}
          animate={{ opacity: 1, y: 0 }}
          transition={{ delay: index * 0.1 }}
-         className="p-6 my-4 transition-shadow duration-200 bg-white border border-gray-200 shadow-sm rounded-xl hover:shadow-md"
+         className="ace-question bg-white"
       >
          <fieldset>
             <div className="flex items-start gap-3 mb-4">

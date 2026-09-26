@@ -88,9 +88,12 @@ class SurveyService
       });
    }
 
-   public function getSurveysByUser(int $userId, ?string $search = null, int $perPage = 12)
+   public function getSurveysByUser(int $userId, ?string $search = null, int $perPage = 12, bool $allUsers = false)
    {
-      $query = Survey::with('questions')->where('user_id', $userId);
+      $query = Survey::with('questions')->withCount('answers');
+      if (!$allUsers) {
+         $query->where('user_id', $userId);
+      }
 
       if ($search) {
          $query->where(function ($q) use ($search) {

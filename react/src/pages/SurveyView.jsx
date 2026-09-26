@@ -31,8 +31,8 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 // Loading Skeleton Component
 const LoadingSkeleton = ({ width }) => (
-   <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="px-4 py-8 mx-auto max-w-7xl">
+   <div className="ace-editor">
+      <div className="mx-auto max-w-5xl">
          {/* Header Skeleton */}
          <div className="mb-6 sm:mb-8">
             <Skeleton height={width < 640 ? 28 : width < 768 ? 32 : 40} width={width < 640 ? 250 : 300} className="mb-2" />
@@ -218,7 +218,9 @@ export default function SurveyView() {
                width={width}
             />
 
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            {survey.can_manage === false && <p className="p-4 mb-4 bg-teal-50 rounded-lg">You are viewing another user's survey. Only its creator can edit or delete it.</p>}
+            <form onSubmit={event => { if (survey.can_manage === false) event.preventDefault(); else handleSubmit(event); }} className="space-y-4 sm:space-y-6">
+               <fieldset disabled={survey.can_manage === false} className="space-y-4 sm:space-y-6">
                <SurveyFormFields
                   survey={survey}
                   setSurvey={setSurvey}
@@ -250,13 +252,14 @@ export default function SurveyView() {
                   animate={{ opacity: 1 }}
                   className="flex justify-end"
                >
-                  <button
+                  {survey.can_manage !== false && <button
                      type="submit"
                      className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                      {id ? "Update Survey" : "Create Survey"}
-                  </button>
+                  </button>}
                </motion.div>
+               </fieldset>
             </form>
 
             <DeleteConfirmationModal
