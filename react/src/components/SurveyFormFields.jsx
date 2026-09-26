@@ -4,9 +4,17 @@ import { PhotoIcon } from "@heroicons/react/24/outline";
 
 const SurveyFormFields = ({ survey, setSurvey, updateSurveyField, onImageChange, width, logo }) => {
    const isSurveyExpired = (expireDate) => {
+      if (!expireDate) return false;
       const today = new Date().setHours(0, 0, 0, 0);
-      const expiration = new Date(expireDate).setHours(0, 0, 0, 0);
-      return expiration <= today;
+      const expiration = new Date(`${expireDate}T00:00:00`).getTime();
+      return expiration < today;
+   };
+
+   const hasExpiration = survey.expire_date !== null && survey.expire_date !== undefined;
+   const defaultExpiration = () => {
+      const date = new Date();
+      date.setDate(date.getDate() + 2);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
    };
 
    const handleFieldChange = (field, value) => {
@@ -102,20 +110,25 @@ const SurveyFormFields = ({ survey, setSurvey, updateSurveyField, onImageChange,
 
                   {/* Expire Date Field */}
                   <div className="relative p-3 sm:p-4 group">
-                     <label className="inline-flex items-center mb-1.5 sm:mb-2 text-xs sm:text-sm md:text-base font-semibold text-gray-900">
-                        <span>Expire Date</span>
-                        <span className="ml-1 text-red-500">*</span>
+                     <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-900">
+                        <input type="checkbox" checked={hasExpiration} onChange={event => handleFieldChange('expire_date', event.target.checked ? defaultExpiration() : null)} aria-controls="survey-expiration-date" />
+                        Set an expiration date
                      </label>
+                     {hasExpiration ? <>
+                     <label htmlFor="survey-expiration-date" className="block mb-2 text-sm font-medium">Expiration date</label>
                      <div className="relative">
                         <input
+                           id="survey-expiration-date"
                            type="date"
+                           required
                            value={survey.expire_date || ""}
                            onChange={(ev) => handleFieldChange('expire_date', ev.target.value)}
                            className="w-full px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                           min={new Date().toISOString().split('T')[0]}
                            style={{ colorScheme: 'light' }}
                         />
                      </div>
+                     <p className="mt-2 text-xs text-gray-500">Accept responses through the end of this date.</p>
+                     </> : <p className="text-sm text-gray-500">No expiration. This survey stays open until you turn off Survey Status.</p>}
                      {isSurveyExpired(survey.expire_date) && (
                         <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 text-xs text-red-600">
                            <svg className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
