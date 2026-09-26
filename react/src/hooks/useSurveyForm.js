@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import axiosClient from '@api/axios.js';
 import { useSurveyCache } from './useSurveyCache';
 
 export const useSurveyForm = (id, showToast, navigate) => {
-   const { getCachedSurvey, setCachedSurvey, isSurveyFetching, setFetching, cacheManager } = useSurveyCache();
-   const hasFetched = useRef(false);
+   const { getCachedSurvey, setCachedSurvey, cacheManager } = useSurveyCache();
+   const activeRequest = useRef(null);
+   useEffect(() => () => activeRequest.current?.abort(), [id]);
 
    const getTomorrowDate = () => {
       const tomorrow = new Date();
@@ -100,46 +101,20 @@ export const useSurveyForm = (id, showToast, navigate) => {
    const fetchSurvey = useCallback(async () => {
       if (!id) return;
 
-      const cachedSurvey = getCachedSurvey(id);
-      if (cachedSurvey) {
-         console.log("Using cached survey data for ID:", id);
-         setSurvey(cachedSurvey);
-         setLoading(false);
-         return;
-      }
-
-      if (hasFetched.current) return;
-      hasFetched.current = true;
-
-      if (isSurveyFetching(id)) {
-         console.log("Request for this survey already in progress");
-         const checkCache = setInterval(() => {
-            const cached = getCachedSurvey(id);
-            if (cached) {
-               clearInterval(checkCache);
-               setSurvey(cached);
-               setLoading(false);
-            }
-         }, 100);
-         return;
-      }
-
-      setFetching(id, true);
+      activeRequest.current?.abort();
+      const controller = new AbortController();
+      activeRequest.current = controller;
       setLoading(true);
-
+      setError('');
       try {
-         const { data } = await axiosClient.get(`/survey/${id}`);
-         setCachedSurvey(id, data.data);
-         setSurvey(data.data);
-         setLoading(false);
+         const { data } = await axiosClient.get('/survey/' + id, { signal: controller.signal });
+         if (!controller.signal.aborted) setSurvey(data.data);
       } catch (error) {
-         console.error("Error fetching survey:", error);
-         setError("Failed to load the survey");
-         setLoading(false);
+         if (!controller.signal.aborted) setError(error.response?.data?.message || 'Failed to load the survey');
       } finally {
-         setFetching(id, false);
+         if (!controller.signal.aborted) setLoading(false);
       }
-   }, [id, getCachedSurvey, setCachedSurvey, isSurveyFetching, setFetching]);
+   }, [id]);
 
    const updateSurveyField = useCallback((field, value) => {
       setSurvey(prev => ({

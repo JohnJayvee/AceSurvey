@@ -259,6 +259,11 @@ export const ContextProvider = ({ children }) => {
         setCurrentUser({});
     }, []);
 
+    useEffect(() => {
+        window.addEventListener('auth:expired', logout);
+        return () => window.removeEventListener('auth:expired', logout);
+    }, [logout]);
+
     // Generate a unique session ID
     const generateSessionId = () => {
         return Math.random().toString(36).substring(2) + Date.now().toString(36);

@@ -1,167 +1,28 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import axiosClient from "@api/axios.js";
-
-// Simple cache without global state pollution
-const cache = new Map();
-const requestsInProgress = new Map();
+import { useEffect, useState } from 'react';
+import axiosClient from '@api/axios.js';
 
 export const useSurveyData = (surveyId) => {
-   const [survey, setSurvey] = useState({ title: "", status: true });
-   const [responses, setResponses] = useState({ data: [] });
-   const [responseCount, setResponseCount] = useState(0);
-   const [ratingsData, setRatingsData] = useState([]);
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState(null);
-
-   const abortControllerRef = useRef(null);
-   const isMountedRef = useRef(true);
-
-   const resetState = useCallback(() => {
-      setSurvey({ title: "", status: true });
-      setResponses({ data: [] });
-      setResponseCount(0);
-      setRatingsData([]);
-      setError(null);
-   }, []);
-
+   const [state, setState] = useState({ survey: { title: '', status: true }, responses: { data: [] }, responseCount: 0, ratingsData: [], loading: true, error: null });
    useEffect(() => {
-      isMountedRef.current = true;
-      return () => {
-         isMountedRef.current = false;
-      };
-   }, []);
-
-   useEffect(() => {
-      if (!surveyId) {
-         setLoading(false);
-         return;
-      }
-
-      // Reset state when surveyId changes
-      resetState();
-
-      // Check cache first
-      const cacheKey = `survey_${surveyId}`;
-      if (cache.has(cacheKey)) {
-         const cachedData = cache.get(cacheKey);
-         if (isMountedRef.current) {
-            setSurvey(cachedData.survey);
-            setResponses(cachedData.responses);
-            setResponseCount(cachedData.responseCount);
-            setRatingsData(cachedData.ratingsData);
-            setLoading(false);
-         }
-         return;
-      }
-
-      // Check if request is already in progress
-      if (requestsInProgress.has(surveyId)) {
-         const existingRequest = requestsInProgress.get(surveyId);
-         existingRequest
-            .then((data) => {
-               if (isMountedRef.current) {
-                  setSurvey(data.survey);
-                  setResponses(data.responses);
-                  setResponseCount(data.responseCount);
-                  setRatingsData(data.ratingsData);
-                  setLoading(false);
-               }
-            })
-            .catch((err) => {
-               if (isMountedRef.current && err.name !== 'AbortError') {
-                  setError(err.message || "Failed to load data");
-                  setLoading(false);
-               }
-            });
-         return;
-      }
-
-      fetchSurveyData(surveyId);
-
-      return () => {
-         if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-         }
-      };
-   }, [surveyId, resetState]);
-
-   const fetchSurveyData = async (id) => {
-      try {
-         setLoading(true);
-         setError(null);
-
-         // Cancel any existing request
-         if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-         }
-
-         abortControllerRef.current = new AbortController();
-         const { signal } = abortControllerRef.current;
-
-         // Create the request promise
-         const requestPromise = Promise.all([
-            axiosClient.get(`/survey/${id}`, {
-               signal,
-               timeout: 10000 // 10 second timeout
-            }),
-            axiosClient.get(`/survey/${id}/responses`, {
-               signal,
-               timeout: 10000
-            }),
-            axiosClient.get(`/survey/${id}/responses/count`, {
-               signal,
-               timeout: 10000
-            }),
-            axiosClient.get(`/total-department-ratings/${id}`, {
-               signal,
-               timeout: 10000
-            })
-         ]).then(([surveyRes, responsesRes, countRes, ratingsRes]) => {
-            const surveyData = surveyRes.data.data || { title: "", status: true };
-            const responsesData = responsesRes.data || { data: [] };
-            const countData = countRes.data.count || 0;
-            const processedRatingsData = processRatingsData(ratingsRes.data.ratings);
-
-            return {
-               survey: surveyData,
-               responses: responsesData,
-               responseCount: countData,
-               ratingsData: processedRatingsData
-            };
-         });
-
-         // Store the promise for deduplication
-         requestsInProgress.set(id, requestPromise);
-
-         const data = await requestPromise;
-
-         // Only update state if component is still mounted
-         if (!isMountedRef.current) return;
-
-         // Cache the results
-         cache.set(`survey_${id}`, data);
-
-         setSurvey(data.survey);
-         setResponses(data.responses);
-         setResponseCount(data.responseCount);
-         setRatingsData(data.ratingsData);
-
-      } catch (err) {
-         if (!isMountedRef.current) return;
-
-         if (err.name !== 'AbortError' && err.code !== 'ECONNABORTED') {
-            console.error('Survey data fetch error:', err);
-            setError(err.response?.data?.message || err.message || "Failed to load survey data");
-         }
-      } finally {
-         if (isMountedRef.current) {
-            setLoading(false);
-         }
-         requestsInProgress.delete(id);
-      }
-   };
-
-   return { survey, responses, responseCount, ratingsData, loading, error };
+      const controller = new AbortController();
+      const { signal } = controller;
+      setState({ survey: { title: '', status: true }, responses: { data: [] }, responseCount: 0, ratingsData: [], loading: Boolean(surveyId), error: null });
+      if (!surveyId) return;
+      const options = { signal };
+      Promise.all([
+         axiosClient.get('/survey/' + surveyId, options),
+         axiosClient.get('/survey/' + surveyId + '/responses', options),
+         axiosClient.get('/survey/' + surveyId + '/responses/count', options),
+         axiosClient.get('/total-department-ratings/' + surveyId, options),
+      ]).then(([survey, responses, count, ratings]) => {
+         if (signal.aborted) return;
+         setState({ survey: survey.data.data, responses: responses.data, responseCount: count.data.count || 0, ratingsData: processRatingsData(ratings.data.ratings), loading: false, error: null });
+      }).catch(error => {
+         if (!signal.aborted) setState(prev => ({ ...prev, loading: false, error: error.response?.data?.message || 'Failed to load survey data. Please try again.' }));
+      });
+      return () => controller.abort();
+   }, [surveyId]);
+   return state;
 };
 
 const processRatingsData = (ratings) => {

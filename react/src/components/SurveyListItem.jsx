@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
    ArrowTopRightOnSquareIcon,
    PencilIcon,
@@ -10,195 +10,26 @@ import Fade from "@mui/material/Fade";
 import ShareSurveyPopup from "@components/ShareSurveyPopup";
 import { Link, useNavigate } from "react-router-dom";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartTooltip } from "recharts";
-import axios from "@api/axios";
+
 import { debounce } from 'lodash';
 import logo from "@images/AceLogo.png";
 
-// Put these at the top level of your file (outside any component)
-const cache = {};
-let isAnalyticsFetching = false;
-let analyticsPromise = null;
-
-export default function SurveyListItem({ survey, onDeleteClick }) {
+export default function SurveyListItem({ survey, onDeleteClick, analyticsData, isLoadingAnalytics }) {
    const [openSharePopup, setOpenSharePopup] = useState(false);
    const [shareLink, setShareLink] = useState("");
    const [graphData, setGraphData] = useState([]);
    const [totalResponses, setTotalResponses] = useState(0);
-   const [analyticsData, setAnalyticsData] = useState(null);
-   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+
+
    const navigate = useNavigate();
-   const hasFetched = useRef(false);
-   const lastSurveyData = useRef(null);
+
+
 
    const isSurveyExpired = (expireDate) => {
       const today = new Date().setHours(0, 0, 0, 0);
       const expiration = new Date(expireDate).setHours(0, 0, 0, 0);
       return expiration <= today;
    };
-
-   // Function to clear analytics cache
-   const clearAnalyticsCache = () => {
-      delete cache['survey-analytics'];
-      isAnalyticsFetching = false;
-      analyticsPromise = null;
-      console.log('Analytics cache cleared');
-   };
-
-   // Function to fetch analytics data with shorter cache duration
-   const fetchAnalyticsData = async (forceRefresh = false) => {
-      // Clear cache if force refresh
-      if (forceRefresh) {
-         clearAnalyticsCache();
-      }
-
-      // Check cache age - expire after 30 seconds instead of indefinitely
-      const CACHE_DURATION = 30 * 1000; // 30 seconds
-      const now = Date.now();
-
-      if (cache['survey-analytics'] && !forceRefresh) {
-         // Check if cache is still fresh
-         if (cache['survey-analytics'].timestamp &&
-            (now - cache['survey-analytics'].timestamp) < CACHE_DURATION) {
-            setAnalyticsData(cache['survey-analytics'].data);
-            return cache['survey-analytics'].data;
-         } else {
-            // Cache expired, clear it
-            console.log('Analytics cache expired, clearing...');
-            clearAnalyticsCache();
-         }
-      }
-
-      // If a request is already in progress, wait for that instead of making a new one
-      if (isAnalyticsFetching) {
-         try {
-            const data = await analyticsPromise;
-            setAnalyticsData(data);
-            return data;
-         } catch (error) {
-            console.error("Error from existing analytics request:", error);
-            throw error;
-         }
-      }
-
-      // Start a new request and track it globally
-      setIsLoadingAnalytics(true);
-      isAnalyticsFetching = true;
-
-      try {
-         // Create and store the promise for other components to use
-         analyticsPromise = axios.get("/survey-analytics")
-            .then(res => {
-               const data = res.data.analytics.surveyStats;
-               // Store in cache with timestamp
-               cache['survey-analytics'] = {
-                  data: data,
-                  timestamp: now
-               };
-               isAnalyticsFetching = false;
-               return data;
-            })
-            .catch(error => {
-               console.error("Error fetching analytics:", error);
-               isAnalyticsFetching = false;
-               throw error;
-            });
-
-         // Use the promise for this component
-         const data = await analyticsPromise;
-         setAnalyticsData(data);
-         return data;
-      } catch (error) {
-         console.error("Analytics fetch failed:", error);
-         setAnalyticsData([]);
-         throw error;
-      } finally {
-         setIsLoadingAnalytics(false);
-      }
-   };
-
-   // Check if survey data has changed and invalidate cache if needed
-   useEffect(() => {
-      if (lastSurveyData.current) {
-         const hasChanged =
-            lastSurveyData.current.title !== survey.title ||
-            lastSurveyData.current.updated_at !== survey.updated_at ||
-            lastSurveyData.current.status !== survey.status;
-
-         if (hasChanged) {
-            console.log('Survey data changed, invalidating cache...');
-            clearAnalyticsCache();
-         }
-      }
-
-      lastSurveyData.current = {
-         id: survey.id,
-         title: survey.title,
-         updated_at: survey.updated_at,
-         status: survey.status
-      };
-   }, [survey.title, survey.updated_at, survey.status, survey.id]);
-
-   // Initial API call to fetch analytics
-   useEffect(() => {
-      fetchAnalyticsData();
-   }, []);
-
-   // Listen for global survey update events
-   useEffect(() => {
-      const handleSurveyUpdate = (event) => {
-         const { surveyId, action, surveyData } = event.detail;
-
-         console.log('Survey update event received:', { surveyId, action });
-
-         // Clear all analytics caches
-         if (cache['survey-analytics']) {
-            clearAnalyticsCache();
-         }
-
-         // If this is the specific survey that was updated
-         if (surveyId === survey.id || action === 'global_refresh') {
-            console.log(`Survey ${surveyId} updated, refreshing analytics...`);
-
-            // Force refetch analytics after a short delay
-            setTimeout(async () => {
-               try {
-                  await fetchAnalyticsData(true); // Force refresh
-                  console.log('Analytics data refreshed');
-               } catch (error) {
-                  console.error("Error refetching analytics after update:", error);
-               }
-            }, 500);
-         }
-      };
-
-      window.addEventListener('surveyUpdated', handleSurveyUpdate);
-
-      return () => {
-         window.removeEventListener('surveyUpdated', handleSurveyUpdate);
-      };
-   }, [survey.id]);
-
-   // Add real-time updates listener
-   useEffect(() => {
-      // Listen for survey response events
-      const handleNewResponse = (event) => {
-         const { surveyId } = event.detail;
-
-         if (surveyId === survey.id) {
-            console.log(`New response for survey ${surveyId}, refreshing analytics...`);
-            // Clear cache and refetch immediately
-            clearAnalyticsCache();
-            fetchAnalyticsData(true);
-         }
-      };
-
-      // Listen for custom events from survey response submissions
-      window.addEventListener('surveyResponseSubmitted', handleNewResponse);
-
-      return () => {
-         window.removeEventListener('surveyResponseSubmitted', handleNewResponse);
-      };
-   }, [survey.id]);
 
    // Debounced function for sharing
    const handleOpenShare = debounce(() => {

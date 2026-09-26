@@ -11,40 +11,6 @@ import { debounce } from 'lodash';
 import ErrorMessage from "@components/ErrorMessage";
 import logo from '@images/AceLogo.png';
 
-// Utility: Cache management
-class SurveyCache {
-   constructor() {
-      this.data = {};
-   }
-
-   set(key, value) {
-      this.data[key] = value;
-      try {
-         localStorage.setItem(`survey_${key}`, JSON.stringify(value));
-      } catch (e) {
-         console.warn('Could not save to localStorage:', e);
-      }
-   }
-
-   get(key) {
-      if (this.data[key]) return this.data[key];
-
-      try {
-         const item = localStorage.getItem(`survey_${key}`);
-         if (item) {
-            const parsed = JSON.parse(item);
-            this.data[key] = parsed;
-            return parsed;
-         }
-      } catch (e) {
-         console.warn('Could not retrieve from localStorage:', e);
-      }
-      return null;
-   }
-}
-
-const surveyCache = new SurveyCache();
-
 // Constants
 const INITIAL_SURVEY_STATE = {
    id: null,
@@ -286,36 +252,25 @@ const useSurveyData = (slug) => {
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
 
-   const fetchSurvey = useCallback(async () => {
+   const fetchSurvey = useCallback(async (signal) => {
       setLoading(true);
       setError(null);
 
       try {
-         // Check cache first
-         const cachedData = surveyCache.get(slug);
-         if (cachedData) {
-            setSurvey(cachedData);
-            setLoading(false);
-            return;
-         }
-
-         console.log('Fetching survey with slug:', slug);
-
-         // Use axiosClient instead of fetch
-         const response = await axiosClient.get(`survey/get-by-slug/${slug}`);
-         console.log('Survey fetch response:', response);
+         const response = await axiosClient.get('survey/get-by-slug/' + slug, { signal });
+         if (signal?.aborted) return;
 
          if (!response.data?.data) {
             throw new Error("Invalid API response format");
          }
 
-         surveyCache.set(slug, response.data.data);
+
          setSurvey(response.data.data);
       } catch (error) {
-         console.error("Error fetching survey:", error);
+         if (signal?.aborted) return;
          setError(error.message || "Failed to load survey");
       } finally {
-         setLoading(false);
+         if (!signal?.aborted) setLoading(false);
       }
    }, [slug]);
 
@@ -385,9 +340,9 @@ export default function SurveyPublicView() {
    } = useSurveySubmission(survey.id);
 
    useEffect(() => {
-      if (slug) {
-         fetchSurvey();
-      }
+      const controller = new AbortController();
+      if (slug) fetchSurvey(controller.signal);
+      return () => controller.abort();
    }, [fetchSurvey, slug]);
 
    if (loading) return <LoadingSkeleton />;

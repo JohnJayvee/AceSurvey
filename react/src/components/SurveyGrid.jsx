@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axiosClient from '@api/axios';
 import { motion, AnimatePresence } from "framer-motion";
 import { DocumentIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
@@ -13,6 +14,24 @@ export default function SurveyGrid({
    onPageClick,
    refreshing
 }) {
+   const [analyticsData, setAnalyticsData] = useState([]);
+   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
+   useEffect(() => {
+      const controller = new AbortController();
+      setIsLoadingAnalytics(true);
+      axiosClient.get('/survey-analytics', { signal: controller.signal })
+         .then(({ data }) => {
+            if (!controller.signal.aborted) setAnalyticsData(data.analytics?.surveyStats || []);
+         })
+         .catch(() => {
+            if (!controller.signal.aborted) setAnalyticsData([]);
+         })
+         .finally(() => {
+            if (!controller.signal.aborted) setIsLoadingAnalytics(false);
+         });
+      return () => controller.abort();
+   }, [meta]);
+
    if (surveys.length === 0) {
       return (
          <motion.div
@@ -61,6 +80,8 @@ export default function SurveyGrid({
                   >
                      <SurveyListItem
                         survey={survey}
+                        analyticsData={analyticsData}
+                        isLoadingAnalytics={isLoadingAnalytics}
                         onDeleteClick={onDeleteClick}
                      />
                   </motion.div>

@@ -3,7 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\CorsMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,10 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Add the built-in Laravel CORS middleware first
-        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
-        // Then add your custom CORS middleware
-        $middleware->append(CorsMiddleware::class);
+        // Laravel's default middleware already includes HandleCors.
+        // A second CORS layer overwrote its credential-aware origin header.
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

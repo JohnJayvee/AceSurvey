@@ -13,103 +13,7 @@ export default defineConfig({
    base: '/',
 
    plugins: [
-      react({
-         jsxRuntime: 'automatic',
-         jsxImportSource: "@emotion/react",
-         babel: {
-            plugins: [
-               // ULTIMATE AUTO-BABEL PLUGINS - covers ALL React patterns
-
-               // Emotion & CSS-in-JS (always included)
-               "@emotion/babel-plugin",
-
-               // Styled Components (environment aware)
-               ...(isProduction ? [] : [
-                  ['babel-plugin-styled-components', {
-                     displayName: true,
-                     fileName: true,
-                     meaninglessFileNames: ['index', 'styles']
-                  }]
-               ]),
-
-               // React optimization plugins
-               ['babel-plugin-react-remove-properties', {
-                  properties: isProduction ? ['data-testid', 'data-test'] : []
-               }],
-
-               // Development plugins (dev only)
-               ...(!isProduction ? [
-                  'babel-plugin-react-display-name',
-                  ['babel-plugin-react-refresh', { skipEnvCheck: true }]
-               ] : []),
-
-               // Import optimization (always)
-               ['babel-plugin-import', {
-                  libraryName: 'antd',
-                  libraryDirectory: 'es',
-                  style: true
-               }, 'antd'],
-               ['babel-plugin-import', {
-                  libraryName: '@mui/material',
-                  libraryDirectory: '',
-                  camel2DashComponentName: false
-               }, 'mui-material'],
-               ['babel-plugin-import', {
-                  libraryName: '@mui/icons-material',
-                  libraryDirectory: '',
-                  camel2DashComponentName: false
-               }, 'mui-icons'],
-               ['babel-plugin-import', {
-                  libraryName: 'lodash',
-                  libraryDirectory: '',
-                  camel2DashComponentName: false
-               }, 'lodash'],
-
-               // Production optimizations (prod only)
-               ...(isProduction ? [
-                  'babel-plugin-transform-react-remove-prop-types',
-                  'babel-plugin-transform-react-constant-elements',
-                  'babel-plugin-transform-react-inline-elements'
-               ] : []),
-
-               // Modern JS features (always)
-               '@babel/plugin-proposal-optional-chaining',
-               '@babel/plugin-proposal-nullish-coalescing-operator',
-               '@babel/plugin-proposal-logical-assignment-operators',
-               '@babel/plugin-proposal-class-properties',
-               '@babel/plugin-proposal-private-methods',
-
-               // Dynamic imports (always)
-               '@babel/plugin-syntax-dynamic-import',
-
-               // Async/await optimization (always)
-               ['@babel/plugin-transform-runtime', {
-                  corejs: false,
-                  helpers: true,
-                  regenerator: true,
-                  useESModules: false
-               }]
-            ],
-
-            // Additional presets for comprehensive coverage
-            presets: [
-               ['@babel/preset-env', {
-                  targets: {
-                     browsers: ['> 1%', 'last 2 versions', 'not dead']
-                  },
-                  useBuiltIns: 'usage',
-                  corejs: 3,
-                  modules: false
-               }],
-               ['@babel/preset-react', {
-                  runtime: 'automatic',
-                  importSource: '@emotion/react'
-               }],
-               '@babel/preset-typescript'
-            ]
-         },
-         fastRefresh: !isProduction
-      }),
+      react({ jsxImportSource: '@emotion/react' }),
       svgr({
          svgrOptions: {
             icon: true,
@@ -122,9 +26,9 @@ export default defineConfig({
          injectRegister: 'auto',
          includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'safari-pinned-tab.svg'],
 
-         // Force generate in development too
+         // Keep development requests outside the service worker cache.
          devOptions: {
-            enabled: true,
+            enabled: false,
             type: 'module'
          },
 
@@ -137,19 +41,8 @@ export default defineConfig({
 
             runtimeCaching: [
                {
-                  urlPattern: /^https:\/\/api\./,
-                  handler: 'NetworkFirst',
-                  options: {
-                     cacheName: 'api-cache',
-                     networkTimeoutSeconds: 3,
-                     expiration: {
-                        maxEntries: 100,
-                        maxAgeSeconds: 60 * 60 * 24
-                     },
-                     cacheableResponse: {
-                        statuses: [0, 200]
-                     }
-                  }
+                  urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+                  handler: 'NetworkOnly'
                },
                {
                   urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
@@ -347,104 +240,7 @@ export default defineConfig({
 
       rollupOptions: {
          output: {
-            // ULTIMATE AUTO-CHUNKING - handles ANY library automatically
-            manualChunks: (id) => {
-               // Core React ecosystem
-               if (id.includes('react') || id.includes('react-dom')) {
-                  return 'react';
-               }
-
-               // Router libraries
-               if (id.includes('router')) {
-                  return 'router';
-               }
-
-               // UI Component libraries
-               if (id.includes('@mui') || id.includes('antd') || id.includes('@chakra') ||
-                  id.includes('@mantine') || id.includes('react-bootstrap') || id.includes('semantic-ui')) {
-                  return 'ui-lib';
-               }
-
-               // Styling libraries
-               if (id.includes('@emotion') || id.includes('styled-components') ||
-                  id.includes('classnames') || id.includes('clsx')) {
-                  return 'styles';
-               }
-
-               // Form libraries
-               if (id.includes('formik') || id.includes('react-hook-form') ||
-                  id.includes('yup') || id.includes('zod') || id.includes('joi')) {
-                  return 'forms';
-               }
-
-               // Charts & Data Visualization
-               if (id.includes('chart') || id.includes('d3') || id.includes('recharts') ||
-                  id.includes('@visx') || id.includes('plotly') || id.includes('highcharts')) {
-                  return 'charts';
-               }
-
-               // Utility libraries
-               if (id.includes('lodash') || id.includes('ramda') || id.includes('date-fns') ||
-                  id.includes('moment') || id.includes('dayjs') || id.includes('uuid')) {
-                  return 'utils';
-               }
-
-               // State Management
-               if (id.includes('redux') || id.includes('zustand') || id.includes('recoil') ||
-                  id.includes('jotai') || id.includes('valtio') || id.includes('mobx')) {
-                  return 'state';
-               }
-
-               // Animation libraries
-               if (id.includes('framer-motion') || id.includes('react-spring') ||
-                  id.includes('react-transition') || id.includes('lottie')) {
-                  return 'animation';
-               }
-
-               // HTTP & API libraries
-               if (id.includes('axios') || id.includes('fetch') || id.includes('ky') ||
-                  id.includes('apollo') || id.includes('graphql') || id.includes('relay')) {
-                  return 'api';
-               }
-
-               // Table & Data libraries
-               if (id.includes('react-table') || id.includes('@tanstack/react-table') ||
-                  id.includes('ag-grid') || id.includes('react-virtualized')) {
-                  return 'tables';
-               }
-
-               // Icon libraries
-               if (id.includes('react-icons') || id.includes('lucide') || id.includes('@heroicons') ||
-                  id.includes('feather') || id.includes('phosphor')) {
-                  return 'icons';
-               }
-
-               // Testing libraries (if included in build)
-               if (id.includes('@testing-library') || id.includes('jest') || id.includes('vitest')) {
-                  return 'testing';
-               }
-
-               // I18n libraries
-               if (id.includes('i18n') || id.includes('react-intl') || id.includes('format')) {
-                  return 'i18n';
-               }
-
-               // All other node_modules (catch-all)
-               if (id.includes('node_modules')) {
-                  return 'vendor';
-               }
-
-               // App code chunking by feature
-               if (id.includes('/src/pages/') || id.includes('/src/views/') || id.includes('/src/screens/')) {
-                  return 'pages';
-               }
-               if (id.includes('/src/components/')) {
-                  return 'components';
-               }
-               if (id.includes('/src/features/') || id.includes('/src/modules/')) {
-                  return 'features';
-               }
-            },
+            // Preserve Vite's route-level dynamic import splitting.
             chunkFileNames: 'assets/js/[name]-[hash].js',
             entryFileNames: 'assets/js/[name]-[hash].js',
             assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
@@ -461,13 +257,10 @@ export default defineConfig({
       }
    },
 
-   // ULTIMATE AUTO-OPTIMIZATION - Never touch this again!
+   // Reuse Vite's dependency cache between development starts.
    optimizeDeps: {
-      // Automatically discovers and optimizes ALL dependencies
-      auto: true,
-
-      // Forces optimization for better performance
-      force: true,
+      // Only rebuild dependencies when they change.
+      force: false,
 
       esbuildOptions: {
          target: 'es2020'

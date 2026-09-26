@@ -26,8 +26,8 @@ const safeRequestIdleCallback = (callback) => {
    return setTimeout(callback, 1);
 };
 
-// Global cache to prevent recreation
-let userCache = null;
+
+
 
 export default function DefaultLayout() {
    const { currentUser, userToken, setCurrentUser, setUserToken } = useStateContext();
@@ -52,7 +52,7 @@ export default function DefaultLayout() {
    const [anchor, setAnchor] = useState(null);
 
    // Refs for cleanup
-   const hasFetchedRef = useRef(false);
+
    const resizeTimeoutRef = useRef(null);
    const abortControllerRef = useRef(null);
    const cleanupRef = useRef([]);
@@ -177,44 +177,20 @@ export default function DefaultLayout() {
    // User data fetching
    useEffect(() => {
       if (!userToken) {
-         hasFetchedRef.current = false;
+
          return;
       }
 
-      if (userCache) {
-         setCurrentUser(userCache);
-         return;
-      }
-
-      if (hasFetchedRef.current) return;
-      hasFetchedRef.current = true;
-
-      if (abortControllerRef.current) {
-         abortControllerRef.current.abort();
-      }
-
-      abortControllerRef.current = new AbortController();
-
-      // Use safe polyfill
-      safeRequestIdleCallback(() => {
-         axiosClient.get("/me", { signal: abortControllerRef.current.signal })
-            .then(({ data }) => {
-               userCache = data;
-               setCurrentUser(data);
-            })
-            .catch((error) => {
-               if (error.name !== 'AbortError') {
-                  console.error("Error fetching user data:", error);
-                  hasFetchedRef.current = false;
-               }
-            });
-      });
-
-      return () => {
-         if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-         }
-      };
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      axiosClient.get('/me', { signal: controller.signal })
+         .then(({ data }) => {
+            if (!controller.signal.aborted) setCurrentUser(data);
+         })
+         .catch(error => {
+            if (!controller.signal.aborted) console.error('Error fetching user data:', error);
+         });
+      return () => controller.abort();
    }, [userToken, setCurrentUser]);
 
    // Logout handler
@@ -232,8 +208,8 @@ export default function DefaultLayout() {
 
          setCurrentUser({});
          setUserToken(null);
-         userCache = null;
-         hasFetchedRef.current = false;
+
+
 
       } catch (error) {
          if (error.name !== 'AbortError') {
