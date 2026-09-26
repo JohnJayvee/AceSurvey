@@ -130,7 +130,7 @@ class AuthController extends Controller
 
       $user = $this->authService->findUserForLogin($request->login, $loginType);
 
-      if (!$user || !Hash::check($request->password, $user->password)) {
+      if (!$user || !Hash::check($request->password, $user->password) || !$user->is_active) {
          $this->rateLimitService->hitLoginLimit($request->login, $request->ip());
 
          DatabaseLogger::warning('login_failed', 'Failed login attempt', [

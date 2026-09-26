@@ -12,6 +12,8 @@ class User extends Authenticatable
 {
    use HasApiTokens, HasFactory, Notifiable;
 
+   protected $attributes = ['is_admin' => false, 'is_active' => true];
+
    /**
     * The attributes that are mass assignable.
     *
@@ -45,6 +47,7 @@ class User extends Authenticatable
          'email_verified_at' => 'datetime',
          'password' => 'hashed',
          'is_admin' => 'boolean',
+         'is_active' => 'boolean',
       ];
    }
 

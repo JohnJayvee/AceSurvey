@@ -9,6 +9,59 @@ use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
+it('allows admins to edit accounts and passwords without exposing passwords', function () {
+    $admin = accessUser('editor', true);
+    $user = accessUser('target');
+    $oldHash = $user->password;
+    Sanctum::actingAs($admin);
+    $payload = ['name' => 'Updated Name', 'username' => 'updated', 'email' => 'updated@example.test', 'role' => 'user', 'is_active' => true, 'password' => ''];
+    $this->putJson('/api/admin/users/'.$user->id, $payload)->assertOk()->assertJsonPath('data.name', 'Updated Name');
+    expect($user->fresh()->password)->toBe($oldHash);
+    $user->createToken('existing-session');
+    $this->putJson('/api/admin/users/'.$user->id, [...$payload, 'role' => 'admin', 'password' => 'NewPassword123!', 'password_confirmation' => 'NewPassword123!'])
+        ->assertOk()->assertJsonPath('data.is_admin', true)->assertJsonMissingPath('data.password');
+    expect(\Illuminate\Support\Facades\Hash::check('NewPassword123!', $user->fresh()->password))->toBeTrue();
+    expect($user->tokens()->count())->toBe(0);
+    expect($user->passwordHistory()->count())->toBe(1);
+    $log = Log::where('action', 'admin_account_updated')->latest('id')->firstOrFail();
+    expect($log->context['password_changed'])->toBeTrue();
+    expect(json_encode($log->context))->not->toContain('NewPassword123!');
+});
+
+it('blocks disabled accounts from login and authenticated APIs and allows reactivation', function () {
+    $admin = accessUser('editor', true);
+    $user = accessUser('target');
+    $user->createToken('existing-session');
+    $payload = ['name' => $user->name, 'username' => $user->username, 'email' => $user->email, 'role' => 'user', 'is_active' => false];
+    Sanctum::actingAs($admin);
+    $this->putJson('/api/admin/users/'.$user->id, $payload)->assertOk()->assertJsonPath('data.is_active', false);
+    expect($user->tokens()->count())->toBe(0);
+    $this->postJson('/api/login', ['login' => $user->email, 'password' => 'Password123!'])->assertUnauthorized();
+    Sanctum::actingAs($user->fresh());
+    $this->getJson('/api/me')->assertUnauthorized();
+    $this->getJson('/api/survey')->assertUnauthorized();
+    $this->getJson('/api/admin/users')->assertUnauthorized();
+    Sanctum::actingAs($admin);
+    $this->putJson('/api/admin/users/'.$user->id, [...$payload, 'is_active' => true])->assertOk();
+    $this->postJson('/api/login', ['login' => $user->email, 'password' => 'Password123!'])->assertOk();
+});
+
+it('rejects unauthorized edits, duplicate details, invalid passwords and self lockout', function () {
+    $admin = accessUser('editor', true);
+    $user = accessUser('target');
+    $payload = ['name' => $user->name, 'username' => $user->username, 'email' => $user->email, 'role' => 'user', 'is_active' => true];
+    $this->putJson('/api/admin/users/'.$user->id, $payload)->assertUnauthorized();
+    Sanctum::actingAs($user);
+    $this->putJson('/api/admin/users/'.$user->id, [...$payload, 'role' => 'admin'])->assertForbidden();
+    Sanctum::actingAs($admin);
+    $this->putJson('/api/admin/users/'.$user->id, [...$payload, 'email' => $admin->email, 'password' => 'weak', 'password_confirmation' => 'different'])
+        ->assertUnprocessable()->assertJsonValidationErrors(['email', 'password']);
+    $self = ['name' => $admin->name, 'username' => $admin->username, 'email' => $admin->email, 'role' => 'admin', 'is_active' => true];
+    $this->putJson('/api/admin/users/'.$admin->id, [...$self, 'is_active' => false])->assertUnprocessable();
+    $this->putJson('/api/admin/users/'.$admin->id, [...$self, 'role' => 'user'])->assertUnprocessable();
+    $this->putJson('/api/admin/users/'.$admin->id, $self)->assertOk();
+});
+
 it('restricts account listing and creation to admins', function () {
     $this->getJson('/api/admin/users')->assertUnauthorized();
     $this->postJson('/api/admin/users', [])->assertUnauthorized();
