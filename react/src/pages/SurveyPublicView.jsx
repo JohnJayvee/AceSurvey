@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "@api/axios";
 import PublicQuestionView from "@components/PublicQuestionView";
@@ -7,8 +7,9 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import AnimatedBackground from "@components/AnimatedBackground";
 import { motion } from "framer-motion";
-import { debounce } from 'lodash';
+
 import ErrorMessage from "@components/ErrorMessage";
+import SimpleProgressBar from "@components/SimpleProgressBar";
 import logo from '@images/AceLogo.png';
 
 // Constants
@@ -251,6 +252,9 @@ const useSurveyData = (slug) => {
    const [survey, setSurvey] = useState(INITIAL_SURVEY_STATE);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
+   const isMountedRef = useRef(true);
+   const abortControllerRef = useRef(null);
+   const fetchingRef = useRef(false);
 
    const fetchSurvey = useCallback(async (signal) => {
       setLoading(true);
@@ -274,6 +278,22 @@ const useSurveyData = (slug) => {
       }
    }, [slug]);
 
+   // Fetch survey on mount and slug change
+   useEffect(() => {
+      if (!slug) return;
+
+      isMountedRef.current = true;
+      fetchSurvey();
+
+      return () => {
+         isMountedRef.current = false;
+         // Cancel any pending request when component unmounts
+         if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+         }
+      };
+   }, [slug]);
+
    return { survey, loading, error, fetchSurvey };
 };
 
@@ -284,7 +304,16 @@ const useSurveySubmission = (surveyId) => {
    const [isSubmitting, setIsSubmitting] = useState(false);
 
    const handleAnswerChange = useCallback((question, value) => {
-      setAnswers(prev => ({ ...prev, [question.id]: value }));
+      // Live update - add/remove answers dynamically
+      setAnswers(prev => {
+         const newAnswers = { ...prev };
+         if (value && value !== '' && value !== null && value !== undefined) {
+            newAnswers[question.id] = value;
+         } else {
+            delete newAnswers[question.id];
+         }
+         return newAnswers;
+      });
    }, []);
 
    const handleSubmit = useCallback(async (e) => {
@@ -331,6 +360,7 @@ export default function SurveyPublicView() {
    const { slug } = useParams();
    const { survey, loading, error, fetchSurvey } = useSurveyData(slug);
    const {
+      answers,
       submissionError,
       setSubmissionError,
       surveyFinished,
@@ -356,6 +386,8 @@ export default function SurveyPublicView() {
          <div className="relative z-10 w-11/12 py-12 mx-auto md:w-3/4 xl:w-1/2">
             <div className="space-y-6">
                <SurveyHeader survey={survey} />
+
+               <SimpleProgressBar current={Object.keys(answers).length} total={(survey.questions || []).length} />
 
                {surveyFinished ? (
                   <SuccessMessage />
