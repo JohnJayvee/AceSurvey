@@ -12,7 +12,7 @@ import ErrorMessage from "@components/ErrorMessage"; // Add this import
 const ResetPassword = () => {
    const { token } = useParams();
    const navigate = useNavigate(); // Add navigate hook
-   const [email, setEmail] = useState('');
+   const [email, setEmail] = useState(() => new URLSearchParams(window.location.search).get('email') || '');
    const [password, setPassword] = useState('');
    const [passwordConfirmation, setPasswordConfirmation] = useState('');
    const [message, setMessage] = useState('');
@@ -49,8 +49,7 @@ const ResetPassword = () => {
          if (error.response && error.response.data.errors) {
             // Convert error array to HTML format for ErrorMessage component
             const allErrors = Object.values(error.response.data.errors).flat();
-            const errorHTML = allErrors.map(err => `<li>${err}</li>`).join('');
-            setErrorMessage(`<ul class="list-disc pl-5">${errorHTML}</ul>`);
+            setErrorMessage(allErrors.join('\n'));
          } else if (error.response && error.response.data.message) {
             setErrorMessage(error.response.data.message);
          } else {

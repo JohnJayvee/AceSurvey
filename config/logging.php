@@ -6,6 +6,7 @@ use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
 return [
+    'database_reads' => env('LOG_DATABASE_READS', false),
 
     /*
     |--------------------------------------------------------------------------

@@ -49,11 +49,14 @@ export const generateMonthlyData = (surveyStats) => {
 };
 
 export const formatDate = (dateString) => {
-   return format(new Date(dateString), "MMMM, dd yyyy | hh:mm a");
+   if (!dateString) return "No expiration";
+   const date = new Date(dateString);
+   return Number.isNaN(date.getTime()) ? "Invalid date" : format(date, "MMMM, dd yyyy | hh:mm a");
 };
 
 export const isSurveyExpired = (expireDate) => {
+   if (!expireDate) return false;
    const today = new Date().setHours(0, 0, 0, 0);
-   const expiration = new Date(expireDate).setHours(0, 0, 0, 0);
-   return expiration <= today;
+   const expiration = new Date(expireDate.length === 10 ? expireDate + "T00:00:00" : expireDate).setHours(0, 0, 0, 0);
+   return expiration < today;
 };

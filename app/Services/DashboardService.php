@@ -15,6 +15,7 @@ class DashboardService
       $total = Survey::where('user_id', $userId)->count();
 
       $latest = Survey::where('user_id', $userId)
+         ->withCount(['questions', 'answers'])
          ->latest('created_at')
          ->first();
 
@@ -23,6 +24,7 @@ class DashboardService
          ->count();
 
       $latestAnswers = SurveyAnswer::select('survey_answers.*')
+         ->with('survey.questions')
          ->join('surveys', 'survey_answers.survey_id', '=', 'surveys.id')
          ->where('surveys.user_id', $userId)
          ->orderBy('survey_answers.end_date', 'DESC')
@@ -31,9 +33,9 @@ class DashboardService
 
       return [
          'totalSurveys' => (int) $total,
-         'latestSurvey' => $latest ? new SurveyResourceDashboard($latest) : null,
+         'latestSurvey' => $latest ? (new SurveyResourceDashboard($latest))->resolve() : null,
          'totalAnswers' => (int) $totalAnswers,
-         'latestAnswers' => SurveyAnswerResource::collection($latestAnswers)
+         'latestAnswers' => SurveyAnswerResource::collection($latestAnswers)->resolve()
       ];
    }
 
@@ -136,16 +138,16 @@ class DashboardService
             ];
          });
 
-      $recentAnswers = SurveyAnswer::select(['survey_answers.id', 'survey_answers.created_at', 'surveys.title as survey_title'])
+      $recentAnswers = SurveyAnswer::select(['survey_answers.id', 'survey_answers.end_date', 'surveys.title as survey_title'])
          ->join('surveys', 'survey_answers.survey_id', '=', 'surveys.id')
          ->where('surveys.user_id', $userId)
-         ->latest('survey_answers.created_at')
+         ->latest('survey_answers.end_date')
          ->take(10)
          ->get()
          ->map(function ($answer) {
             return [
                'id' => $answer->id,
-               'created_at' => $answer->created_at->toISOString(),
+               'created_at' => $answer->end_date ? \Illuminate\Support\Carbon::parse($answer->end_date)->toISOString() : null,
                'survey_title' => strip_tags($answer->survey_title)
             ];
          });
@@ -163,7 +165,7 @@ class DashboardService
 
       $activeSurveys = Survey::where('user_id', $userId)
          ->where('status', true)
-         ->where('expire_date', '>', now())
+         ->where(fn ($query) => $query->whereNull('expire_date')->orWhereDate('expire_date', '>=', today()))
          ->count();
 
       $totalResponses = SurveyAnswer::join('surveys', 'survey_answers.survey_id', '=', 'surveys.id')
@@ -180,7 +182,7 @@ class DashboardService
 
       $newResponsesThisMonth = SurveyAnswer::join('surveys', 'survey_answers.survey_id', '=', 'surveys.id')
          ->where('surveys.user_id', $userId)
-         ->where('survey_answers.created_at', '>=', $thirtyDaysAgo)
+         ->where('survey_answers.end_date', '>=', $thirtyDaysAgo)
          ->count();
 
       return [

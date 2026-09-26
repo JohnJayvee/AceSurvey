@@ -1,18 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-export default function PublicQuestionView({ question, index, answerChanged }) {
-   let selectedOptions = [];
-
-   function onCheckboxChanged(option, $event) {
-      if ($event.target.checked) {
-         selectedOptions.push(option.text);
-      } else {
-         selectedOptions = selectedOptions.filter(
-            (op) => op !== option.text
-         );
-      }
-      answerChanged(selectedOptions);
+export default function PublicQuestionView({ question, index, answer, answerChanged }) {
+   const options = question.data?.options || [];
+   function onCheckboxChanged(option, event) {
+      const selected = Array.isArray(answer) ? answer : [];
+      answerChanged(event.target.checked ? [...new Set([...selected, option.text])] : selected.filter(value => value !== option.text));
    }
 
    const inputBaseClass = "w-full transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
@@ -44,11 +37,12 @@ export default function PublicQuestionView({ question, index, answerChanged }) {
             <div className="mt-4 ml-9">
                {question.type === "dropdown" && (
                   <select
+                     value={answer || ""}
                      onChange={(ev) => answerChanged(ev.target.value)}
                      className={`${inputBaseClass} px-4 py-2.5 bg-white cursor-pointer hover:border-blue-200`}
                   >
                      <option value="">Please Select</option>
-                     {question.data.options.map((option) => (
+                     {options.map((option) => (
                         <option key={option.uuid} value={option.text}>
                            {option.text}
                         </option>
@@ -58,7 +52,7 @@ export default function PublicQuestionView({ question, index, answerChanged }) {
 
                {question.type === "multiple choice" && (
                   <div className="space-y-2">
-                     {question.data.options.map((option) => (
+                     {options.map((option) => (
                         <label
                            key={option.uuid}
                            className="flex items-center p-3 transition-colors duration-200 border border-gray-100 rounded-lg hover:bg-gray-50"
@@ -68,6 +62,7 @@ export default function PublicQuestionView({ question, index, answerChanged }) {
                               name={"question" + question.id}
                               value={option.text}
                               onChange={(ev) => answerChanged(ev.target.value)}
+                              checked={answer === option.text}
                               type="radio"
                               className="w-5 h-5 text-blue-600 transition-colors duration-200 border-2 border-gray-300 rounded-full cursor-pointer focus:ring-blue-500 focus:ring-offset-0"
                            />
@@ -81,7 +76,7 @@ export default function PublicQuestionView({ question, index, answerChanged }) {
 
                {question.type === "checkboxes" && (
                   <div className="space-y-2">
-                     {question.data.options.map((option) => (
+                     {options.map((option) => (
                         <label
                            key={option.uuid}
                            className="flex items-center p-3 transition-colors duration-200 border border-gray-100 rounded-lg hover:bg-gray-50"
@@ -89,6 +84,7 @@ export default function PublicQuestionView({ question, index, answerChanged }) {
                            <input
                               id={option.uuid}
                               onChange={(ev) => onCheckboxChanged(option, ev)}
+                              checked={Array.isArray(answer) && answer.includes(option.text)}
                               type="checkbox"
                               className="w-5 h-5 text-blue-600 transition-colors duration-200 border-2 border-gray-300 rounded cursor-pointer focus:ring-blue-500 focus:ring-offset-0"
                            />
@@ -102,6 +98,7 @@ export default function PublicQuestionView({ question, index, answerChanged }) {
 
                {question.type === "short answer" && (
                   <input
+                     value={answer || ""}
                      type="text"
                      onChange={(ev) => answerChanged(ev.target.value)}
                      placeholder="Your answer"
@@ -111,6 +108,7 @@ export default function PublicQuestionView({ question, index, answerChanged }) {
 
                {question.type === "paragraph" && (
                   <textarea
+                     value={answer || ""}
                      onChange={(ev) => answerChanged(ev.target.value)}
                      rows={4}
                      placeholder="Your answer"

@@ -108,7 +108,6 @@ class AuthController extends Controller
       $request->validate([
          'login' => 'required|string|max:255',
          'password' => 'required|string|min:8|max:255',
-         'captcha' => 'sometimes|required|captcha',
       ]);
 
       $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
@@ -146,7 +145,6 @@ class AuthController extends Controller
       try {
          $this->rateLimitService->clearLoginLimit($request->login, $request->ip());
 
-         Auth::login($user, $request->has('remember'));
          $response = $this->authService->processSuccessfulLogin($user);
 
          DatabaseLogger::info('login_success', 'User login completed successfully', [], $request, $user->id);
@@ -154,7 +152,6 @@ class AuthController extends Controller
          $timingProtection->protect();
          return response()->json($response);
       } catch (\Exception $e) {
-         Auth::logout();
          $timingProtection->protect();
          return $this->handleError('login_token_error', 'Login token generation failed', $e, $request, $user->id);
       }
@@ -166,7 +163,10 @@ class AuthController extends Controller
       DatabaseLogger::info('logout_initiated', 'User logout initiated', [], $request, $user->id);
 
       try {
-         $request->user()->currentAccessToken()->delete();
+         $token = $request->user()->currentAccessToken();
+         if ($token instanceof \Laravel\Sanctum\PersonalAccessToken) {
+            $token->delete();
+         }
          $user->forceFill(['remember_token' => null])->save();
          Cache::forget("user_profile_{$user->id}");
 
@@ -221,14 +221,14 @@ class AuthController extends Controller
          $user->save();
 
          $currentToken = $user->currentAccessToken();
-         $user->tokens()->where('id', '!=', $currentToken->id)->delete();
+         $user->tokens()->when($currentToken instanceof \Laravel\Sanctum\PersonalAccessToken, fn ($query) => $query->where('id', '!=', $currentToken->id))->delete();
 
          Cache::forget("user_profile_{$user->id}");
 
          DB::commit();
          RateLimiter::clear($rateLimitKey);
 
-         Mail::to($user->email)->send(new PasswordChanged($user));
+         $this->sendAccountNotification($user, new PasswordChanged($user));
 
          DatabaseLogger::info('password_change_success', 'Password changed successfully', [], $request, $user->id);
 
@@ -299,7 +299,7 @@ class AuthController extends Controller
       $data = $request->validate([
          'token' => 'required|string|max:255',
          'email' => 'required|email|max:255',
-         'password' => 'required|min:8|max:255|confirmed',
+         'password' => 'required|string|min:8|max:255|confirmed',
       ]);
 
       DatabaseLogger::info('password_reset_attempt', 'Password reset attempt', [
@@ -327,7 +327,7 @@ class AuthController extends Controller
                   'email' => $user->email
                ], $request, $user->id);
 
-               Mail::to($user->email)->send(new PasswordReset($user));
+               $this->sendAccountNotification($user, new PasswordReset($user));
             } catch (\Exception $e) {
                DB::rollBack();
                throw $e;
@@ -375,12 +375,12 @@ class AuthController extends Controller
          $user->email = $data['email'];
          $user->save();
 
-         Cache::forget('user_email_' . md5($oldEmail));
+         Cache::forget('user_email_' . hash('sha256', $oldEmail));
          Cache::forget('user_profile_' . $user->id);
 
          DB::commit();
 
-         Mail::to($user->email)->send(new EmailChanged($user));
+         $this->sendAccountNotification($user, new EmailChanged($user));
 
          DatabaseLogger::info('email_change_success', 'Email changed successfully', [
             'old_email' => $oldEmail,
@@ -452,6 +452,18 @@ class AuthController extends Controller
       return response()->json([
          'accountInfo' => $userInfo
       ]);
+   }
+
+   private function sendAccountNotification(User $user, \Illuminate\Mail\Mailable $mail): void
+   {
+      // The account change has committed. Mail failure must not report it as failed.
+      try {
+         Mail::to($user->email)->send($mail);
+      } catch (\Throwable $error) {
+         DatabaseLogger::error('account_notification_failed', 'Account notification could not be sent', [
+            'error' => $error->getMessage(),
+         ], request(), $user->id);
+      }
    }
 
    private function handleError(string $logType, string $message, \Exception $e, Request $request, ?int $userId = null, array $context = []): \Illuminate\Http\JsonResponse

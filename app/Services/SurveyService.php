@@ -64,23 +64,17 @@ class SurveyService
    public function storeSurveyAnswer(Survey $survey, array $answers, string $ipAddress): void
    {
       DB::transaction(function () use ($survey, $answers, $ipAddress) {
+         $questionIds = $survey->questions()->pluck('id')->all();
+         if (array_diff(array_keys($answers), $questionIds)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['answers' => 'Invalid question ID']);
+         }
          $surveyAnswer = SurveyAnswer::create([
             'survey_id' => $survey->id,
             'start_date' => now(),
             'end_date' => now(),
-            'ip_address' => $ipAddress,
          ]);
 
          foreach ($answers as $questionId => $answer) {
-            $question = SurveyQuestion::where([
-               'id' => $questionId,
-               'survey_id' => $survey->id
-            ])->first();
-
-            if (!$question) {
-               throw new \Exception('Invalid question ID');
-            }
-
             $sanitizedAnswer = is_array($answer)
                ? json_encode(array_map('strip_tags', $answer))
                : strip_tags($answer);
@@ -96,26 +90,26 @@ class SurveyService
 
    public function getSurveysByUser(int $userId, ?string $search = null, int $perPage = 12)
    {
-      $query = Survey::where('user_id', $userId);
+      $query = Survey::with('questions')->where('user_id', $userId);
 
       if ($search) {
          $query->where(function ($q) use ($search) {
-            $q->where('title', 'LIKE', '%' . addslashes($search) . '%')
-               ->orWhere('description', 'LIKE', '%' . addslashes($search) . '%');
+            $q->where('title', 'LIKE', '%' . $search . '%')
+               ->orWhere('description', 'LIKE', '%' . $search . '%');
          });
       }
 
-      return $query->orderBy('created_at', 'desc')->paginate($perPage);
+      return $query->orderByDesc('created_at')->orderByDesc('id')->paginate($perPage)->withQueryString();
    }
 
    public function isUserAuthorized(Survey $survey, int $userId): bool
    {
-      return $survey->user_id === $userId;
+      return (int) $survey->user_id === $userId;
    }
 
    public function isSurveyActive(Survey $survey): bool
    {
-      return $survey->status && new \DateTime() <= new \DateTime($survey->expire_date);
+      return $survey->status && (!$survey->expire_date || now()->lte(\Illuminate\Support\Carbon::parse($survey->expire_date)->endOfDay()));
    }
 
    private function createQuestion(array $data): SurveyQuestion
@@ -123,6 +117,8 @@ class SurveyService
       $data['question'] = strip_tags(trim($data['question']));
       $data['description'] = isset($data['description']) ? strip_tags(trim($data['description'])) : null;
 
+      unset($data['id']);
+      $data['data'] ??= [];
       if (is_array($data['data'])) {
          $data['data'] = json_encode($data['data']);
       }
@@ -168,6 +164,7 @@ class SurveyService
       $data['question'] = strip_tags(trim($data['question']));
       $data['description'] = isset($data['description']) ? strip_tags(trim($data['description'])) : null;
 
+      $data['data'] ??= [];
       if (is_array($data['data'])) {
          $data['data'] = json_encode($data['data']);
       }

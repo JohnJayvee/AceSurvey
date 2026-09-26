@@ -2,47 +2,34 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuestionTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SurveyStoreRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null;
     }
 
-    protected function prepareForValidation()
-    {
-        $this->merge([
-            'user_id' => $this->user()->id,
-            'expire_date' => $this->formatDateForMySQL($this->expire_date),
-        ]);
-    }
-
-    private function formatDateForMySQL($date)
-    {
-        return date('Y-m-d', strtotime($date));
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
             'title' => 'required|string|max:1000',
-            'image' => 'nullable|string',
-            'user_id' => 'required|exists:users,id',
+            'image' => 'nullable|string|max:7000000',
             'status' => 'required|boolean',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:60000',
             'expire_date' => 'nullable|date_format:Y-m-d|after:today',
-            'questions' => 'required|array',
-
+            'questions' => 'required|array|max:50',
+            'questions.*.id' => 'nullable',
+            'questions.*.question' => 'required|string|max:1000',
+            'questions.*.type' => ['required', Rule::enum(QuestionTypeEnum::class)],
+            'questions.*.description' => 'nullable|string|max:2000',
+            'questions.*.data' => 'present|array',
+            'questions.*.data.options' => 'sometimes|array|max:100',
+            'questions.*.data.options.*.uuid' => 'required|string|max:100',
+            'questions.*.data.options.*.text' => 'required|string|max:1000',
         ];
     }
 }

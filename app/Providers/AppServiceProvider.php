@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,8 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(UrlGenerator $url)
     {
-        if (env('APP_ENV') == 'production') {
+        if ($this->app->environment('production')) {
             $url->forceScheme('https');
         }
+
+        ResetPassword::createUrlUsing(fn ($user, $token) =>
+            rtrim(config('app.frontend_url'), '/').'/reset-password/'.$token.'?'.http_build_query(['email' => $user->email])
+        );
     }
 }

@@ -1,23 +1,23 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+
 import { v4 as uuidv4 } from "uuid";
 import { motion, AnimatePresence } from "framer-motion";
 import QuestionEditor from "@components/QuestionEditor";
 
 export default function SurveyQuestions({ questions, onQuestionsUpdate }) {
-   const [myQuestions, setMyQuestions] = useState([...questions]);
+   const myQuestions = questions || [];
 
    const addQuestion = (index) => {
       index = index !== undefined ? index : myQuestions.length;
-      myQuestions.splice(index, 0, {
+      const updated = [...myQuestions];
+      updated.splice(index, 0, {
          id: uuidv4(),
          type: "short answer",
          question: "",
          description: "",
          data: {},
       });
-      setMyQuestions([...myQuestions]);
-      onQuestionsUpdate(myQuestions);
+      onQuestionsUpdate(updated);
    };
 
    const questionChange = (question) => {
@@ -28,19 +28,17 @@ export default function SurveyQuestions({ questions, onQuestionsUpdate }) {
          }
          return q;
       });
-      setMyQuestions(newQuestions);
+
       onQuestionsUpdate(newQuestions);
    };
 
    const deleteQuestion = (question) => {
       const newQuestions = myQuestions.filter((q) => q.id !== question.id);
-      setMyQuestions(newQuestions);
+
       onQuestionsUpdate(newQuestions);
    };
 
-   useEffect(() => {
-      setMyQuestions(questions);
-   }, [questions]);
+
 
    return (
       <motion.div
@@ -106,7 +104,7 @@ export default function SurveyQuestions({ questions, onQuestionsUpdate }) {
                      No questions created yet
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
-                     Click the "Add Question" button to get started
+                     Click the &quot;Add Question&quot; button to get started
                   </p>
                </motion.div>
             )}

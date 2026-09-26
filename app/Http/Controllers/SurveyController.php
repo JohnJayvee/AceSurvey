@@ -19,6 +19,7 @@ use App\Services\SurveyRateLimitService;
 use App\Http\Requests\SurveyStoreRequest;
 use App\Http\Requests\SurveyUpdateRequest;
 use App\Http\Requests\StoreSurveyAnswerRequest;
+use Illuminate\Validation\ValidationException;
 
 class SurveyController extends Controller
 {
@@ -87,6 +88,8 @@ class SurveyController extends Controller
             ->response()
             ->withHeaders($this->getSecurityHeaders());
 
+      } catch (ValidationException $e) {
+         throw $e;
       } catch (\Exception $e) {
          return $this->handleError('surveys_index_error', 'Failed to retrieve surveys list', $e, $request, $user->id);
       }
@@ -134,6 +137,8 @@ class SurveyController extends Controller
             ->response()
             ->withHeaders($this->getSecurityHeaders());
 
+      } catch (ValidationException $e) {
+         throw $e;
       } catch (\Exception $e) {
          $this->rateLimitService->hit('survey_create', $user->id);
          return $this->handleError('survey_create_error', 'Failed to create survey', $e, $request, $user->id);
@@ -191,18 +196,22 @@ class SurveyController extends Controller
          'title' => strip_tags($data['title'] ?? $survey->title)
       ], $request, $survey->user_id);
 
+      $oldSlug = $survey->slug;
+      $oldImage = $survey->image;
+      $newImage = null;
+      if (!isset($data['image'])) unset($data['image']);
       try {
          if (isset($data['image'])) {
-            $data['image'] = $this->imageService->saveImage($data['image']);
-            if ($survey->image) {
-               $this->imageService->deleteImage($survey->image);
-            }
+            $newImage = $this->imageService->saveImage($data['image']);
+            $data['image'] = $newImage;
          }
 
          $survey = $this->surveyService->updateSurvey($survey, $data);
+         if ($newImage && $oldImage) $this->imageService->deleteImage($oldImage);
 
          $this->rateLimitService->clear('survey_update', $user->id);
          $this->cacheService->clearSurveyCaches($survey);
+         $this->cacheService->forget("survey_by_slug_{$oldSlug}");
 
          DatabaseLogger::info('survey_update_success', 'Survey updated successfully', [
             'survey_id' => $survey->id,
@@ -213,7 +222,10 @@ class SurveyController extends Controller
             ->response()
             ->withHeaders($this->getSecurityHeaders());
 
+      } catch (ValidationException $e) {
+         throw $e;
       } catch (\Exception $e) {
+         if ($newImage && $survey->getRawOriginal('image') !== $newImage) $this->imageService->deleteImage($newImage);
          $this->rateLimitService->hit('survey_update', $user->id);
          return $this->handleError('survey_update_error', 'Failed to update survey', $e, $request, $survey->user_id);
       }
@@ -257,6 +269,8 @@ class SurveyController extends Controller
 
          return response('', 204)->withHeaders($this->getSecurityHeaders());
 
+      } catch (ValidationException $e) {
+         throw $e;
       } catch (\Exception $e) {
          $this->rateLimitService->hit('survey_delete', $user->id);
          return $this->handleError('survey_delete_error', 'Failed to delete survey', $e, $request, $user->id);
@@ -265,6 +279,9 @@ class SurveyController extends Controller
 
    public function getBySlug(Survey $survey, Request $request)
    {
+      if (!$this->surveyService->isSurveyActive($survey)) {
+         return $this->errorResponse('Survey not available', 404);
+      }
       if ($this->rateLimitService->checkLimit('survey_public', $request->ip(), 30)) {
          return $this->errorResponse('Too many requests', 429);
       }
@@ -309,6 +326,7 @@ class SurveyController extends Controller
 
       try {
          $this->surveyService->storeSurveyAnswer($survey, $validated['answers'], $request->ip());
+         $this->cacheService->clearSurveyCaches($survey);
 
          $this->rateLimitService->clear('survey_answer', $request->ip() . ':' . $survey->id);
 
@@ -318,6 +336,8 @@ class SurveyController extends Controller
 
          return response("", 201)->withHeaders($this->getSecurityHeaders());
 
+      } catch (ValidationException $e) {
+         throw $e;
       } catch (\Exception $e) {
          $this->rateLimitService->hit('survey_answer', $request->ip() . ':' . $survey->id);
          return $this->handleError('survey_answer_error', 'Failed to submit survey answer', $e, $request);
@@ -410,7 +430,7 @@ class SurveyController extends Controller
       ], $request, $user->id);
 
       // Cache response details for 10 minutes
-      $cacheKey = "response_details_{$surveyId}_{$responseId}";
+      $cacheKey = "response_details_{$surveyId}_{$responseId}_{$survey->updated_at->getTimestamp()}";
 
       $responseData = Cache::remember($cacheKey, 600, function () use ($surveyId, $responseId) {
          // Fetch survey with related questions
@@ -467,6 +487,10 @@ class SurveyController extends Controller
    public function totalDepartmentRatings($surveyAnswerId, Request $request)
    {
       $user = $request->user();
+      $survey = Survey::findOrFail($surveyAnswerId);
+      if (!$this->surveyService->isUserAuthorized($survey, $user->id)) {
+         return $this->errorResponse('Unauthorized', 403);
+      }
 
       DatabaseLogger::info('ratings_department_view', 'User viewing department ratings', [
          'survey_answer_id' => $surveyAnswerId
@@ -552,7 +576,7 @@ class SurveyController extends Controller
 
       $transformedResponses = Cache::remember($cacheKey, 300, function () use ($survey) {
          // Fetch questions with proper security
-         $questions = $survey->questions()->select('id', 'question', 'type')->get();
+         $questions = $survey->questions()->select('id', 'question', 'type')->get()->keyBy('id');
 
          // Define special questions for PII identification
          $specialQuestions = [
@@ -577,6 +601,7 @@ class SurveyController extends Controller
                      ->orderBy('created_at', 'desc');
                }
             ])
+            ->orderByDesc('id')
             ->limit(1000) // Prevent memory issues
             ->get();
 
@@ -584,7 +609,7 @@ class SurveyController extends Controller
             $allAnswers = collect();
 
             foreach ($response->answers as $answer) {
-               $question = $questions->firstWhere('id', $answer->survey_question_id);
+               $question = $questions->get($answer->survey_question_id);
 
                if ($question) {
                   // Sanitize answer for display
@@ -592,6 +617,7 @@ class SurveyController extends Controller
 
                   $answerData = [
                      'id' => $answer->id,
+                     'survey_question_id' => $answer->survey_question_id,
                      'question' => strip_tags($question->question),
                      'answer' => $sanitizedAnswer,
                      'created_at' => $answer->created_at,
@@ -657,19 +683,21 @@ class SurveyController extends Controller
          $cacheKey = 'public_survey_links_v2';
          $links = $this->cacheService->remember($cacheKey, 1800, function () {
             return Survey::where('status', true)
-               ->where('expire_date', '>', now())
+               ->where(fn ($query) => $query->whereNull('expire_date')->orWhereDate('expire_date', '>=', today()))
                ->select('slug', 'title')
                ->get()
                ->map(function ($survey) {
                   return [
                      'title' => strip_tags($survey->title),
-                     'link' => 'http://localhost:3000/survey/public/' . $survey->slug
+                     'link' => rtrim(config('app.frontend_url'), '/') . '/survey/public/' . $survey->slug
                   ];
                });
          });
 
          return response()->json($links)->withHeaders($this->getSecurityHeaders());
 
+      } catch (ValidationException $e) {
+         throw $e;
       } catch (\Exception $e) {
          return $this->handleError('get_links_error', 'Failed to retrieve survey links', $e, request());
       }

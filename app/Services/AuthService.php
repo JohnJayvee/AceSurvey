@@ -15,6 +15,7 @@ class AuthService
       return DB::transaction(function () use ($data) {
          return User::create([
             'name' => strip_tags($data['name']),
+            'username' => $data['username'] ?? 'user_'.Str::uuid(),
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
          ]);
@@ -30,7 +31,8 @@ class AuthService
    public function findUserForLogin(string $login, string $loginType): ?User
    {
       if ($loginType === 'username') {
-         return User::whereRaw('BINARY username = ?', [$login])->first();
+         $user = User::where('username', $login)->first();
+         return $user && hash_equals($user->username, $login) ? $user : null;
       }
 
       return User::where('email', $login)->first();
@@ -42,7 +44,7 @@ class AuthService
          // Generate secure remember token
          $rememberToken = $this->generateUniqueRememberToken($user);
 
-         $user->update(['remember_token' => $rememberToken]);
+         $user->forceFill(['remember_token' => $rememberToken])->save();
 
          $token = $this->generateAuthToken($user);
 

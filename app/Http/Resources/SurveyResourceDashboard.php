@@ -23,8 +23,8 @@ class SurveyResourceDashboard extends JsonResource
             'status' => !!$this->status,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'expire_date' => $this->expire_date,
-            'questions' => $this->questions()->count(),
-            'answers' => $this->answers()->count()
+            'questions' => $this->questions_count ?? $this->questions()->count(),
+            'answers' => $this->answers_count ?? $this->answers()->count()
         ];
     }
 }

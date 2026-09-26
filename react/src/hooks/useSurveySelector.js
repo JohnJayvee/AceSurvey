@@ -1,84 +1,37 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axiosClient from "@api/axios.js";
-
-// Simple cache to prevent repeated requests
-const cache = new Map();
-const requestsInProgress = new Map();
 
 export const useSurveySelector = () => {
    const [surveys, setSurveys] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
    const [searchTerm, setSearchTerm] = useState("");
-
-   const abortControllerRef = useRef(null);
-   const isMountedRef = useRef(true);
-
-   useEffect(() => {
-      isMountedRef.current = true;
-      return () => { isMountedRef.current = false; };
-   }, []);
+   const active = useRef(null);
 
    const fetchSurveys = useCallback(async () => {
-      const cacheKey = "all_surveys";
-
-      if (cache.has(cacheKey)) {
-         setSurveys(cache.get(cacheKey));
-         setLoading(false);
-         return;
-      }
-
-      if (requestsInProgress.has(cacheKey)) {
-         const existingRequest = requestsInProgress.get(cacheKey);
-         existingRequest.then(data => {
-            if (isMountedRef.current) setSurveys(data);
-         }).catch(err => {
-            if (isMountedRef.current) setError(err.message || "Failed to load surveys");
-         });
-         return;
-      }
-
+      active.current?.abort();
+      const controller = new AbortController();
+      active.current = controller;
+      setLoading(true);
+      setError(null);
       try {
-         setLoading(true);
-         setError(null);
-
-         if (abortControllerRef.current) abortControllerRef.current.abort();
-         abortControllerRef.current = new AbortController();
-         const { signal } = abortControllerRef.current;
-
-         const requestPromise = axiosClient.get("/survey/links", { signal }).then(res => res.data);
-         requestsInProgress.set(cacheKey, requestPromise);
-
-         const data = await requestPromise;
-
-         if (!isMountedRef.current) return;
-
-         cache.set(cacheKey, data);
-         setSurveys(data);
-      } catch (err) {
-         if (!isMountedRef.current) return;
-         if (err.name !== "AbortError") {
-            setError(err.response?.data?.message || err.message || "Failed to load surveys");
-         }
+         const { data } = await axiosClient.get("/survey/links", { signal: controller.signal });
+         if (!controller.signal.aborted) setSurveys(Array.isArray(data) ? data : []);
+      } catch (error) {
+         if (!controller.signal.aborted) setError(error.response?.data?.message || "Failed to load surveys. Please try again.");
       } finally {
-         if (isMountedRef.current) setLoading(false);
-         requestsInProgress.delete(cacheKey);
+         if (!controller.signal.aborted) setLoading(false);
       }
    }, []);
 
-   const filteredSurveys = surveys.filter(s =>
-      s.title.toLowerCase().includes(searchTerm.toLowerCase())
-   );
+   useEffect(() => {
+      fetchSurveys();
+      return () => active.current?.abort();
+   }, [fetchSurveys]);
 
-   useEffect(() => { fetchSurveys(); }, [fetchSurveys]);
+   const filteredSurveys = useMemo(() => surveys.filter(survey =>
+      (survey.title || "").toLowerCase().includes(searchTerm.toLowerCase())
+   ), [surveys, searchTerm]);
 
-   return {
-      surveys,
-      filteredSurveys,
-      loading,
-      error,
-      searchTerm,
-      setSearchTerm,
-      refetch: fetchSurveys
-   };
+   return { surveys, filteredSurveys, loading, error, searchTerm, setSearchTerm, refetch: fetchSurveys };
 };

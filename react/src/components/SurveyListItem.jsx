@@ -1,3 +1,4 @@
+import { isSurveyExpired } from '@utils/dashboardUtils';
 import React, { useState, useEffect } from "react";
 import {
    ArrowTopRightOnSquareIcon,
@@ -24,12 +25,6 @@ export default function SurveyListItem({ survey, onDeleteClick, analyticsData, i
    const navigate = useNavigate();
 
 
-
-   const isSurveyExpired = (expireDate) => {
-      const today = new Date().setHours(0, 0, 0, 0);
-      const expiration = new Date(expireDate).setHours(0, 0, 0, 0);
-      return expiration <= today;
-   };
 
    // Debounced function for sharing
    const handleOpenShare = debounce(() => {

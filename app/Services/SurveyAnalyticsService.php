@@ -30,7 +30,7 @@ class SurveyAnalyticsService
 
       $answers = SurveyQuestionAnswer::whereHas('surveyAnswer', function ($query) use ($userSurveyIds) {
          $query->whereIn('survey_id', $userSurveyIds);
-      })->whereRaw('answer REGEXP "^[1-5]"')->get();
+      })->select('answer')->cursor();
 
       foreach ($answers as $answer) {
          $sanitizedAnswer = strip_tags($answer->answer);
@@ -56,7 +56,7 @@ class SurveyAnalyticsService
          ->select('id', 'title', 'expire_date')
          ->where('user_id', $userId)
          ->withCount('answers')
-         ->having('answers_count', '>', 0)
+         ->has('answers')
          ->orderBy('answers_count', 'desc')
          ->limit($limit)
          ->get();
@@ -68,7 +68,7 @@ class SurveyAnalyticsService
          ->select('id', 'title', 'expire_date')
          ->where('user_id', $userId)
          ->withCount('answers')
-         ->having('answers_count', '>', 0)
+         ->has('answers')
          ->orderBy('answers_count', 'asc')
          ->limit($limit)
          ->get();

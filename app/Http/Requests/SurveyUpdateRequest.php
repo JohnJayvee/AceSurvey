@@ -2,37 +2,19 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class SurveyUpdateRequest extends FormRequest
+class SurveyUpdateRequest extends SurveyStoreRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        $survey = $this->route('survey');
-        if ($this->user()->id !==$survey->user_id) {
-            return false;
-        }
-        return true;
+        return $this->user() && (int) $this->user()->id === (int) $this->route('survey')->user_id;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-        return [
-            'title' => 'required|string|max:1000',
-            'image' => 'string',
-            'user_id' => 'exists:user,id',
-            'status' => 'required|boolean',
-            'description' => 'nullable|string',
-            'expire_date' => 'nullable|date|after:today',
-            'questions' => 'array',
+        return [...parent::rules(),
+            // An expired survey can still be edited or disabled.
+            'expire_date' => 'nullable|date_format:Y-m-d',
+            'questions' => 'sometimes|array|max:50',
         ];
     }
 }

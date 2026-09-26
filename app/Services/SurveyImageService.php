@@ -3,53 +3,38 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class SurveyImageService
 {
     public function saveImage(string $imageData): string
     {
-        if (!preg_match('/^data:image\/(jpeg|jpg|png|gif);base64,/', $imageData, $type)) {
-            throw new \Exception('Invalid image format');
+        if (strlen($imageData) > 7000000 || !preg_match('/^data:image\/(jpeg|jpg|png|gif);base64,/', $imageData, $matches)) {
+            throw ValidationException::withMessages(['image' => 'Choose a JPEG, PNG or GIF image under 5 MB.']);
+        }
+        $decoded = base64_decode(substr($imageData, strpos($imageData, ',') + 1), true);
+        $info = $decoded !== false ? @getimagesizefromstring($decoded) : false;
+        $mime = $matches[1] === 'jpg' ? 'image/jpeg' : 'image/'.$matches[1];
+        if ($decoded === false || strlen($decoded) > 5 * 1024 * 1024 || !$info || ($info['mime'] ?? '') !== $mime) {
+            throw ValidationException::withMessages(['image' => 'The image is invalid or exceeds 5 MB.']);
         }
 
-        $imageData = substr($imageData, strpos($imageData, ',') + 1);
-        $type = strtolower($type[1]);
-
-        if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
-            throw new \Exception('Invalid image type');
+        $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
+        $relativePath = 'images/'.Str::uuid().'.'.$extension;
+        File::ensureDirectoryExists(public_path('images'), 0755);
+        if (File::put(public_path($relativePath), $decoded) === false) {
+            throw new \RuntimeException('Unable to save survey image.');
         }
-
-        $imageData = str_replace(' ', '+', $imageData);
-        $decodedImage = base64_decode($imageData);
-
-        if ($decodedImage === false) {
-            throw new \Exception('Failed to decode image');
-        }
-
-        if (strlen($decodedImage) > 5 * 1024 * 1024) {
-            throw new \Exception('Image too large');
-        }
-
-        $filename = hash('sha256', $decodedImage . time()) . '.' . $type;
-        $dir = 'images/';
-        $relativePath = $dir . $filename;
-        $absolutePath = public_path($dir);
-
-        if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
-        }
-
-        file_put_contents($absolutePath . $filename, $decodedImage);
-        chmod($absolutePath . $filename, 0644);
-
         return $relativePath;
     }
 
     public function deleteImage(string $imagePath): void
     {
-        $absolutePath = public_path($imagePath);
-        if (File::exists($absolutePath)) {
-            File::delete($absolutePath);
+        $directory = realpath(public_path('images'));
+        $path = realpath(public_path($imagePath));
+        if ($directory && $path && str_starts_with($path, $directory.DIRECTORY_SEPARATOR) && is_file($path)) {
+            File::delete($path);
         }
     }
 }

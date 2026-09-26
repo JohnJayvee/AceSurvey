@@ -44,7 +44,7 @@ export default function ErrorMessage({ error, onClear }) {
                         transition={{ delay: 0.2 }}
                         className="text-sm font-medium text-gray-800"
                      >
-                        <div dangerouslySetInnerHTML={{ __html: error }} />
+                        <div className="whitespace-pre-line">{error}</div>
                      </motion.div>
                   </div>
 
@@ -59,6 +59,7 @@ export default function ErrorMessage({ error, onClear }) {
                      whileTap={{ scale: 0.9 }}
                      transition={{ delay: 0.3 }}
                      onClick={onClear}
+                     type="button"
                      className="p-1 ml-auto text-red-500 rounded-md hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                      <span className="sr-only">Dismiss</span>
@@ -83,6 +84,7 @@ export default function ErrorMessage({ error, onClear }) {
                >
                   <button
                      onClick={onClear}
+                     type="button"
                      className="text-xs font-medium text-red-700 transition-colors duration-200 hover:text-red-900"
                   >
                      Dismiss this message

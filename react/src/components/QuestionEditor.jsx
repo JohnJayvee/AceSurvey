@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+
 import { useStateContext } from "@context/ContextProvider";
 import {
    TrashIcon,
@@ -28,12 +28,11 @@ export default function QuestionEditor({
    deleteQuestion,
    questionChange,
 }) {
-   const [model, setModel] = useState({ ...question });
+   const model = question;
+   const setModel = questionChange;
    const { questionTypes } = useStateContext();
 
-   useEffect(() => {
-      questionChange(model);
-   }, [model]);
+
 
    function upperCaseFirst(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
@@ -50,7 +49,7 @@ export default function QuestionEditor({
          type: option.value,
       };
       if (!shouldHaveOptions(model.type) && shouldHaveOptions(option.value)) {
-         if (!model.data.options) {
+         if (!model.data?.options) {
             newModel.data = {
                options: [{ uuid: uuidv4(), text: "" }],
             };
@@ -60,18 +59,11 @@ export default function QuestionEditor({
    }
 
    function addOption() {
-      model.data.options.push({
-         uuid: uuidv4(),
-         text: "",
-      });
-      setModel({ ...model });
+      setModel({ ...model, data: { ...model.data, options: [...(model.data?.options || []), { uuid: uuidv4(), text: '' }] } });
    }
 
    function deleteOption(op) {
-      model.data.options = model.data.options.filter(
-         (option) => option.uuid !== op.uuid
-      );
-      setModel({ ...model });
+      setModel({ ...model, data: { ...model.data, options: (model.data?.options || []).filter(option => option.uuid !== op.uuid) } });
    }
 
    const questionTypeOptions = questionTypes.map((type) => ({
@@ -185,13 +177,13 @@ export default function QuestionEditor({
                animate={{ opacity: 1 }}
                className="mt-6 space-y-3"
             >
-               {model.data.options.length === 0 && (
+               {(model.data?.options || []).length === 0 && (
                   <div className="p-4 text-sm text-center text-gray-500 rounded-lg bg-gray-50">
                      No options defined yet
                   </div>
                )}
 
-               {model.data.options.map((op, ind) => (
+               {(model.data?.options || []).map((op, ind) => (
                   <motion.div
                      key={op.uuid}
                      initial={{ opacity: 0, x: -20 }}
@@ -226,8 +218,7 @@ export default function QuestionEditor({
                         placeholder="Option text"
                         value={op.text}
                         onChange={(ev) => {
-                           op.text = ev.target.value;
-                           setModel({ ...model });
+                           setModel({ ...model, data: { ...model.data, options: model.data.options.map(option => option.uuid === op.uuid ? { ...option, text: ev.target.value } : option) } });
                         }}
                         className="flex-1 px-4 py-2 text-sm text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200"
                      />

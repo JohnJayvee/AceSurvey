@@ -16,5 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // A second CORS layer overwrote its credential-aware origin header.
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->shouldRenderJsonWhen(fn ($request, $exception) =>
+            $request->is('api/*') || $request->expectsJson()
+        );
     })->create();

@@ -52,12 +52,6 @@ class PWAManager {
    init(options = {}) {
       this.allowedPages = options.installPages || []
 
-      // Don't show install prompts if app is already installed
-      if (this.isInstalled) {
-         console.log('App is already installed - no install prompts will be shown')
-         return
-      }
-
       this.updateSW = registerSW({
          onNeedRefresh: () => {
             this.showUpdatePrompt()

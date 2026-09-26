@@ -31,6 +31,7 @@ export default function Signup() {
 
    const onSubmit = (ev) => {
       ev.preventDefault();
+      if (loading) return;
       setError({ __html: "" });
       setLoading(true);
 
@@ -42,8 +43,7 @@ export default function Signup() {
             password_confirmation: passwordConfirmation,
          })
          .then(({ data }) => {
-            setCurrentUser(data.user);
-            setUserToken(data.token);
+            setUserToken(data.token, false, data.user);
          })
          .catch((error) => {
             if (error.response) {
@@ -56,7 +56,7 @@ export default function Signup() {
                   (accum, next) => [...accum, ...next],
                   []
                );
-               setError({ __html: finalErrors.join("<br>") });
+               setError({ __html: finalErrors.join("\n") });
             } else {
                setError({ __html: "An error occurred" });
             }
@@ -76,8 +76,8 @@ export default function Signup() {
             {error.__html && (
                <div
                   className="w-full px-3 py-2 mb-2 text-sm font-semibold text-center text-red-400 bg-red-100 rounded-md"
-                  dangerouslySetInnerHTML={error}
-               ></div>
+                  style={{ whiteSpace: 'pre-line' }}
+               >{error.__html}</div>
             )}
             <div className="w-full p-6 m-4 bg-white rounded-lg drop-shadow-xl animated fadeInDown">
                <form onSubmit={onSubmit}>

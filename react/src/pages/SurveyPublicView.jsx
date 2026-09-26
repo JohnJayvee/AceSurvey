@@ -138,7 +138,7 @@ const ExpirationBadge = ({ expireDate }) => (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
-      Expires: {new Date(expireDate).toLocaleDateString()}
+      {expireDate ? 'Expires: ' + new Date(expireDate + 'T00:00:00').toLocaleDateString() : 'No expiration'}
    </span>
 );
 
@@ -210,7 +210,7 @@ const SuccessMessage = () => (
    </motion.div>
 );
 
-const QuestionsList = ({ questions, onAnswerChange }) => (
+const QuestionsList = ({ questions, answers, onAnswerChange }) => (
    <div className="space-y-4">
       {questions.map((question, index) => (
          <motion.div
@@ -221,6 +221,7 @@ const QuestionsList = ({ questions, onAnswerChange }) => (
             <PublicQuestionView
                question={question}
                index={index}
+               answer={answers[question.id]}
                answerChanged={(val) => onAnswerChange(question, val)}
             />
          </motion.div>
@@ -252,10 +253,6 @@ const useSurveyData = (slug) => {
    const [survey, setSurvey] = useState(INITIAL_SURVEY_STATE);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
-   const isMountedRef = useRef(true);
-   const abortControllerRef = useRef(null);
-   const fetchingRef = useRef(false);
-
    const fetchSurvey = useCallback(async (signal) => {
       setLoading(true);
       setError(null);
@@ -278,22 +275,6 @@ const useSurveyData = (slug) => {
       }
    }, [slug]);
 
-   // Fetch survey on mount and slug change
-   useEffect(() => {
-      if (!slug) return;
-
-      isMountedRef.current = true;
-      fetchSurvey();
-
-      return () => {
-         isMountedRef.current = false;
-         // Cancel any pending request when component unmounts
-         if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-         }
-      };
-   }, [slug]);
-
    return { survey, loading, error, fetchSurvey };
 };
 
@@ -302,12 +283,18 @@ const useSurveySubmission = (surveyId) => {
    const [submissionError, setSubmissionError] = useState(null);
    const [surveyFinished, setSurveyFinished] = useState(false);
    const [isSubmitting, setIsSubmitting] = useState(false);
+   const submitting = useRef(false);
+   useEffect(() => {
+      setAnswers({});
+      setSurveyFinished(false);
+      setSubmissionError(null);
+   }, [surveyId]);
 
    const handleAnswerChange = useCallback((question, value) => {
       // Live update - add/remove answers dynamically
       setAnswers(prev => {
          const newAnswers = { ...prev };
-         if (value && value !== '' && value !== null && value !== undefined) {
+         if (Array.isArray(value) ? value.length > 0 : value != null && value !== '') {
             newAnswers[question.id] = value;
          } else {
             delete newAnswers[question.id];
@@ -322,7 +309,8 @@ const useSurveySubmission = (surveyId) => {
          e.stopPropagation();
       }
 
-      if (isSubmitting || !surveyId) return;
+      if (submitting.current || !surveyId) return;
+      submitting.current = true;
 
       console.log('Submitting survey with answers:', answers);
 
@@ -340,9 +328,10 @@ const useSurveySubmission = (surveyId) => {
             "There was a problem submitting your response. Please try again."
          );
       } finally {
+         submitting.current = false;
          setIsSubmitting(false);
       }
-   }, [answers, surveyId, isSubmitting]);
+   }, [answers, surveyId]);
 
    return {
       answers,
@@ -395,6 +384,7 @@ export default function SurveyPublicView() {
                   <>
                      <QuestionsList
                         questions={survey.questions || []}
+                        answers={answers}
                         onAnswerChange={handleAnswerChange}
                      />
                      {submissionError && (
