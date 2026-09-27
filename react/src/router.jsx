@@ -1,3 +1,7 @@
+import RespondentSkeleton from '@components/RespondentSkeleton';
+import SurveyEditorSkeleton from '@components/SurveyEditorSkeleton';
+import DashboardSkeleton from '@components/dashboard/DashboardSkeleton';
+import SurveyResponseSkeleton from '@components/SurveyResponseSkeleton';
 import React, { useEffect, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import "@css/main.css";
@@ -99,7 +103,7 @@ const router = createBrowserRouter([
          },
          {
             path: "/dashboard",
-            element: <Dashboard />,
+            element: <Suspense fallback={<DashboardSkeleton />}><Dashboard /></Suspense>,
          },
          {
             path: "/surveys",
@@ -107,19 +111,19 @@ const router = createBrowserRouter([
          },
          {
             path: "/surveys/create",
-            element: <SurveyView />,
+            element: <Suspense fallback={<SurveyEditorSkeleton />}><SurveyView /></Suspense>,
          },
          {
             path: "/surveys/:id",
-            element: <SurveyView />,
+            element: <Suspense fallback={<SurveyEditorSkeleton />}><SurveyView /></Suspense>,
          },
          {
             path: "/surveys/:id/responses",
-            element: <SurveyResponse />,
+            element: <Suspense fallback={<SurveyResponseSkeleton />}><SurveyResponse /></Suspense>,
          },
          {
             path: "/surveys/:surveyId/responses/:responseId",
-            element: <Respondent />,
+            element: <Suspense fallback={<RespondentSkeleton />}><Respondent /></Suspense>,
          },
 
 

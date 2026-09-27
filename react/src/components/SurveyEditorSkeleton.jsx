@@ -1,0 +1,8 @@
+export default function SurveyEditorSkeleton() {
+   return <div className="survey-builder" role="status" aria-busy="true" aria-label="Loading survey editor"><span className="sr-only">Loading survey editor...</span><div aria-hidden="true">
+      <div className="builder-heading"><div className="w-full"><div className="response-placeholder w-28 h-3 mb-5" /><div className="response-placeholder w-40 h-3 mb-3" /><div className="response-placeholder w-80 max-w-full h-9 mb-3" /><div className="response-placeholder w-64 max-w-full h-3" /></div></div>
+      <div className="builder-actions">{[1,2,3].map(i => <div key={i} className="response-placeholder w-24 h-8" />)}</div>
+      <div className="builder-settings"><div className="builder-section-title"><div className="response-placeholder w-56 h-8" /></div><div className="builder-settings-grid"><div className="builder-cover"><div className="response-placeholder w-full h-48 mb-3" /><div className="response-placeholder w-full h-10" /></div><div className="builder-fields"><div className="response-placeholder w-full h-14" /><div className="response-placeholder w-full h-28" /><div className="builder-settings-pair"><div className="response-placeholder h-24" /><div className="response-placeholder h-24" /></div></div></div></div>
+      <div className="builder-questions mt-6"><div className="response-placeholder w-48 h-6 mb-6" />{[1,2].map(i => <div key={i} className="response-placeholder w-full h-36 mb-4" />)}</div>
+   </div></div>;
+}

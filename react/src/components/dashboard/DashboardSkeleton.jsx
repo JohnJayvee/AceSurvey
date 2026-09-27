@@ -1,0 +1,7 @@
+export default function DashboardSkeleton() {
+   return <div className="dashboard-redesign" role="status" aria-busy="true" aria-label="Loading dashboard"><span className="sr-only">Loading dashboard...</span><div aria-hidden="true">
+      <div className="dashboard-welcome"><div className="w-full"><div className="response-placeholder w-40 h-3 mb-5" /><div className="response-placeholder w-72 max-w-full h-24 mb-5" /><div className="response-placeholder w-80 max-w-full h-4 mb-5" /><div className="response-placeholder w-40 h-11" /></div><div className="dashboard-welcome-note"><div className="response-placeholder w-full h-40" /></div></div>
+      <div className="dashboard-metric-grid">{[1,2,3,4].map(i => <div key={i} className="dashboard-metric"><div className="response-placeholder w-28 h-3" /><div className="response-placeholder w-20 h-10" /><div className="response-placeholder w-32 max-w-full h-3" /></div>)}</div>
+      {['dashboard-insights','dashboard-recent','dashboard-rankings'].map(section => <div key={section}><div className="dashboard-section-label"><div className="response-placeholder w-56 h-5" /></div><div className={section}>{[1,2].map(i => <div key={i} className="ace-card p-6"><div className="response-placeholder w-40 h-5 mb-5" /><div className="response-placeholder w-full h-64" /></div>)}</div></div>)}
+   </div></div>;
+}

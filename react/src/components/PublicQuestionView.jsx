@@ -14,18 +14,18 @@ export default function PublicQuestionView({ question, index, answer, answerChan
       <motion.div
          initial={{ opacity: 0, y: 20 }}
          animate={{ opacity: 1, y: 0 }}
-         transition={{ delay: index * 0.1 }}
+         transition={{ duration: 0.15 }}
          className="ace-question bg-white"
       >
-         <fieldset>
+         <fieldset aria-labelledby={"question-label-" + question.id}>
             <div className="flex items-start gap-3 mb-4">
                <span className="flex items-center justify-center w-6 h-6 text-sm font-semibold text-white bg-blue-600 rounded-full shrink-0">
                   {index + 1}
                </span>
                <div>
-                  <legend className="text-lg font-semibold text-gray-900">
+                  <h2 id={"question-label-" + question.id} className="text-lg font-semibold text-gray-900">
                      {question.question}
-                  </legend>
+                  </h2>
                   {question.description && (
                      <p className="mt-2 text-sm text-gray-500">
                         {question.description}
@@ -36,7 +36,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
 
             <div className="mt-4 ml-9">
                {question.type === "dropdown" && (
-                  <select
+                  <select aria-labelledby={"question-label-" + question.id}
                      value={answer || ""}
                      onChange={(ev) => answerChanged(ev.target.value)}
                      className={`${inputBaseClass} px-4 py-2.5 bg-white cursor-pointer hover:border-blue-200`}
@@ -100,6 +100,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
                   <input
                      value={answer || ""}
                      type="text"
+                     aria-labelledby={"question-label-" + question.id}
                      onChange={(ev) => answerChanged(ev.target.value)}
                      placeholder="Your answer"
                      className={`${inputBaseClass} px-4 py-2.5`}
@@ -107,7 +108,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
                )}
 
                {question.type === "paragraph" && (
-                  <textarea
+                  <textarea aria-labelledby={"question-label-" + question.id}
                      value={answer || ""}
                      onChange={(ev) => answerChanged(ev.target.value)}
                      rows={4}

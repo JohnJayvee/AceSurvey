@@ -2,12 +2,12 @@ import { format } from "date-fns";
 
 export const transformResponsesData = (responsesData, survey) => {
    return responsesData.map((response) => {
-      const createdAt = new Date(response.answers[0]?.created_at);
+      const createdAt = new Date(response.end_date || response.answers?.[0]?.created_at);
 
       let nameAnswer = "No answer";
       if (survey.questions && survey.questions.length > 0) {
          const firstQuestion = survey.questions[0].question;
-         const firstQuestionAnswer = response.answers.find(
+         const firstQuestionAnswer = (response.answers || []).find(
             ans => ans.question === firstQuestion
          );
          nameAnswer = firstQuestionAnswer?.answer || "No answer";
@@ -16,8 +16,8 @@ export const transformResponsesData = (responsesData, survey) => {
       return {
          id: response.id,
          answer: nameAnswer,
-         date: format(createdAt, "MMMM d, yyyy"),
-         time: format(createdAt, "h:mm a"),
+         date: Number.isNaN(createdAt.getTime()) ? "Date unavailable" : format(createdAt, "MMMM d, yyyy"),
+         time: Number.isNaN(createdAt.getTime()) ? "" : format(createdAt, "h:mm a"),
       };
    });
 };
