@@ -1,4 +1,4 @@
-import { Cog6ToothIcon } from '@heroicons/react/24/outline';
+
 import { useEffect, useState, useRef } from "react";
 import { Navigate, NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useStateContext } from "@context/ContextProvider";
@@ -47,7 +47,7 @@ export default function DefaultLayout() {
    };
 
    if (!userToken) return <Navigate to="/login" replace />;
-   const page = location.pathname === '/settings' ? 'Settings' : location.pathname === '/users' ? 'Users' : location.pathname === '/logs' ? 'Activity logs' : location.pathname.includes('/responses') ? 'Responses' : location.pathname.includes('/surveys') ? 'Surveys' : 'Overview';
+   const page = location.pathname === '/profile' ? 'Profile' : location.pathname === '/settings' ? 'Settings' : location.pathname === '/users' ? 'Users' : location.pathname === '/logs' ? 'Activity logs' : location.pathname.includes('/responses') ? 'Responses' : location.pathname.includes('/surveys') ? 'Surveys' : 'Overview';
    return (
       <div className="ace-workspace">
          <a className="ace-skip" href="#main-content">Skip to content</a>
@@ -59,7 +59,7 @@ export default function DefaultLayout() {
             <nav className="ace-nav">
                <NavLink to="/dashboard"><HomeIcon />Overview</NavLink>
                <NavLink to="/surveys"><ClipboardDocumentListIcon />Surveys</NavLink>
-               <NavLink to="/settings"><Cog6ToothIcon />Settings</NavLink>
+
                {currentUser.is_admin && <NavLink to="/logs"><ClipboardDocumentListIcon />Activity logs</NavLink>}
                {currentUser.is_admin && <NavLink to="/users"><ClipboardDocumentListIcon />Users</NavLink>}
             </nav>

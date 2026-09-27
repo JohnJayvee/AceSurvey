@@ -8,6 +8,7 @@ export default function GuestLayout() {
    const isPublic = ['/survey-selection', '/qr'].includes(pathname);
    if (isPublic) return <Outlet />;
    if (userToken) return <Navigate to="/dashboard" replace />;
+   if (pathname === "/forgot-password") return <Outlet />;
    return (
       <div className="ace-auth">
          <section className="ace-auth-story">

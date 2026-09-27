@@ -29,6 +29,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureAccountActive::cla
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/change-email', [AuthController::class, 'changeEmail'])->name('changeEmail'); // New route for changing email
     Route::get('/me', [AuthController::class, 'me'])->name('me');
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show']);
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->middleware('throttle:10,1');
     Route::apiResource('survey', SurveyController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -1,341 +1,67 @@
-import React, { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeftIcon, ArrowRightIcon, EnvelopeIcon, KeyIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import axiosClient from '@api/axios';
-import { Loader as RsuiteLoader } from 'rsuite';
-import { useNavigate } from 'react-router-dom';
-import 'rsuite/dist/rsuite.min.css';
-import logo from "@images/AceLogo.png";
-import AnimatedBackground from "@components/AnimatedBackground";
-import { motion } from "framer-motion";
-import ErrorMessage from "@components/ErrorMessage";
-import { HiOutlineMail, HiArrowLeft, HiUser, HiCheck } from "react-icons/hi";
-import { FaUserShield } from "react-icons/fa";
+import logo from '@images/AceLogo.png';
 
-const ForgotPassword = () => {
+export default function ForgotPassword() {
    const [email, setEmail] = useState('');
-   const [message, setMessage] = useState('');
-   const [isError, setIsError] = useState(false);
+   const [step, setStep] = useState('email');
+   const [account, setAccount] = useState(null);
    const [loading, setLoading] = useState(false);
-   const [isSubmitted, setIsSubmitted] = useState(false);
-   const [verificationStep, setVerificationStep] = useState(false);
-   const [accountInfo, setAccountInfo] = useState(null);
-   const navigate = useNavigate();
-
-   const clearErrorMessage = () => {
-      setMessage('');
-      setIsError(false);
-   };
-
-   const verifyEmail = async (e) => {
-      e.preventDefault();
-      setMessage('');
-      setIsError(false);
+   const [error, setError] = useState('');
+   const pending = useRef(false);
+   const submit = async event => {
+      event.preventDefault();
+      if (pending.current) return;
+      pending.current = true;
       setLoading(true);
-
+      setError('');
       try {
-         const { data } = await axiosClient.post('/verify-email-exists', { email });
-         setAccountInfo(data.accountInfo);
-         setVerificationStep(true);
-         setIsError(false);
+         if (step === 'email') {
+            const address = email.trim();
+            const { data } = await axiosClient.post('/verify-email-exists', { email: address });
+            if (!data.accountInfo) throw new Error('Could not load account information. Please try again.');
+            setEmail(address);
+            setAccount(data.accountInfo);
+            setStep('confirm');
+         } else {
+            await axiosClient.post('/forgot-password', { email });
+            setStep('sent');
+         }
       } catch (error) {
-         setMessage(error.response?.data?.message || 'Email not found. Please check and try again.');
-         setIsError(true);
+         setError(Object.values(error.response?.data?.errors || {}).flat().join(' ') || error.response?.data?.message || error.response?.data?.error || (error.response?.status === 429 ? 'Too many attempts. Please wait before trying again.' : 'We could not complete your request. Please try again.'));
       } finally {
+         pending.current = false;
          setLoading(false);
       }
    };
-
-   const handleSubmit = async (e) => {
-      e.preventDefault();
-      setMessage('');
-      setIsError(false);
-      setLoading(true);
-
-      try {
-         const { data } = await axiosClient.post('/forgot-password', { email });
-         setMessage(data.message);
-         setIsError(false);
-         setIsSubmitted(true);
-      } catch (error) {
-         setMessage(error.response?.data?.message || 'Something went wrong.');
-         setIsError(true);
-      } finally {
-         setLoading(false);
-      }
-   };
-
-   const resetForm = () => {
-      setIsSubmitted(false);
-      setVerificationStep(false);
-      setAccountInfo(null);
-      setEmail('');
-      setMessage('');
-   };
-
-   // If the form has been submitted successfully, show the "check your email" interface
-   if (isSubmitted && !isError) {
-      return (
-         <div className="relative flex items-center justify-center min-h-screen px-5 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-            <AnimatedBackground />
-
-            <div className="relative z-10 w-full max-w-lg">
-               <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-8 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
-               >
-                  <motion.div
-                     initial={{ scale: 0.9 }}
-                     animate={{ scale: 1 }}
-                     className="flex justify-center mb-6"
-                  >
-                     {/* <img
-                                src={logo}
-                                loading="lazy"
-                                alt="Logo"
-                                className="w-auto h-24 transition-transform duration-300 hover:scale-105"
-                            /> */}
-                  </motion.div>
-
-                  {/* Success state */}
-                  <div className="flex flex-col items-center justify-center py-6">
-                     <div className="flex items-center justify-center w-24 h-24 mb-6 bg-green-100 rounded-full">
-                        <HiOutlineMail className="w-12 h-12 text-green-600" />
-                     </div>
-
-                     <h2 className="mb-2 text-2xl font-bold text-gray-900">Check Your Email</h2>
-                     <p className="max-w-md mb-6 text-center text-gray-600">
-                        We've sent a password reset link to <span className="font-semibold text-blue-600">{email}</span>.
-                        Please check your inbox and follow the instructions.
-                     </p>
-
-                     <div className="p-4 mb-6 text-sm text-blue-700 border border-blue-200 rounded-lg bg-blue-50">
-                        <p className="font-medium">The link will expire in 60 minutes.</p>
-                        <p className="mt-1">If you don't see the email, check your spam folder.</p>
-                     </div>
-
-                     <div className="flex flex-col w-full gap-3 sm:flex-row">
-                        <motion.button
-                           type="button"
-                           onClick={resetForm}
-                           whileHover={{ scale: 1.01 }}
-                           whileTap={{ scale: 0.99 }}
-                           className="flex items-center justify-center flex-1 px-6 py-3 font-medium text-gray-700 transition-all duration-200 bg-gray-100 rounded-lg hover:bg-gray-200"
-                        >
-                           Try Different Email
-                        </motion.button>
-
-                        <motion.button
-                           type="button"
-                           onClick={() => navigate('/login')}
-                           whileHover={{ scale: 1.01 }}
-                           whileTap={{ scale: 0.99 }}
-                           className="flex items-center justify-center flex-1 px-6 py-3 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700"
-                        >
-                           Back to Login
-                        </motion.button>
-                     </div>
-                  </div>
-               </motion.div>
-            </div>
-         </div>
-      );
-   }
-
-   // Show account verification step
-   if (verificationStep && accountInfo) {
-      return (
-         <div className="relative flex items-center justify-center min-h-screen px-5 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-            <AnimatedBackground />
-
-            <div className="relative z-10 w-full max-w-lg">
-               <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-8 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
-               >
-                  <motion.div
-                     initial={{ scale: 0.9 }}
-                     animate={{ scale: 1 }}
-                     className="flex justify-center mb-6"
-                  >
-                     {/* <img
-                                src={logo}
-                                loading="lazy"
-                                alt="Logo"
-                                className="w-auto h-24 transition-transform duration-300 hover:scale-105"
-                            /> */}
-                  </motion.div>
-
-                  <div className="flex flex-col items-center justify-center py-4">
-                     <div className="flex items-center justify-center w-20 h-20 mb-4 bg-blue-100 rounded-full">
-                        <FaUserShield className="w-10 h-10 text-blue-600" />
-                     </div>
-
-                     <h2 className="mb-2 text-2xl font-bold text-gray-900">Confirm Your Account</h2>
-
-                     <div className="w-full p-4 my-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <div className="flex items-center space-x-4">
-                           <div className="flex-shrink-0">
-                              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
-                                 {accountInfo.avatarUrl ? (
-                                    <img
-                                       src={accountInfo.avatarUrl}
-                                       alt="Profile"
-                                       className="w-12 h-12 rounded-full"
-                                    />
-                                 ) : (
-                                    <span className="text-xl font-semibold text-blue-600">
-                                       {accountInfo.name.charAt(0).toUpperCase()}
-                                    </span>
-                                 )}
-                              </div>
-                           </div>
-                           <div>
-                              <p className="text-sm font-medium text-gray-700">Name:</p>
-                              <p className="font-semibold text-gray-900">{accountInfo.name}</p>
-                              <p className="mt-1 text-sm font-medium text-gray-700">Email:</p>
-                              <p className="font-semibold text-gray-900">{email}</p>
-                           </div>
-                        </div>
-                     </div>
-
-                     <p className="mb-6 text-center text-gray-600">
-                        Is this your account? We'll send password reset instructions to this email.
-                     </p>
-
-                     <div className="flex flex-col w-full gap-3 sm:flex-row">
-                        <motion.button
-                           type="button"
-                           onClick={() => setVerificationStep(false)}
-                           whileHover={{ scale: 1.01 }}
-                           whileTap={{ scale: 0.99 }}
-                           className="flex items-center justify-center flex-1 px-6 py-3 font-medium text-gray-700 transition-all duration-200 bg-gray-100 rounded-lg hover:bg-gray-200"
-                        >
-                           <HiArrowLeft className="mr-2" />
-                           Back
-                        </motion.button>
-
-                        <motion.button
-                           type="button"
-                           onClick={handleSubmit}
-                           disabled={loading}
-                           whileHover={{ scale: loading ? 1 : 1.01 }}
-                           whileTap={{ scale: loading ? 1 : 0.99 }}
-                           className={`flex items-center justify-center flex-1 px-6 py-3 font-medium text-white transition-all duration-200 rounded-lg ${loading
-                              ? "bg-blue-400 cursor-not-allowed"
-                              : "bg-blue-600 hover:bg-blue-700"
-                              }`}
-                        >
-                           {loading ? (
-                              <div className="flex items-center gap-2">
-                                 <RsuiteLoader size="sm" />
-                                 <span>Sending...</span>
-                              </div>
-                           ) : (
-                              <>
-                                 <HiCheck className="mr-2" />
-                                 Yes, Continue
-                              </>
-                           )}
-                        </motion.button>
-                     </div>
-                  </div>
-               </motion.div>
-            </div>
-         </div>
-      );
-   }
-
-   // Show the initial form for email entry
-   return (
-      <div className="relative flex items-center justify-center min-h-screen px-5 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-         <AnimatedBackground />
-
-         <div className="relative z-10 w-full max-w-lg">
-            <motion.div
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="p-8 bg-white border-0 shadow-xl rounded-2xl backdrop-blur-xl"
-            >
-               <motion.div
-                  initial={{ scale: 0.9 }}
-                  animate={{ scale: 1 }}
-                  className="flex justify-center mb-8"
-               >
-                  <img
-                     src={logo}
-                     loading="lazy"
-                     alt="Logo"
-                     className="w-auto h-32 transition-transform duration-300 hover:scale-105"
-                  />
-               </motion.div>
-
-               <div className="text-center">
-                  <h1 className="text-2xl font-bold text-gray-900">Forgot Password?</h1>
-                  <p className="mt-2 text-sm text-gray-600">
-                     Enter your email to find your account
-                  </p>
-               </div>
-
-               <div className="mt-6">
-                  {isError && message && (
-                     <ErrorMessage error={message} onClear={clearErrorMessage} />
-                  )}
-               </div>
-
-               <form onSubmit={verifyEmail} className="mt-8 space-y-6">
-                  <div>
-                     <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Email Address
-                     </label>
-                     <input
-                        type="text"
-                        placeholder="Enter your email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 text-gray-900 transition-all duration-200 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-200"
-                     />
-                  </div>
-
-                  <motion.button
-                     type="submit"
-                     disabled={loading}
-                     whileHover={{ scale: 1.01 }}
-                     whileTap={{ scale: 0.99 }}
-                     className={`flex items-center justify-center w-full gap-2 px-6 py-3 font-medium text-white transition-all duration-200 rounded-lg ${loading
-                        ? "bg-blue-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        }`}
-                  >
-                     {loading ? (
-                        <div className="flex items-center gap-2">
-                           <RsuiteLoader size="sm" />
-                           <span>Searching...</span>
-                        </div>
-                     ) : (
-                        "Find Account"
-                     )}
-                  </motion.button>
-
-                  <motion.div
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                     className="text-center"
-                  >
-                     <button
-                        type="button"
-                        onClick={() => navigate('/login')}
-                        className="flex items-center justify-center mx-auto text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
-                     >
-                        <HiArrowLeft className="mr-1" />
-                        Back to Login
-                     </button>
-                  </motion.div>
-               </form>
-            </motion.div>
-         </div>
+   const changeEmail = () => { setStep('email'); setAccount(null); setError(''); };
+   const Icon = step === 'sent' ? CheckCircleIcon : step === 'confirm' ? EnvelopeIcon : KeyIcon;
+   return <main className="recovery-shell">
+      <header className="recovery-shell-header"><Link className="recovery-brand" to="/login"><img src={logo} alt="" /><span>AceSurvey<span>YOUR FEEDBACK WORKSPACE</span></span></Link><Link className="recovery-back" to="/login"><ArrowLeftIcon />Back to login</Link></header>
+      <div className="recovery-layout">
+         <aside className="recovery-story"><span className="ace-eyebrow">A FRESH START</span><h2>Good to have<br />you back.</h2><p>Your surveys, responses, and ideas are waiting right where you left them.</p><div className="recovery-art" aria-hidden="true"><div><KeyIcon /></div><span /><span /><span /></div><div className="recovery-story-note"><CheckCircleIcon /><span>A new password.<br /><strong>The same meaningful conversations.</strong></span></div></aside>
+         <section className="recovery-page" aria-labelledby="recovery-title">
+      <div className="recovery-symbol"><Icon /></div>
+      <span className="ace-eyebrow">{step === 'sent' ? 'YOU ARE ONE STEP CLOSER' : 'LET’S GET YOU BACK IN'}</span>
+      <h1 id="recovery-title">{step === 'sent' ? 'Check your inbox.' : step === 'confirm' ? 'Is this your account?' : 'Forgot your password?'}</h1>
+      <p className="recovery-description">{step === 'sent' ? 'Your reset link is on its way. Follow the instructions in the email to choose a new password.' : step === 'confirm' ? 'Confirm the details below and we will send a password reset link to your email.' : 'It happens. Enter your email address and we’ll help you get back to your surveys.'}</p>
+      <ol className="recovery-steps" aria-label="Password recovery steps">{[['email', 'Find account'], ['confirm', 'Confirm'], ['sent', 'Check email']].map(([value, label], index) => <li key={value} aria-current={step === value ? 'step' : undefined}><span>{index + 1}</span>{label}</li>)}</ol>
+      {error && <p className="recovery-error" role="alert">{error}</p>}
+      {step === 'sent' ? <div role="status">
+         <div className="recovery-email-card"><EnvelopeIcon /><div><span>Reset link sent to</span><strong>{email}</strong></div></div>
+         <p className="recovery-help">Can’t find the message? Check your spam or junk folder. If it takes a few minutes to arrive, keep this page open.</p>
+         <Link to="/login" className="ace-button recovery-primary">Return to login<ArrowRightIcon /></Link>
+         <button type="button" className="recovery-secondary" onClick={changeEmail}>Use a different email</button>
+      </div> : <form onSubmit={submit} aria-busy={loading}>
+         {step === 'email' ? <div className="recovery-field"><label htmlFor="recovery-email">Email address</label><div><EnvelopeIcon /><input id="recovery-email" type="email" required autoComplete="email" maxLength={191} placeholder="you@example.com" value={email} disabled={loading} onChange={event => setEmail(event.target.value)} /></div></div> : <div className="recovery-email-card"><span className="recovery-avatar">{(account?.name || 'A').slice(0,1).toUpperCase()}</span><div><strong>{account?.name || 'Your account'}</strong><span>{email}</span></div></div>}
+         <button className="ace-button recovery-primary" type="submit" disabled={loading}>{loading ? step === 'email' ? 'Finding your account...' : 'Sending reset link...' : step === 'email' ? 'Find my account' : 'Send reset link'}{!loading && <ArrowRightIcon />}</button>
+         {step === 'confirm' && <button type="button" className="recovery-secondary" disabled={loading} onClick={changeEmail}>Use a different email</button>}
+      </form>}
+      <p className="recovery-footer">A fresh start. Your feedback workspace is waiting.</p>
+         </section>
       </div>
-   );
-};
-
-export default ForgotPassword;
+      <footer className="recovery-shell-footer">AceSurvey · Thoughtful questions. Meaningful answers.</footer>
+   </main>;
+}

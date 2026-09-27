@@ -1,3 +1,4 @@
+import Profile from '@pages/Profile';
 import Settings from '@pages/Settings';
 import RespondentSkeleton from '@components/RespondentSkeleton';
 import SurveyEditorSkeleton from '@components/SurveyEditorSkeleton';
@@ -53,6 +54,8 @@ const DynamicTitle = ({ children }) => {
          title = "Users";
       } else if (path === "/settings") {
          title = "Settings";
+      } else if (path === "/profile") {
+         title = "Profile";
       } else if (path === "/surveys/create") {
          title = "Survey Create";
       } else if (path.startsWith("/survey/public/")) {
@@ -101,6 +104,7 @@ const router = createBrowserRouter([
          { path: "/logs", element: <Logs /> },
          { path: "/users", element: <Users /> },
          { path: "/settings", element: <Settings /> },
+         { path: "/profile", element: <Profile /> },
          {
             index: true,
             element: <Navigate to="/dashboard" replace />,
