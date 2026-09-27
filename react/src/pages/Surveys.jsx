@@ -139,7 +139,7 @@ export default function Surveys() {
 
                   <Link
                      to="/surveys/create"
-                     className="flex items-center justify-center gap-2 px-4 py-2.5 font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 hover:text-white focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                     className="ace-button"
                   >
                      <PlusCircleIcon className="w-5 h-5" />
                      <span className="inline-block">Create survey</span>

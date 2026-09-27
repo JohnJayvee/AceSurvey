@@ -5,17 +5,7 @@ import router from "./router";
 import { RouterProvider } from "react-router-dom";
 import { ContextProvider } from "@context/ContextProvider";
 import { pwaManager } from '@services/pwa'
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-
-const theme = createTheme({
-    palette: { primary: { main: '#107e72' }, background: { default: '#f5f7f8' }, text: { primary: '#20313d', secondary: '#778590' } },
-    typography: { fontFamily: '"Segoe UI", ui-sans-serif, system-ui, sans-serif', fontSize: 13 },
-    shape: { borderRadius: 10 },
-    components: {
-        MuiButton: { styleOverrides: { root: { textTransform: 'none', fontWeight: 600, boxShadow: 'none' } } },
-        MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
-    },
-});
+import AppearanceProvider from '@context/AppearanceProvider';
 
 // Initialize PWA with page control
 pwaManager.init({
@@ -36,10 +26,10 @@ pwaManager.init({
 
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
-        <ThemeProvider theme={theme}>
+        <AppearanceProvider>
         <ContextProvider>
             <RouterProvider router={router} />
         </ContextProvider>
-        </ThemeProvider>
+        </AppearanceProvider>
     </React.StrictMode>
 );

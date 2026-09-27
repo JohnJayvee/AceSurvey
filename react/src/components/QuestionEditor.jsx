@@ -98,19 +98,19 @@ export default function QuestionEditor({
          ...provided,
          minHeight: "38px",
          cursor: "pointer",
-         borderColor: state.isFocused ? '#3b82f6' : '#e5e7eb',
-         boxShadow: state.isFocused ? '0 0 0 1px #3b82f6' : 'none',
+         borderColor: state.isFocused ? 'var(--ace-accent)' : '#e5e7eb',
+         boxShadow: state.isFocused ? '0 0 0 1px var(--ace-accent)' : 'none',
          '&:hover': {
-            borderColor: '#3b82f6'
+            borderColor: 'var(--ace-accent)'
          }
       }),
       option: (provided, state) => ({
          ...provided,
-         backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#e5e7eb' : 'white',
+         backgroundColor: state.isSelected ? 'var(--ace-accent)' : state.isFocused ? '#e5e7eb' : 'white',
          color: state.isSelected ? 'white' : '#374151',
          cursor: 'pointer',
          '&:active': {
-            backgroundColor: '#2563eb'
+            backgroundColor: 'var(--ace-accent)'
          }
       }),
       menu: (provided) => ({

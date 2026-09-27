@@ -1,3 +1,4 @@
+import Settings from '@pages/Settings';
 import RespondentSkeleton from '@components/RespondentSkeleton';
 import SurveyEditorSkeleton from '@components/SurveyEditorSkeleton';
 import DashboardSkeleton from '@components/dashboard/DashboardSkeleton';
@@ -50,6 +51,8 @@ const DynamicTitle = ({ children }) => {
          title = "Activity Logs";
       } else if (path === "/users") {
          title = "Users";
+      } else if (path === "/settings") {
+         title = "Settings";
       } else if (path === "/surveys/create") {
          title = "Survey Create";
       } else if (path.startsWith("/survey/public/")) {
@@ -97,6 +100,7 @@ const router = createBrowserRouter([
       children: [
          { path: "/logs", element: <Logs /> },
          { path: "/users", element: <Users /> },
+         { path: "/settings", element: <Settings /> },
          {
             index: true,
             element: <Navigate to="/dashboard" replace />,

@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-const colors = ['#107e72', '#6bafa1', '#d8b968', '#d79478', '#b96662'];
+const colors = ['var(--ace-accent)', 'hsl(var(--palette-400))', '#d8b968', '#d79478', '#b96662'];
 export default function RatingDistributionChart({ data = [] }) {
    const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
    return <section className="ace-card ace-chart-card"><div className="ace-card-heading"><div><h2>The feedback picture</h2><p>Rating distribution across your surveys</p></div><span className="ace-tag">{total.toLocaleString()} ratings</span></div>

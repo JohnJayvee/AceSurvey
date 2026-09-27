@@ -51,7 +51,7 @@ export default function SurveyGrid({
             {!searchTerm && (
                <Link
                   to="/surveys/create"
-                  className="flex items-center gap-2 px-4 py-2 mt-4 text-sm font-medium text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="ace-button mt-4"
                >
                   <PlusCircleIcon className="w-5 h-5" />
                   Create Survey
