@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosClient from "../api/axios.js";
-import { processRatingsData, generateMonthlyData } from "../utils/dashboardUtils";
+import { processRatingsData } from "../utils/dashboardUtils";
 
 
 
@@ -13,7 +13,7 @@ export const useDashboardData = () => {
       latestSurvey: null,
       latestAnswers: [],
       ratingsData: [],
-      chartData: [],
+      monthlyActivity: [],
       topSurveys: [],
       bottomSurveys: []
    });
@@ -40,7 +40,7 @@ export const useDashboardData = () => {
                latestSurvey: dashboardRes.data.latestSurvey || null,
                latestAnswers: dashboardRes.data.latestAnswers || [],
                ratingsData: processRatingsData(ratingsRes.data.ratings),
-               chartData: generateMonthlyData(analyticsRes.data.analytics?.surveyStats || []),
+               monthlyActivity: analyticsRes.data.analytics?.monthlyActivity || [],
                topSurveys: topRes.data || [],
                bottomSurveys: bottomRes.data || []
             };

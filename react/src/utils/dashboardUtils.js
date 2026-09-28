@@ -21,8 +21,16 @@ export const processRatingsData = (ratings) => {
    return defaultData;
 };
 
-export const generateMonthlyData = (surveyStats) => {
-   const currentYear = new Date().getFullYear();
+const activityMonth = value => typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : null;
+
+export const getActivityYears = (monthlyActivity = [], currentYear = new Date().getFullYear()) => {
+   const years = monthlyActivity.map(item => activityMonth(item.month) ? Number(item.month.slice(0, 4)) : NaN)
+      .filter(year => Number.isFinite(year) && year > 0 && year <= currentYear);
+   const earliestYear = Math.min(currentYear, ...years);
+   return Array.from({ length: currentYear - earliestYear + 1 }, (_, index) => currentYear - index);
+};
+
+export const generateMonthlyData = (monthlyActivity = [], selectedYear = new Date().getFullYear()) => {
    const months = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
@@ -34,14 +42,12 @@ export const generateMonthlyData = (surveyStats) => {
       responses: 0
    }));
 
-   surveyStats?.forEach((surveyStat) => {
-      const surveyDate = new Date(surveyStat.updated_at);
-      if (isNaN(surveyDate.getTime())) return;
-
-      if (surveyDate.getFullYear() === currentYear) {
-         const surveyMonth = surveyDate.getMonth();
-         chartData[surveyMonth].surveys += 1;
-         chartData[surveyMonth].responses += surveyStat.answers;
+   monthlyActivity.forEach((activity) => {
+      if (!activityMonth(activity.month)) return;
+      if (Number(activity.month.slice(0, 4)) === selectedYear) {
+         const surveyMonth = Number(activity.month.slice(5, 7)) - 1;
+         chartData[surveyMonth].surveys += Number(activity.surveys) || 0;
+         chartData[surveyMonth].responses += Number(activity.responses) || 0;
       }
    });
 

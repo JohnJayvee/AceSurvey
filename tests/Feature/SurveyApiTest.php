@@ -10,6 +10,25 @@ use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
+it('keeps dashboard activity in creation and submission months after later survey edits', function () {
+    $owner = surveyOwner();
+    $survey = Survey::create([...surveyPayload(), 'user_id' => $owner->id]);
+    DB::table('surveys')->where('id', $survey->id)->update([
+        'created_at' => '2025-05-10 12:00:00', 'updated_at' => '2026-09-10 12:00:00',
+    ]);
+    foreach (['2025-12-31 23:59:59', '2026-01-01 00:00:00'] as $date) {
+        DB::table('survey_answers')->insert(['survey_id' => $survey->id, 'start_date' => $date, 'end_date' => $date]);
+    }
+    $other = Survey::create([...surveyPayload(), 'user_id' => surveyOwner('other')->id]);
+    DB::table('survey_answers')->insert(['survey_id' => $other->id, 'start_date' => '2024-01-01 00:00:00', 'end_date' => '2024-01-01 00:00:00']);
+    Sanctum::actingAs($owner);
+    $this->getJson('/api/survey-analytics')->assertOk()->assertJsonPath('analytics.monthlyActivity', [
+        ['month' => '2025-05', 'surveys' => 1, 'responses' => 0],
+        ['month' => '2025-12', 'surveys' => 0, 'responses' => 1],
+        ['month' => '2026-01', 'surveys' => 0, 'responses' => 1],
+    ]);
+});
+
 it('rejects invalid images without writing a survey', function () {
     Sanctum::actingAs(surveyOwner());
     $payload = surveyPayload();

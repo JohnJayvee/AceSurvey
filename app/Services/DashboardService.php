@@ -79,9 +79,24 @@ class DashboardService
       $totalSurveys = $combinedStats->count();
       $totalAnswers = $surveyStats->sum('answers');
 
+      // Keep historical activity in its original month, even after a survey is edited.
+      $created = Survey::where('user_id', $userId)
+         ->selectRaw('SUBSTR(created_at, 1, 7) as month, COUNT(*) as surveys')
+         ->whereNotNull('created_at')->groupByRaw('SUBSTR(created_at, 1, 7)')->get()->keyBy('month');
+      $submitted = SurveyAnswer::join('surveys', 'survey_answers.survey_id', '=', 'surveys.id')
+         ->where('surveys.user_id', $userId)->whereNotNull('survey_answers.end_date')
+         ->selectRaw('SUBSTR(survey_answers.end_date, 1, 7) as month, COUNT(*) as responses')
+         ->groupByRaw('SUBSTR(survey_answers.end_date, 1, 7)')->get()->keyBy('month');
+      $monthlyActivity = $created->keys()->merge($submitted->keys())->unique()->sort()->map(fn ($month) => [
+         'month' => $month,
+         'surveys' => (int) ($created->get($month)?->surveys ?? 0),
+         'responses' => (int) ($submitted->get($month)?->responses ?? 0),
+      ])->values();
+
       return [
          'analytics' => [
             'surveyStats' => $combinedStats,
+            'monthlyActivity' => $monthlyActivity,
             'totalAnswers' => (int) $totalAnswers,
             'totalSurveys' => (int) $totalSurveys,
          ],
