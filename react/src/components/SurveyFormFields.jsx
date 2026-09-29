@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { PhotoIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
 export default function SurveyFormFields({ survey, setSurvey, updateSurveyField, onImageChange, logo }) {
@@ -11,7 +12,7 @@ export default function SurveyFormFields({ survey, setSurvey, updateSurveyField,
    return <section className="builder-settings">
       <div className="builder-section-title"><span>01</span><div><h2>The essentials</h2><p>Give your survey a clear purpose and a welcoming introduction.</p></div></div>
       <div className="builder-settings-grid">
-         <div className="builder-cover"><div className="builder-cover-preview"><img src={survey.image_url || logo} alt="Survey cover" /></div><label className="builder-upload"><PhotoIcon />Choose cover image<input type="file" accept="image/*" onChange={onImageChange} aria-label="Choose survey cover image" /></label><p>This image appears at the top of your public survey.</p>{survey.slug && <a href={'/survey/public/' + survey.slug} target="_blank" rel="noopener noreferrer">Preview survey<ArrowTopRightOnSquareIcon /></a>}</div>
+         <div className="builder-cover"><div className="builder-cover-preview"><img src={survey.image_url || logo} alt="Survey cover" /></div><label className="builder-upload"><PhotoIcon />Choose cover image<input type="file" accept="image/jpeg,image/png,image/gif" onChange={onImageChange} aria-label="Choose survey cover image" /></label><p>JPEG, PNG or GIF, up to 5 MB. This image appears at the top of your public survey.</p>{survey.slug && <a href={'/survey/public/' + survey.slug} target="_blank" rel="noopener noreferrer">Preview survey<ArrowTopRightOnSquareIcon /></a>}</div>
          <div className="builder-fields">
             <div><label htmlFor="survey-title">Survey title <span>*</span></label><input id="survey-title" type="text" required maxLength={255} placeholder="Give your survey a name" value={survey.title || ''} onChange={event => change('title', event.target.value)} /></div>
             <div><label htmlFor="survey-description">Description <small>Optional</small></label><textarea id="survey-description" rows={4} placeholder="Tell people what this survey is about and why their feedback matters." value={survey.description || ''} onChange={event => change('description', event.target.value)} /></div>
@@ -23,3 +24,10 @@ export default function SurveyFormFields({ survey, setSurvey, updateSurveyField,
       </div>
    </section>;
 }
+SurveyFormFields.propTypes = {
+   survey: PropTypes.object,
+   setSurvey: PropTypes.func,
+   updateSurveyField: PropTypes.func,
+   onImageChange: PropTypes.func,
+   logo: PropTypes.string,
+};

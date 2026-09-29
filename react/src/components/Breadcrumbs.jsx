@@ -1,4 +1,5 @@
-import React from "react";
+import PropTypes from 'prop-types';
+
 import { Breadcrumbs as MuiBreadcrumbs } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -32,6 +33,10 @@ const Breadcrumbs = ({ links }) => {
       </MuiBreadcrumbs>
    );
 };
+Breadcrumbs.propTypes = {
+   links: PropTypes.arrayOf(PropTypes.object),
+};
+
 
 const Link = (props) => {
    if (props.disabled) {
@@ -39,5 +44,10 @@ const Link = (props) => {
    }
    return <RouterLink {...props} />;
 };
+Link.propTypes = {
+   disabled: PropTypes.bool,
+   children: PropTypes.node,
+};
+
 
 export default Breadcrumbs;

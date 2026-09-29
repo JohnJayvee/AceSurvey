@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from "react";
 import axiosClient from '@api/axios';
 import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
 import { Loader as RsuiteLoader } from 'rsuite';

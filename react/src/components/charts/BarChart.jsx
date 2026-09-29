@@ -1,4 +1,5 @@
-import React from 'react';
+import PropTypes from 'prop-types';
+
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { CHART_MARGINS } from '../../constants/chartConstants';
 
@@ -66,3 +67,9 @@ export default function BarChart({ data, color, dataKey, name }) {
       </ResponsiveContainer>
    );
 }
+BarChart.propTypes = {
+   data: PropTypes.arrayOf(PropTypes.object),
+   color: PropTypes.string,
+   dataKey: PropTypes.string,
+   name: PropTypes.string,
+};

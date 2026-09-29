@@ -1,4 +1,5 @@
-import React from 'react';
+import PropTypes from 'prop-types';
+
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -41,3 +42,8 @@ export default function SearchBar({ searchTerm, onSearch, placeholder = "Search 
       </motion.div>
    );
 }
+SearchBar.propTypes = {
+   searchTerm: PropTypes.string,
+   onSearch: PropTypes.func,
+   placeholder: PropTypes.string,
+};

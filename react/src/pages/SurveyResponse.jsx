@@ -1,5 +1,6 @@
+import PropTypes from 'prop-types';
 import SurveyResponseSkeleton from '@components/SurveyResponseSkeleton';
-import React, { useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -90,3 +91,6 @@ const ErrorDisplay = ({ error }) => (
       </div>
    </div>
 );
+ErrorDisplay.propTypes = {
+   error: PropTypes.string,
+};

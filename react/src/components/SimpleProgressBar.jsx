@@ -1,7 +1,7 @@
+import PropTypes from 'prop-types';
 import { motion } from "framer-motion";
 
 const SimpleProgressBar = ({ current, total }) => {
-   /* eslint-disable react/prop-types */
    const progress = total > 0 ? Math.round((current / total) * 100) : 0;
 
    return (
@@ -24,6 +24,10 @@ const SimpleProgressBar = ({ current, total }) => {
       </div>
    );
 };
+SimpleProgressBar.propTypes = {
+   current: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+   total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
+
 
 export default SimpleProgressBar;
-

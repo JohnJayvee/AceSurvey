@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import axiosClient from "@api/axios";
 import { useStateContext } from "@context/ContextProvider";
-import Footer from "@components/Footer";
+
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Loader as RsuiteLoader } from "rsuite";
 import "rsuite/dist/rsuite.min.css";
 import Bulb from "@components/Bulb";
 import logo from "@images/AceLogo.png";
-import AnimatedBackground from "../components/AnimatedBackground";
+
 import { motion } from "framer-motion";
 import ErrorMessage from "@components/ErrorMessage";
 
@@ -92,7 +92,6 @@ export default function Login() {
 
    // Extract login success logic
    const handleLoginSuccess = (data) => {
-      localStorage.setItem('CURRENT_USER', JSON.stringify(data.user));
       setCurrentUser(data.user);
       setUserToken(data.token, formData.keepSignedIn, data.user);
    };

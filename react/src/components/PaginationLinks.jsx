@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import { motion } from "framer-motion";
 
@@ -97,3 +98,7 @@ export default function PaginationLinks({ meta, onPageClick }) {
       </motion.div>
    );
 }
+PaginationLinks.propTypes = {
+   meta: PropTypes.object,
+   onPageClick: PropTypes.func,
+};

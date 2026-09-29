@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 export default function RespondentAnswerView({ question, index, answer }) {
    let values = [];
    if (question.type === 'checkboxes' && answer != null && answer !== '') {
@@ -12,3 +13,8 @@ export default function RespondentAnswerView({ question, index, answer }) {
       {!values.length ? <p className="answer-not-provided">No answer provided</p> : question.type === 'checkboxes' ? <ul className="answer-selections">{values.map((value, i) => <li key={i}><span aria-hidden="true">✓</span>{String(value)}</li>)}</ul> : <div className="answer-text">{String(values[0])}</div>}
    </article>;
 }
+RespondentAnswerView.propTypes = {
+   question: PropTypes.object,
+   index: PropTypes.number,
+   answer: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+};

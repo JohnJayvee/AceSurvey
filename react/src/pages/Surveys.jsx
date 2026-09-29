@@ -1,6 +1,7 @@
-import React, { useCallback } from "react";
+import PropTypes from 'prop-types';
+import { useCallback } from "react";
 import { PlusCircleIcon, ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import Breadcrumbs from "@components/Breadcrumbs";
+
 import { Link } from "react-router-dom";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -58,6 +59,11 @@ const ErrorState = ({ error, onRetry }) => (
       </button>
    </div>
 );
+ErrorState.propTypes = {
+   error: PropTypes.string,
+   onRetry: PropTypes.func,
+};
+
 
 export default function Surveys() {
    const { currentUser } = useStateContext();
@@ -91,10 +97,6 @@ export default function Surveys() {
       }
    }, [surveyToDelete, deleteSurvey, closeModal]);
 
-   const breadcrumbLinks = [
-      { to: "/dashboard", label: "Home" },
-      { to: "", label: "Survey List" },
-   ];
 
    // Render error state
    if (error && !loading && filteredSurveys.length === 0) {

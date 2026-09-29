@@ -1,4 +1,9 @@
+import PropTypes from 'prop-types';
 const Bar = ({ className = '' }) => <div className={'response-placeholder ' + className} />;
+Bar.propTypes = {
+   className: PropTypes.string,
+};
+
 
 export default function SurveyResponseSkeleton() {
    return <div className="ace-responses-page" role="status" aria-busy="true" aria-label="Loading survey responses">

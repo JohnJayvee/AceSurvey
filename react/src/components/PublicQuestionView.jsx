@@ -1,7 +1,10 @@
-import React from "react";
-import { motion } from "framer-motion";
+import PropTypes from 'prop-types';
 
-export default function PublicQuestionView({ question, index, answer, answerChanged }) {
+import { motion } from "framer-motion";
+import { MAX_ANSWER_LENGTH } from '../utils/surveyValidation';
+
+export default function PublicQuestionView({ question, index, answer, answerChanged, error }) {
+   const validationProps = { 'aria-invalid': Boolean(error), 'aria-describedby': error ? 'question-error-' + question.id : undefined };
    const options = question.data?.options || [];
    function onCheckboxChanged(option, event) {
       const selected = Array.isArray(answer) ? answer : [];
@@ -17,7 +20,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
          transition={{ duration: 0.15 }}
          className="ace-question bg-white"
       >
-         <fieldset aria-labelledby={"question-label-" + question.id}>
+         <fieldset id={'question-' + question.id} aria-labelledby={"question-label-" + question.id}>
             <div className="flex items-start gap-3 mb-4">
                <span className="flex items-center justify-center w-6 h-6 text-sm font-semibold text-white bg-blue-600 rounded-full shrink-0">
                   {index + 1}
@@ -37,6 +40,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
             <div className="mt-4 ml-9">
                {question.type === "dropdown" && (
                   <select aria-labelledby={"question-label-" + question.id}
+                     {...validationProps}
                      value={answer || ""}
                      onChange={(ev) => answerChanged(ev.target.value)}
                      className={`${inputBaseClass} px-4 py-2.5 bg-white cursor-pointer hover:border-blue-200`}
@@ -58,6 +62,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
                            className="flex items-center p-3 transition-colors duration-200 border border-gray-100 rounded-lg hover:bg-gray-50"
                         >
                            <input
+                              {...validationProps}
                               id={option.uuid}
                               name={"question" + question.id}
                               value={option.text}
@@ -82,6 +87,7 @@ export default function PublicQuestionView({ question, index, answer, answerChan
                            className="flex items-center p-3 transition-colors duration-200 border border-gray-100 rounded-lg hover:bg-gray-50"
                         >
                            <input
+                              {...validationProps}
                               id={option.uuid}
                               onChange={(ev) => onCheckboxChanged(option, ev)}
                               checked={Array.isArray(answer) && answer.includes(option.text)}
@@ -98,6 +104,8 @@ export default function PublicQuestionView({ question, index, answer, answerChan
 
                {question.type === "short answer" && (
                   <input
+                     {...validationProps}
+                     maxLength={MAX_ANSWER_LENGTH}
                      value={answer || ""}
                      type="text"
                      aria-labelledby={"question-label-" + question.id}
@@ -109,6 +117,8 @@ export default function PublicQuestionView({ question, index, answer, answerChan
 
                {question.type === "paragraph" && (
                   <textarea aria-labelledby={"question-label-" + question.id}
+                     {...validationProps}
+                     maxLength={MAX_ANSWER_LENGTH}
                      value={answer || ""}
                      onChange={(ev) => answerChanged(ev.target.value)}
                      rows={4}
@@ -117,7 +127,15 @@ export default function PublicQuestionView({ question, index, answer, answerChan
                   />
                )}
             </div>
+            {error && <p id={'question-error-' + question.id} className="mt-3 ml-9 text-red-700">{error}</p>}
          </fieldset>
       </motion.div>
    );
 }
+PublicQuestionView.propTypes = {
+   question: PropTypes.object,
+   index: PropTypes.number,
+   answer: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+   answerChanged: PropTypes.func,
+   error: PropTypes.string,
+};

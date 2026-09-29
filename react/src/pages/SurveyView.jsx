@@ -1,22 +1,15 @@
 import SurveyEditorSkeleton from '@components/SurveyEditorSkeleton';
-import React, { useEffect, useState, useRef } from "react";
-import {
-   ArrowTopRightOnSquareIcon,
-   EyeIcon,
-   UsersIcon,
-   TrashIcon,
-   ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+
 import axiosClient from "@api/axios.js";
 import { useNavigate, useParams } from "react-router-dom";
 import SurveyQuestions from "@components/SurveyQuestions.jsx";
 import { useStateContext } from "@context/ContextProvider.jsx";
 import ShareSurveyPopup from "../components/ShareSurveyPopup.jsx";
 import { motion } from "framer-motion";
-import { debounce } from 'lodash';
 import ErrorMessage from "@components/ErrorMessage";
 import logo from "@images/AceLogo.png";
-import Skeleton from 'react-loading-skeleton';
+
 import 'react-loading-skeleton/dist/skeleton.css';
 
 // Custom hooks
@@ -25,7 +18,7 @@ import { useSurveyCache } from '../hooks/useSurveyCache';
 import { useSurveyForm } from '../hooks/useSurveyForm';
 
 // Components
-import SurveyHeader from '../components/SurveyHeader';
+
 import SurveyActions from '../components/SurveyActions';
 import SurveyFormFields from '../components/SurveyFormFields';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
@@ -46,7 +39,9 @@ export default function SurveyView() {
       clearError,
       handleSubmit,
       handleImageChange,
-      fetchSurvey
+      fetchSurvey,
+      readingImage,
+      allowNavigation
    } = useSurveyForm(id, showToast, navigate);
 
    // Cache management
@@ -66,15 +61,16 @@ export default function SurveyView() {
    }, [id, fetchSurvey]);
 
    // Event handlers
-   const handleDeleteClick = debounce((surveyId) => {
+   const handleDeleteClick = (surveyId) => {
       setSurveyToDelete(surveyId);
       setShowDeleteModal(true);
-   }, 300);
+   };
 
    const handleConfirmDelete = async () => {
       try {
          await axiosClient.delete(`/survey/${surveyToDelete}`);
          clearSurveyCache();
+         allowNavigation();
          navigate("/surveys");
          showToast("The survey was deleted");
       } catch (error) {
@@ -86,18 +82,18 @@ export default function SurveyView() {
       }
    };
 
-   const handleOpenShare = debounce(() => {
+   const handleOpenShare = () => {
       setShareLink(`${window.location.origin}/survey/public/${survey.slug}`);
       setOpenSharePopup(true);
-   }, 300);
+   };
 
-   const handleGoBack = debounce(() => {
+   const handleGoBack = () => {
       navigate('/surveys');
-   }, 300);
+   };
 
-   const handleViewResponses = debounce((surveyId) => {
+   const handleViewResponses = (surveyId) => {
       navigate(`/surveys/${surveyId}/responses`);
-   }, 300);
+   };
 
    const handleQuestionsUpdate = (questions) => {
       if (survey.can_manage === false) return;
@@ -126,7 +122,7 @@ export default function SurveyView() {
                width={width}
             />
 
-            {survey.can_manage === false && <p className="p-4 mb-4 bg-teal-50 rounded-lg">You are viewing another user's survey. Only its creator can edit or delete it.</p>}
+            {survey.can_manage === false && <p className="p-4 mb-4 bg-teal-50 rounded-lg">You are viewing another user&apos;s survey. Only its creator can edit or delete it.</p>}
             <form onSubmit={event => { if (survey.can_manage === false) event.preventDefault(); else handleSubmit(event); }} className="space-y-4 sm:space-y-6">
                <fieldset disabled={survey.can_manage === false} className="space-y-4 sm:space-y-6">
                <SurveyFormFields
@@ -164,9 +160,10 @@ export default function SurveyView() {
                   <p>Ready to share? Save your changes first.</p>
                   {survey.can_manage !== false && <button
                      type="submit"
+                     disabled={readingImage}
                      className="ace-button"
                   >
-                     {id ? "Save changes" : "Create survey"}
+                     {readingImage ? "Reading image..." : id ? "Save changes" : "Create survey"}
                   </button>}
                </motion.div>
                </fieldset>

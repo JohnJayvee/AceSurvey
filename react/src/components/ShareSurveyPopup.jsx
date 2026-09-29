@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useEffect, useId, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import { QRCodeSVG } from 'qrcode.react';
@@ -99,3 +100,8 @@ export default function ShareSurveyPopup({ openSharePopup, setOpenSharePopup, sh
       <footer className="share-dialog-footer">{shareLink && <a href={shareLink} target="_blank" rel="noopener noreferrer">Open survey<ArrowTopRightOnSquareIcon /></a>}<button type="button" onClick={close}>Done</button></footer>
    </Dialog>;
 }
+ShareSurveyPopup.propTypes = {
+   openSharePopup: PropTypes.bool,
+   setOpenSharePopup: PropTypes.func,
+   shareLink: PropTypes.string,
+};

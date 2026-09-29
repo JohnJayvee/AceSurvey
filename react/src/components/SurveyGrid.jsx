@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { useEffect, useState } from "react";
 import axiosClient from '@api/axios';
 import { motion, AnimatePresence } from "framer-motion";
 import { DocumentIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
@@ -102,3 +103,11 @@ export default function SurveyGrid({
       </motion.div>
    );
 }
+SurveyGrid.propTypes = {
+   surveys: PropTypes.arrayOf(PropTypes.object),
+   meta: PropTypes.object,
+   searchTerm: PropTypes.string,
+   onDeleteClick: PropTypes.func,
+   onPageClick: PropTypes.func,
+   refreshing: PropTypes.bool,
+};

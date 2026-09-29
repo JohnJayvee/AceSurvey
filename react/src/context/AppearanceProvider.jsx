@@ -1,8 +1,11 @@
+import PropTypes from 'prop-types';
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { DEFAULT_COLOR, PALETTE_KEY, paletteFromColor, validColor } from '../utils/palette';
 
 const AppearanceContext = createContext(null);
+// The consumer hook shares this module's private context.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAppearance = () => useContext(AppearanceContext);
 
 export default function AppearanceProvider({ children }) {
@@ -43,3 +46,6 @@ export default function AppearanceProvider({ children }) {
    };
    return <AppearanceContext.Provider value={{ color, changeColor, saveError }}><ThemeProvider theme={theme}>{children}</ThemeProvider></AppearanceContext.Provider>;
 }
+AppearanceProvider.propTypes = {
+   children: PropTypes.node,
+};

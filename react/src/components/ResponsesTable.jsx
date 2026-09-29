@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, ArrowUpRightIcon } from '@heroicons/react/24/outline';
 
@@ -14,3 +15,9 @@ export default function ResponsesTable({ rows, searchQuery, onSearchChange, onVi
       {rows.length > 0 && <nav className="response-pagination" aria-label="Response pagination"><span>Showing {start + 1}–{Math.min(start + perPage, rows.length)} of {rows.length}</span><div><button disabled={current === 1} onClick={() => setPage(current - 1)}>Previous</button><span>{current} / {pages}</span><button disabled={current === pages} onClick={() => setPage(current + 1)}>Next</button></div></nav>}
    </section>;
 }
+ResponsesTable.propTypes = {
+   rows: PropTypes.arrayOf(PropTypes.object),
+   searchQuery: PropTypes.string,
+   onSearchChange: PropTypes.func,
+   onViewDetail: PropTypes.func,
+};

@@ -1,4 +1,5 @@
-import React from 'react';
+import PropTypes from 'prop-types';
+
 
 const EmptyState = ({ icon, message, height = "h-64" }) => {
    const getIcon = () => {
@@ -25,5 +26,11 @@ const EmptyState = ({ icon, message, height = "h-64" }) => {
       </div>
    );
 };
+EmptyState.propTypes = {
+   icon: PropTypes.node,
+   message: PropTypes.string,
+   height: PropTypes.string,
+};
+
 
 export default EmptyState;

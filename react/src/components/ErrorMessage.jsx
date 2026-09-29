@@ -1,4 +1,5 @@
-import React from "react";
+import PropTypes from 'prop-types';
+
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ErrorMessage({ error, onClear }) {
@@ -95,6 +96,11 @@ export default function ErrorMessage({ error, onClear }) {
       </AnimatePresence>
    );
 }
+ErrorMessage.propTypes = {
+   error: PropTypes.string,
+   onClear: PropTypes.func,
+};
+
 
 // In your Login.jsx and other components:
 // import ErrorMessage from "../components/ErrorMessage";

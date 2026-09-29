@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useStateContext } from '@context/ContextProvider';
@@ -13,3 +14,6 @@ export default function UserProfilePopup({ onLogout }) {
       <div className="account-dropdown-footer"><button type="button" onClick={onLogout}><ArrowRightOnRectangleIcon /><span>Logout</span><small>End this session</small></button></div>
    </section>;
 }
+UserProfilePopup.propTypes = {
+   onLogout: PropTypes.func,
+};

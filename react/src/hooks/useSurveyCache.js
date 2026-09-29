@@ -5,7 +5,7 @@ const cache = {};
 const isFetching = {};
 let cacheAccount;
 const syncAccount = () => {
-   const token = localStorage.getItem('TOKEN');
+   const token = localStorage.getItem('TOKEN') || sessionStorage.getItem('TOKEN');
    if (token !== cacheAccount) {
       Object.keys(cache).forEach(key => delete cache[key]);
       Object.keys(isFetching).forEach(key => delete isFetching[key]);

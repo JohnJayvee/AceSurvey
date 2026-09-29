@@ -54,6 +54,8 @@ class PWAManager {
 
       this.updateSW = registerSW({
          onNeedRefresh: () => {
+            this.updateAvailable = true
+            window.dispatchEvent(new Event('pwa:update-available'))
             this.showUpdatePrompt()
             options.onNeedRefresh?.()
          },

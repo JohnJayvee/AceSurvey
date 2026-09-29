@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router-dom";
 import { ContextProvider } from "@context/ContextProvider";
 import { pwaManager } from '@services/pwa'
 import AppearanceProvider from '@context/AppearanceProvider';
+import AppErrorBoundary from '@components/AppErrorBoundary';
 
 // Initialize PWA with page control
 pwaManager.init({
@@ -26,10 +27,12 @@ pwaManager.init({
 
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
+        <AppErrorBoundary>
         <AppearanceProvider>
         <ContextProvider>
             <RouterProvider router={router} />
         </ContextProvider>
         </AppearanceProvider>
+        </AppErrorBoundary>
     </React.StrictMode>
 );

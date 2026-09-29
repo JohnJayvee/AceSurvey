@@ -1,5 +1,6 @@
-import React from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import PropTypes from 'prop-types';
+
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 const RatingChart = ({ ratingsData, width }) => {
    const COLORS = {
@@ -66,30 +67,14 @@ const RatingChart = ({ ratingsData, width }) => {
       }
       return null;
    };
+CustomTooltip.propTypes = {
+   active: PropTypes.bool,
+   payload: PropTypes.arrayOf(PropTypes.object),
+};
 
-   const CustomLegend = ({ payload }) => {
-      return (
-         <div className="flex flex-wrap justify-center gap-4 mt-4">
-            {payload.map((entry, index) => {
-               const dataItem = dataWithPercentages.find(item => item.name === entry.value);
-               return (
-                  <div key={index} className="flex items-center gap-2">
-                     <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: entry.color }}
-                     />
-                     <span className="text-sm text-gray-700">
-                        {entry.value} ({dataItem?.percentage || 0}%)
-                     </span>
-                  </div>
-               );
-            })}
-         </div>
-      );
-   };
 
    // Smart label function that shows all labels (modified)
-   const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage, value, index }) => {
+   const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage, value }) => {
       const percentageNum = parseFloat(percentage);
 
       // Show labels only for segments with sufficient size or on larger screens
@@ -169,7 +154,7 @@ const RatingChart = ({ ratingsData, width }) => {
                         ))}
                      </Pie>
                      <Tooltip content={<CustomTooltip />} />
-                     {/* <Legend content={<CustomLegend />} /> */}
+
                   </PieChart>
                </ResponsiveContainer>
             </div>
@@ -200,5 +185,10 @@ const RatingChart = ({ ratingsData, width }) => {
       </div>
    );
 };
+RatingChart.propTypes = {
+   ratingsData: PropTypes.arrayOf(PropTypes.object),
+   width: PropTypes.number,
+};
+
 
 export default RatingChart;

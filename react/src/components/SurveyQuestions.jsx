@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 import { v4 as uuidv4 } from "uuid";
@@ -112,3 +113,7 @@ export default function SurveyQuestions({ questions, onQuestionsUpdate }) {
       </motion.div>
    );
 }
+SurveyQuestions.propTypes = {
+   questions: PropTypes.arrayOf(PropTypes.object),
+   onQuestionsUpdate: PropTypes.func,
+};

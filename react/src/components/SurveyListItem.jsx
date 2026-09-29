@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRightIcon, ShareIcon, TrashIcon, ChartBarIcon } from "@heroicons/react/24/outline";
@@ -23,3 +24,9 @@ export default function SurveyListItem({ survey, onDeleteClick, analyticsData = 
       {openSharePopup && <ShareSurveyPopup openSharePopup={openSharePopup} setOpenSharePopup={setOpenSharePopup} shareLink={window.location.origin + '/survey/public/' + survey.slug} />}
    </article>;
 }
+SurveyListItem.propTypes = {
+   survey: PropTypes.object,
+   onDeleteClick: PropTypes.func,
+   analyticsData: PropTypes.arrayOf(PropTypes.object),
+   isLoadingAnalytics: PropTypes.bool,
+};

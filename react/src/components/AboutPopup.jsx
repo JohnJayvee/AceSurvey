@@ -1,4 +1,5 @@
-import React, { memo } from "react";
+import PropTypes from 'prop-types';
+import { memo } from "react";
 import { Box } from "@mui/material";
 import Modal from "@mui/joy/Modal";
 import ModalClose from "@mui/joy/ModalClose";
@@ -143,5 +144,7 @@ FeaturesList.displayName = 'FeaturesList';
 TechStack.displayName = 'TechStack';
 AboutContent.displayName = 'AboutContent';
 AboutPopup.displayName = 'AboutPopup';
+
+AboutPopup.propTypes = { openAboutPopup: PropTypes.bool, setOpenAboutPopup: PropTypes.func };
 
 export default AboutPopup;

@@ -15,6 +15,8 @@ export const useCSVDownload = (survey) => {
          const url = URL.createObjectURL(data);
          const link = document.createElement('a');
          link.href = url;
+         // Control characters are deliberately excluded from downloaded filenames.
+         // eslint-disable-next-line no-control-regex
          link.download = (survey.title || 'survey').replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').slice(0, 120) + '_responses.csv';
          document.body.appendChild(link);
          link.click();

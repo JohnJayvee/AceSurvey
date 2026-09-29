@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { isSurveyExpired } from '@utils/dashboardUtils';
 
 const dateLabel = value => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not available';
@@ -25,3 +26,8 @@ export default function ResponseOverview({ survey, responseCount, ratingsData })
       </div>
    </>;
 }
+ResponseOverview.propTypes = {
+   survey: PropTypes.object,
+   responseCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+   ratingsData: PropTypes.arrayOf(PropTypes.object),
+};

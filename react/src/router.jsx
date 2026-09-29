@@ -1,4 +1,5 @@
 import Profile from '@pages/Profile';
+import { RecoveryPage } from '@components/AppErrorBoundary';
 import Settings from '@pages/Settings';
 import RespondentSkeleton from '@components/RespondentSkeleton';
 import SurveyEditorSkeleton from '@components/SurveyEditorSkeleton';
@@ -33,6 +34,8 @@ const capitalizeFirstLetter = (string) => {
    return string.replace(/\b\w/g, char => char.toUpperCase());
 };
 
+// This component is private to the router configuration, not a refresh boundary.
+// eslint-disable-next-line react-refresh/only-export-components
 const DynamicTitle = ({ children }) => {
    const location = useLocation();
 
@@ -90,7 +93,9 @@ const DynamicTitle = ({ children }) => {
    return children;
 };
 
-const router = createBrowserRouter([
+const router = createBrowserRouter([{
+   errorElement: <RecoveryPage />,
+   children: [
    {
       path: "/",
       element: (
@@ -119,7 +124,7 @@ const router = createBrowserRouter([
          },
          {
             path: "/surveys/create",
-            element: <Suspense fallback={<SurveyEditorSkeleton />}><SurveyView /></Suspense>,
+            element: <Suspense fallback={<SurveyEditorSkeleton />}><SurveyView key="create" /></Suspense>,
          },
          {
             path: "/surveys/:id",
@@ -193,6 +198,6 @@ const router = createBrowserRouter([
          </Suspense>
       ),
    },
-]);
+]}]);
 
 export default router;

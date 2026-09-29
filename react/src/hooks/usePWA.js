@@ -4,14 +4,16 @@ import { pwaManager } from '@services/pwa'
 export const usePWA = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine)
     const [isInstalled, setIsInstalled] = useState(false)
-    const [updateAvailable, setUpdateAvailable] = useState(false)
+    const [updateAvailable, setUpdateAvailable] = useState(Boolean(pwaManager.updateAvailable))
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true)
         const handleOffline = () => setIsOnline(false)
+        const handleUpdate = () => setUpdateAvailable(true)
 
         window.addEventListener('online', handleOnline)
         window.addEventListener('offline', handleOffline)
+        window.addEventListener('pwa:update-available', handleUpdate)
 
         // Check if app is installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -21,6 +23,7 @@ export const usePWA = () => {
         return () => {
             window.removeEventListener('online', handleOnline)
             window.removeEventListener('offline', handleOffline)
+            window.removeEventListener('pwa:update-available', handleUpdate)
         }
     }, [])
 

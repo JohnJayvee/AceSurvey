@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Link } from "react-router-dom";
 
 export default function TButton({
@@ -114,3 +115,13 @@ export default function TButton({
         </>
     );
 }
+TButton.propTypes = {
+   color: PropTypes.string,
+   to: PropTypes.string,
+   circle: PropTypes.bool,
+   href: PropTypes.string,
+   link: PropTypes.bool,
+   target: PropTypes.string,
+   onClick: PropTypes.func,
+   children: PropTypes.node,
+};

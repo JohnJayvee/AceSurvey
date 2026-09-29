@@ -1,15 +1,11 @@
+import PropTypes from 'prop-types';
 
 import { useStateContext } from "@context/ContextProvider";
-import {
-   TrashIcon,
-   ChevronDownIcon,
-   PlusCircleIcon,
-   XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { TrashIcon, PlusCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { v4 as uuidv4 } from "uuid";
 import { Divider } from "@mui/material";
-import Tooltip from "@mui/material/Tooltip";
-import Fade from "@mui/material/Fade";
+
+
 import Select from "react-select";
 import {
    FaAlignJustify,
@@ -18,7 +14,7 @@ import {
    FaRegCircle,
    FaSortDown,
 } from "react-icons/fa";
-import { HiBars2 } from "react-icons/hi2";
+
 import { motion } from "framer-motion";
 
 export default function QuestionEditor({
@@ -275,3 +271,10 @@ export default function QuestionEditor({
       </motion.div>
    );
 }
+QuestionEditor.propTypes = {
+   index: PropTypes.number,
+   question: PropTypes.object,
+   addQuestion: PropTypes.func,
+   deleteQuestion: PropTypes.func,
+   questionChange: PropTypes.func,
+};

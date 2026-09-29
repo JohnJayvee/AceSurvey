@@ -1,4 +1,5 @@
-import React from 'react';
+import PropTypes from 'prop-types';
+
 import DashboardCard from '../DashboardCard';
 import BarChart from '../charts/BarChart';
 import EmptyState from './EmptyState';
@@ -29,6 +30,14 @@ const PerformanceChart = ({ title, data, color, icon, emptyMessage }) => (
       )}
    </DashboardCard>
 );
+PerformanceChart.propTypes = {
+   title: PropTypes.string,
+   data: PropTypes.arrayOf(PropTypes.object),
+   color: PropTypes.object,
+   icon: PropTypes.node,
+   emptyMessage: PropTypes.string,
+};
+
 
 export default function SurveyPerformanceCharts({ topSurveys, bottomSurveys }) {
    return (
@@ -65,3 +74,7 @@ export default function SurveyPerformanceCharts({ topSurveys, bottomSurveys }) {
       </>
    );
 }
+SurveyPerformanceCharts.propTypes = {
+   topSurveys: PropTypes.arrayOf(PropTypes.object),
+   bottomSurveys: PropTypes.arrayOf(PropTypes.object),
+};

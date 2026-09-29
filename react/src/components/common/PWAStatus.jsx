@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { usePWA } from '@hooks/usePWA'
 
 const PWAStatus = () => {

@@ -1,4 +1,5 @@
-import React from "react";
+import PropTypes from 'prop-types';
+
 import { format } from "date-fns";
 const SurveyStats = ({ responseCount, survey }) => {
    const formatDate = (dateString) => {
@@ -72,5 +73,10 @@ const SurveyStats = ({ responseCount, survey }) => {
       </div>
    );
 };
+SurveyStats.propTypes = {
+   responseCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+   survey: PropTypes.object,
+};
+
 
 export default SurveyStats;

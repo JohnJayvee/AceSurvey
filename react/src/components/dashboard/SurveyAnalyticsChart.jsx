@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
@@ -18,3 +19,7 @@ export default function SurveyAnalyticsChart({ monthlyActivity = [], loading = f
       </ResponsiveContainer><div className="ace-chart-legend"><span><i />Responses</span><span><i className="muted" />Surveys</span></div></div> : <div className="ace-empty"><span className="ace-empty-symbol">↗</span><h3>No survey activity in {selectedYear}</h3><p>Choose another year or create a survey to start collecting feedback.</p><Link className="ace-text-link" to="/surveys/create">Create a survey →</Link></div>}
    </section>;
 }
+SurveyAnalyticsChart.propTypes = {
+   monthlyActivity: PropTypes.arrayOf(PropTypes.object),
+   loading: PropTypes.bool,
+};

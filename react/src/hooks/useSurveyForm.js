@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import axiosClient from '@api/axios.js';
 import { useSurveyCache } from './useSurveyCache';
+import useUnsavedChanges from './useUnsavedChanges';
+import { validateImage } from '../utils/surveyValidation';
 
 export const useSurveyForm = (id, showToast, navigate) => {
    const { getCachedSurvey, setCachedSurvey, cacheManager } = useSurveyCache();
@@ -26,6 +28,11 @@ export const useSurveyForm = (id, showToast, navigate) => {
 
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState("");
+   const [baseline, setBaseline] = useState(() => JSON.stringify(survey));
+   const allowNavigation = useUnsavedChanges(survey.can_manage !== false && JSON.stringify(survey) !== baseline);
+   const imageReader = useRef(null);
+   const [readingImage, setReadingImage] = useState(false);
+   useEffect(() => () => imageReader.current?.abort(), [id]);
 
    const clearError = () => {
       setError("");
@@ -33,25 +40,34 @@ export const useSurveyForm = (id, showToast, navigate) => {
 
    const handleImageChange = (ev) => {
       const file = ev.target.files[0];
+      ev.target.value = '';
       if (!file) return;
-
+      imageReader.current?.abort();
+      const validationError = validateImage(file);
+      if (validationError) { setReadingImage(false); setError(validationError); return; }
+      setError('');
+      setReadingImage(true);
       const reader = new FileReader();
+      imageReader.current = reader;
       reader.onload = () => {
          setSurvey(prev => ({
             ...prev,
             image: file,
             image_url: reader.result,
          }));
-         ev.target.value = "";
+         setReadingImage(false);
       };
-      reader.readAsDataURL(file);
+      reader.onerror = () => { setReadingImage(false); setError('Could not read this image. Please select it again.'); };
+      reader.onabort = () => setReadingImage(false);
+      try { reader.readAsDataURL(file); }
+      catch { reader.onerror(); }
    };
 
    const handleSubmit = async (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
 
-      if (loading) return;
+      if (loading || readingImage) return;
 
       setLoading(true);
       setError("");
@@ -81,6 +97,7 @@ export const useSurveyForm = (id, showToast, navigate) => {
             }
          }));
 
+         allowNavigation();
          navigate("/surveys");
          showToast(id ? "The survey was updated" : "The survey was created");
       } catch (err) {
@@ -108,7 +125,10 @@ export const useSurveyForm = (id, showToast, navigate) => {
       setError('');
       try {
          const { data } = await axiosClient.get('/survey/' + id, { signal: controller.signal });
-         if (!controller.signal.aborted) setSurvey(data.data);
+         if (!controller.signal.aborted) {
+            setSurvey(data.data);
+            setBaseline(JSON.stringify(data.data));
+         }
       } catch (error) {
          if (!controller.signal.aborted) setError(error.response?.data?.message || 'Failed to load the survey');
       } finally {
@@ -132,6 +152,8 @@ export const useSurveyForm = (id, showToast, navigate) => {
       clearError,
       handleSubmit,
       handleImageChange,
-      fetchSurvey
+      fetchSurvey,
+      readingImage,
+      allowNavigation
    };
 };

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { ShareIcon, EyeIcon, ChartBarIcon, TrashIcon } from '@heroicons/react/24/outline';
 export default function SurveyActions({ survey, onOpenShare, onViewResponses, onDelete }) {
    if (!survey?.id) return null;
@@ -8,3 +9,9 @@ export default function SurveyActions({ survey, onOpenShare, onViewResponses, on
       {survey.can_manage !== false && <button className="builder-delete" type="button" onClick={() => onDelete(survey.id)}><TrashIcon />Delete</button>}
    </nav>;
 }
+SurveyActions.propTypes = {
+   survey: PropTypes.object,
+   onOpenShare: PropTypes.func,
+   onViewResponses: PropTypes.func,
+   onDelete: PropTypes.func,
+};

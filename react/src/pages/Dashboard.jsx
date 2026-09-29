@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import { PlusIcon, ArrowUpRightIcon } from '@heroicons/react/24/outline';
 import { useStateContext } from '@context/ContextProvider';
@@ -17,13 +18,19 @@ function Ranking({ title, caption, surveys }) {
       })}</ol> : <div className="ace-empty"><h3>No surveys yet</h3><p>Your survey rankings will appear here.</p></div>}
    </section>;
 }
+Ranking.propTypes = {
+   title: PropTypes.string,
+   caption: PropTypes.string,
+   surveys: PropTypes.arrayOf(PropTypes.object),
+};
+
 
 export default function Dashboard() {
    const navigate = useNavigate();
    const { currentUser } = useStateContext();
    const { data, loading, error } = useDashboardData();
    if (loading) return <DashboardSkeleton />;
-   if (error) return <div className="ace-empty" role="alert"><h2>We couldn't load your dashboard</h2><p>{error}</p><button className="ace-button" onClick={() => window.location.reload()}>Try again</button></div>;
+   if (error) return <div className="ace-empty" role="alert"><h2>We couldn&apos;t load your dashboard</h2><p>{error}</p><button className="ace-button" onClick={() => window.location.reload()}>Try again</button></div>;
    const ratings = data.ratingsData.reduce((sum, item) => sum + Number(item.value || 0), 0);
    const average = data.totalSurveys ? Math.round(data.totalAnswers / data.totalSurveys) : 0;
    const stats = [
