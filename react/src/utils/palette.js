@@ -10,19 +10,9 @@ export function paletteFromColor(value) {
    let hue = 0;
    if (delta) hue = max === r ? ((g - b) / delta + 6) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
    const saturation = delta ? delta / (1 - Math.abs(2 * light - 1)) * 100 : 0;
-   // Keep primary controls dark enough for their white labels, even with a very light custom color.
-   let primaryLight = Math.min(38, Math.max(24, light * 100));
-   const luminance = percentage => {
-      const l = percentage / 100;
-      const a = saturation / 100 * Math.min(l, 1 - l);
-      const channel = n => {
-         const k = (n + hue * 2) % 12;
-         const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
-         return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-      };
-      return 0.2126 * channel(0) + 0.7152 * channel(8) + 0.0722 * channel(4);
-   };
-   while (primaryLight > 1 && (1.05 / (luminance(primaryLight) + 0.05)) < 4.5) primaryLight--;
-   const primary = `hsl(${Math.round(hue * 60)}, ${Math.round(saturation)}%, ${primaryLight}%)`;
-   return { color, hue: Math.round(hue * 60), saturation: Math.round(saturation), primary };
+   // Preserve the selected RGB color; choose the label color instead of altering it.
+   const linear = [r, g, b].map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+   const luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+   const contrastText = (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) ? '#000000' : '#ffffff';
+   return { color, hue: hue * 60, saturation, primary: color, channels: `${hue * 60} ${saturation}% ${light * 100}%`, contrastText };
 }

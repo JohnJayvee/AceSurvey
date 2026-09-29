@@ -27,13 +27,14 @@ export default function AppearanceProvider({ children }) {
       style.setProperty('--palette-hue', palette.hue);
       style.setProperty('--palette-saturation', palette.saturation + '%');
       style.setProperty('--ace-accent', palette.primary);
+      style.setProperty('--ace-on-accent', palette.contrastText);
       for (const [shade, light] of Object.entries({ 50: 97, 100: 93, 200: 85, 300: 74, 400: 59, 500: 43, 600: 34, 700: 28, 800: 22, 900: 16 })) {
          style.setProperty('--palette-' + shade, `${palette.hue} ${palette.saturation}% ${light}%`);
       }
-      style.setProperty('--palette-600', palette.primary.slice(4, -1).replaceAll(',', ''));
+      style.setProperty('--palette-600', palette.channels);
    }, [palette]);
    const theme = useMemo(() => createTheme({
-      palette: { primary: { main: palette.primary }, background: { default: `hsl(${palette.hue}, 15%, 97%)` }, text: { primary: `hsl(${palette.hue}, 22%, 20%)`, secondary: '#65736c' } },
+      palette: { primary: { main: palette.primary, contrastText: palette.contrastText }, background: { default: `hsl(${palette.hue}, 15%, 97%)` }, text: { primary: `hsl(${palette.hue}, 22%, 20%)`, secondary: '#65736c' } },
       typography: { fontFamily: '"Segoe UI", ui-sans-serif, system-ui, sans-serif', fontSize: 13 },
       shape: { borderRadius: 10 },
       components: { MuiButton: { styleOverrides: { root: { textTransform: 'none', fontWeight: 600, boxShadow: 'none' } } }, MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } } },

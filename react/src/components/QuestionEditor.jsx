@@ -103,10 +103,11 @@ export default function QuestionEditor({
       option: (provided, state) => ({
          ...provided,
          backgroundColor: state.isSelected ? 'var(--ace-accent)' : state.isFocused ? '#e5e7eb' : 'white',
-         color: state.isSelected ? 'white' : '#374151',
+         color: state.isSelected ? 'var(--ace-on-accent)' : '#374151',
          cursor: 'pointer',
          '&:active': {
-            backgroundColor: 'var(--ace-accent)'
+            backgroundColor: 'var(--ace-accent)',
+            color: 'var(--ace-on-accent)'
          }
       }),
       menu: (provided) => ({

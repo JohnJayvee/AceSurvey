@@ -10,12 +10,22 @@ test('palette validates custom colors and safely falls back for invalid saved pr
    }
 });
 
-test('palette supports different hues and neutral colors with readable primary shades', () => {
-   assert.equal(paletteFromColor('#ff0000').hue, 0);
+
+test('primary colors preserve exact custom and preset hex values', () => {
+   for (const color of ['#ffffff', '#000000', '#00ff00', '#ff0000', '#123abc', '#658b50', '#2563eb', '#AABBCC']) {
+      assert.equal(paletteFromColor(color).primary, color);
+   }
    assert.equal(paletteFromColor('#00ff00').hue, 120);
    assert.equal(paletteFromColor('#0000ff').hue, 240);
    assert.equal(paletteFromColor('#ffffff').saturation, 0);
-   assert.equal(paletteFromColor('#ffffff').primary, 'hsl(0, 0%, 38%)');
-   assert.equal(paletteFromColor('#000000').primary, 'hsl(0, 0%, 24%)');
-   assert.ok(Number(paletteFromColor('#00ff00').primary.match(/, ([\d.]+)%\)/)[1]) < 34);
+});
+
+test('labels have at least 4.5:1 contrast without changing the primary color', () => {
+   for (const color of ['#ffffff', '#000000', '#00ff00', '#ff0000', '#123abc', '#658b50', '#2563eb', '#ffff00', '#777777']) {
+      const channels = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16) / 255)
+         .map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      const l = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+      const contrast = paletteFromColor(color).contrastText === '#000000' ? (l + 0.05) / 0.05 : 1.05 / (l + 0.05);
+      assert.ok(contrast >= 4.5, color);
+   }
 });

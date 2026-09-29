@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppearance } from '@context/AppearanceProvider';
 import { useStateContext } from '@context/ContextProvider';
 import { DEFAULT_COLOR, validColor } from '../utils/palette';
@@ -8,6 +8,7 @@ export default function Settings() {
    const { color, changeColor, saveError } = useAppearance();
    const { showToast } = useStateContext();
    const [custom, setCustom] = useState(color);
+   useEffect(() => setCustom(color), [color]);
    const [error, setError] = useState('');
    const choose = (value, notify = true) => {
       const saved = changeColor(value);
@@ -24,7 +25,7 @@ export default function Settings() {
          <form onSubmit={event => { event.preventDefault(); if (validColor(custom)) choose(custom); else setError('Enter a six-digit hex color, such as #107e72.'); }}>
             <label htmlFor="custom-palette" className="block mb-2 text-sm font-medium">Custom color</label><div className="flex flex-wrap items-center gap-3"><input type="color" aria-label="Choose a custom color" value={color} onChange={event => choose(event.target.value, false)} className="w-12 h-11 p-1 bg-white border rounded-lg" /><input id="custom-palette" value={custom} onChange={event => setCustom(event.target.value)} spellCheck={false} maxLength={7} placeholder="#107e72" className="w-36 p-3 border rounded-lg" aria-invalid={Boolean(error)} aria-describedby={error ? 'palette-error' : undefined} /><button className="ace-button" type="submit">Apply color</button></div>{error && <p id="palette-error" role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
          </form>
-         <p className="text-sm text-gray-500">Backgrounds, buttons, charts, and highlights use matching shades. Very bright colors are darkened for readable buttons.</p>
+         <p className="text-sm text-gray-500">Backgrounds, buttons, charts, and highlights use matching shades. Your exact hex color is used for primary controls, with light or dark text for readability.</p>
          {saveError && <p role="alert">{saveError}</p>}
          <div className="flex items-center justify-between gap-4 pt-4 border-t"><span className="ace-status active">Live preview</span><button type="button" className="ace-button ace-button-secondary" onClick={() => choose(DEFAULT_COLOR)}>Reset to default</button></div>
       </div>
