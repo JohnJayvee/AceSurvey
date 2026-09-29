@@ -93,7 +93,7 @@ export default function Login() {
    // Extract login success logic
    const handleLoginSuccess = (data) => {
       setCurrentUser(data.user);
-      setUserToken(data.token, formData.keepSignedIn, data.user);
+      setUserToken(data.token, formData.keepSignedIn, data.user, data.show_welcome_tour);
    };
 
    // Main submit handler

@@ -21,11 +21,22 @@ it('signs up and authenticates using a bearer token without a session', function
     $signup = $this->postJson('/api/signup', [
         'name' => 'New User', 'email' => 'new@example.test',
         'password' => 'Password123!', 'password_confirmation' => 'Password123!',
-    ])->assertSuccessful();
+    ])->assertSuccessful()->assertJsonPath('show_welcome_tour', true);
     expect($signup->json('token'))->toBeString();
     $this->assertDatabaseHas('users', ['email' => 'new@example.test']);
     $this->postJson('/api/login', ['login' => 'new@example.test', 'password' => 'Password123!'])
-        ->assertOk()->assertJsonStructure(['user', 'token']);
+        ->assertOk()->assertJsonStructure(['user', 'token'])->assertJsonPath('show_welcome_tour', false);
+});
+
+it('offers the welcome tour only on the first successful login of a provisioned account', function () {
+    $user = User::forceCreate(['name' => 'New Owner', 'username' => 'new-owner', 'email' => 'new-owner@example.test', 'password' => 'Password123!']);
+    $this->postJson('/api/login', ['login' => $user->email, 'password' => 'Incorrect123!'])->assertUnauthorized();
+    expect($user->fresh()->first_login_at)->toBeNull();
+    $this->postJson('/api/login', ['login' => $user->email, 'password' => 'Password123!'])
+        ->assertOk()->assertJsonPath('show_welcome_tour', true);
+    expect($user->fresh()->first_login_at)->not->toBeNull();
+    $this->postJson('/api/login', ['login' => $user->email, 'password' => 'Password123!'])
+        ->assertOk()->assertJsonPath('show_welcome_tour', false);
 });
 
 it('logs in by username and rejects invalid credentials without server errors', function () {

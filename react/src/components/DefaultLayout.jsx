@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Navigate, NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useStateContext } from "@context/ContextProvider";
 import axiosClient from "@api/axios";
+import WelcomeTour from "./WelcomeTour";
 import Toast from "@components/Toast";
 import UserProfilePopup from "@components/UserProfilePopup";
 import { HomeIcon, ClipboardDocumentListIcon, Bars3Icon, XMarkIcon, PlusIcon, ArrowUpRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
@@ -57,13 +58,13 @@ export default function DefaultLayout() {
             <button className="ace-mobile-close" aria-label="Close navigation" onClick={() => setMenuOpen(false)}><XMarkIcon /></button>
             <div className="ace-nav-label">WORKSPACE</div>
             <nav className="ace-nav">
-               <NavLink to="/dashboard"><HomeIcon />Overview</NavLink>
-               <NavLink to="/surveys"><ClipboardDocumentListIcon />Surveys</NavLink>
+               <NavLink data-tour="overview" to="/dashboard"><HomeIcon />Overview</NavLink>
+               <NavLink data-tour="surveys" to="/surveys"><ClipboardDocumentListIcon />Surveys</NavLink>
 
                {currentUser.is_admin && <NavLink to="/logs"><ClipboardDocumentListIcon />Activity logs</NavLink>}
                {currentUser.is_admin && <NavLink to="/users"><ClipboardDocumentListIcon />Users</NavLink>}
             </nav>
-            <Link className="ace-sidebar-create" to="/surveys/create"><PlusIcon />Create a survey</Link>
+            <Link data-tour="create" className="ace-sidebar-create" to="/surveys/create"><PlusIcon />Create a survey</Link>
             <div className="ace-sidebar-bottom">
                <div className="ace-sidebar-note"><span className="ace-small-orbit" />Every response<br /><strong>starts a conversation.</strong><p>Listen closely. Make better decisions.</p></div>
                <Link to="/survey-selection" className="ace-public-link">Open survey hub<ArrowUpRightIcon /></Link>
@@ -74,7 +75,7 @@ export default function DefaultLayout() {
             <header className="ace-topbar">
                <div className="ace-topbar-left"><button className="ace-mobile-toggle" aria-label="Open navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Bars3Icon /></button><span className="ace-breadcrumb">Workspace <span>/</span> <strong>{page}</strong></span></div>
                <div className="ace-profile-wrap" ref={profile}>
-                  <button className="ace-profile-button" aria-expanded={profileOpen} aria-label="Account settings" onClick={() => setProfileOpen(!profileOpen)}>
+                  <button data-tour="account" className="ace-profile-button" aria-expanded={profileOpen} aria-label="Account settings" onClick={() => setProfileOpen(!profileOpen)}>
                      <span className="ace-avatar">{(currentUser.name || 'A').slice(0, 1).toUpperCase()}</span>
                      <span className="ace-profile-name">{currentUser.name || 'Your account'}<small>Personal workspace</small></span><ChevronDownIcon />
                   </button>
@@ -84,6 +85,7 @@ export default function DefaultLayout() {
             <main id="main-content" className="ace-page-content"><Outlet /></main>
             <footer className="ace-workspace-footer"><span>© {new Date().getFullYear()} AceSurvey</span><span>Thoughtful questions. Meaningful answers.</span></footer>
          </div>
+         <WelcomeTour />
          <Toast />
       </div>
    );

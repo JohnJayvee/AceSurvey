@@ -38,7 +38,7 @@ export default function Signup() {
             password_confirmation: passwordConfirmation,
          })
          .then(({ data }) => {
-            setUserToken(data.token, false, data.user);
+            setUserToken(data.token, false, data.user, data.show_welcome_tour);
          })
          .catch((error) => {
             if (error.response) {

@@ -80,7 +80,7 @@ class AuthController extends Controller
 
       try {
          $user = $this->authService->createUser($data);
-         $token = $this->authService->generateAuthToken($user);
+         $authentication = $this->authService->processSuccessfulLogin($user);
 
          $this->rateLimitService->clearSignupLimit($request->ip());
 
@@ -89,10 +89,7 @@ class AuthController extends Controller
             'name' => $user->name
          ], $request, $user->id);
 
-         return response()->json([
-            'user' => $user->only(['id', 'name', 'email', 'is_admin', 'created_at']),
-            'token' => $token
-         ]);
+         return response()->json($authentication);
       } catch (\Exception $e) {
          $this->rateLimitService->hitSignupLimit($request->ip());
          return $this->handleError('signup_failed', 'User signup failed', $e, $request, null, [

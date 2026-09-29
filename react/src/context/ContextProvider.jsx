@@ -16,6 +16,7 @@ export const ContextProvider = ({ children }) => {
     const [userToken, updateToken] = useState(() => localStorage.getItem('TOKEN') || sessionStorage.getItem('TOKEN') || '');
     const [toast, setToast] = useState({ message: '', show: false });
     const toastTimer = useRef(null);
+    const [welcomeTourOpen, setWelcomeTourOpen] = useState(false);
 
     const clearSession = useCallback(() => {
         sessionStorage.removeItem('TOKEN');
@@ -23,6 +24,7 @@ export const ContextProvider = ({ children }) => {
         sessionStorage.removeItem('AUTH_LAST_ACCESS');
         axiosClient.cancelAllRequests();
         axiosClient.clearCache();
+        setWelcomeTourOpen(false);
         updateToken('');
         setCurrentUser({});
     }, []);
@@ -35,7 +37,7 @@ export const ContextProvider = ({ children }) => {
         clearSession();
     }, [clearSession]);
 
-    const setUserToken = useCallback((token, keepSignedIn = false, userData = {}) => {
+    const setUserToken = useCallback((token, keepSignedIn = false, userData = {}, showWelcomeTour = false) => {
         if (!token) { logout(); return; }
         axiosClient.cancelAllRequests();
         axiosClient.clearCache();
@@ -49,6 +51,7 @@ export const ContextProvider = ({ children }) => {
         sessionStorage.setItem('AUTH_LAST_ACCESS', String(Date.now()));
         updateToken(token);
         setCurrentUser(userData);
+        setWelcomeTourOpen(showWelcomeTour === true);
     }, [logout]);
 
     useEffect(() => {
@@ -106,7 +109,7 @@ export const ContextProvider = ({ children }) => {
         toastTimer.current = setTimeout(() => setToast({ message: '', show: false }), 4700);
     }, []);
 
-    return <StateContext.Provider value={{ currentUser, setCurrentUser, userToken, setUserToken, logout, surveys: [], questionTypes: ['short answer', 'dropdown', 'multiple choice', 'checkboxes', 'paragraph'], toast, showToast }}>{children}</StateContext.Provider>;
+    return <StateContext.Provider value={{ welcomeTourOpen, setWelcomeTourOpen, currentUser, setCurrentUser, userToken, setUserToken, logout, surveys: [], questionTypes: ['short answer', 'dropdown', 'multiple choice', 'checkboxes', 'paragraph'], toast, showToast }}>{children}</StateContext.Provider>;
 };
 ContextProvider.propTypes = {
    children: PropTypes.node,

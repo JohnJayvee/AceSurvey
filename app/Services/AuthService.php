@@ -41,16 +41,19 @@ class AuthService
    public function processSuccessfulLogin(User $user): array
    {
       return DB::transaction(function () use ($user) {
+         $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+         $firstLogin = $user->first_login_at === null;
          // Generate secure remember token
          $rememberToken = $this->generateUniqueRememberToken($user);
 
-         $user->forceFill(['remember_token' => $rememberToken])->save();
+         $user->forceFill(['remember_token' => $rememberToken, 'first_login_at' => $user->first_login_at ?? now()])->save();
 
          $token = $this->generateAuthToken($user);
 
          return [
             'user' => $user->only(['id', 'name', 'email', 'is_admin', 'created_at']),
             'token' => $token,
+            'show_welcome_tour' => $firstLogin,
          ];
       });
    }
