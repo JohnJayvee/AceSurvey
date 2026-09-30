@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import axiosClient from "@api/axios";
 import { useStateContext } from "@context/ContextProvider";
 
@@ -11,6 +11,8 @@ export function useSurveys() {
    });
    const activeRequest = useRef(null);
    const currentUrl = useRef("/survey");
+   const searchValue = useRef('');
+   const searchTimer = useRef(null);
    const updateState = useCallback(updates => setState(prev => ({ ...prev, ...updates })), []);
 
    const getSurveys = useCallback(async (url = currentUrl.current, forceRefresh = false) => {
@@ -20,7 +22,8 @@ export function useSurveys() {
       currentUrl.current = url;
       updateState({ loading: !forceRefresh, refreshing: forceRefresh, error: null });
       try {
-         const { data } = await axiosClient.get(url, { signal: controller.signal });
+         const page = new URL(url, window.location.origin).searchParams.get('page') || 1;
+         const { data } = await axiosClient.get('/survey', { signal: controller.signal, params: { page, search: searchValue.current.trim() || undefined } });
          if (!controller.signal.aborted) updateState({ surveys: data.data || [], meta: data.meta || {} });
       } catch (error) {
          if (!controller.signal.aborted) {
@@ -35,13 +38,17 @@ export function useSurveys() {
       }
    }, [updateState]);
 
-   const handleSearch = useCallback(value => updateState({ searchTerm: value }), [updateState]);
-   const filteredSurveys = useMemo(() => {
-      const search = state.searchTerm.toLowerCase();
-      return state.surveys.filter(survey =>
-         (survey.title || "").toLowerCase().includes(search) ||
-         (survey.description || "").toLowerCase().includes(search));
-   }, [state.surveys, state.searchTerm]);
+   const handleSearch = useCallback(value => {
+      clearTimeout(searchTimer.current);
+      activeRequest.current?.abort();
+      searchValue.current = value;
+      currentUrl.current = '/survey';
+      updateState({ searchTerm: value, surveys: [], meta: {}, error: null, loading: true, refreshing: false });
+      searchTimer.current = setTimeout(() => {
+         searchTimer.current = null;
+         getSurveys('/survey');
+      }, 300);
+   }, [getSurveys, updateState]);
 
    const deleteSurvey = useCallback(async surveyId => {
       try {
@@ -58,16 +65,17 @@ export function useSurveys() {
    useEffect(() => {
       getSurveys();
       const interval = setInterval(() => {
-         if (!document.hidden && !activeRequest.current) getSurveys(currentUrl.current, true);
+         if (!document.hidden && !activeRequest.current && !searchTimer.current) getSurveys(currentUrl.current, true);
       }, 30000);
       const onUpdate = () => getSurveys(currentUrl.current, true);
       window.addEventListener('surveyUpdated', onUpdate);
       return () => {
          clearInterval(interval);
+         clearTimeout(searchTimer.current);
          activeRequest.current?.abort();
          window.removeEventListener('surveyUpdated', onUpdate);
       };
    }, [getSurveys]);
 
-   return { ...state, filteredSurveys, getSurveys, handleSearch, deleteSurvey, refresh };
+   return { ...state, filteredSurveys: state.surveys, getSurveys, handleSearch, deleteSurvey, refresh };
 }

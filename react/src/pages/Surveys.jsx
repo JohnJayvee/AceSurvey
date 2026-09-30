@@ -1,177 +1,50 @@
-import PropTypes from 'prop-types';
-import { useCallback } from "react";
-import { PlusCircleIcon, ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-
-import { Link } from "react-router-dom";
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
-import SearchBar from "@components/SearchBar";
-import SurveyGrid from "@components/SurveyGrid";
-import DeleteModal from "@components/DeleteModal";
-import { motion } from "framer-motion";
-import { useSurveys } from "@hooks/useSurveys";
-import { useDeleteModal } from "@hooks/useDeleteModal";
+﻿import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { PlusIcon, ArrowPathIcon, MagnifyingGlassIcon, XMarkIcon, ClipboardDocumentListIcon, ArrowUpRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import SurveyGrid from '@components/SurveyGrid';
+import DeleteModal from '@components/DeleteModal';
+import { useSurveys } from '@hooks/useSurveys';
+import { useDeleteModal } from '@hooks/useDeleteModal';
 import { useStateContext } from '@context/ContextProvider';
+import { isSurveyExpired } from '@utils/dashboardUtils';
+import '@css/surveys.css';
 
-const LoadingSkeleton = () => (
-   <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-   >
-      {[...Array(8)].map((_, index) => (
-         <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl"
-         >
-            <Skeleton height={200} className="object-cover w-full" />
-            <div className="p-5">
-               <Skeleton height={24} width="70%" className="mb-3" />
-               <Skeleton height={16} count={2} className="mb-4" />
-               <div className="flex items-center justify-between">
-                  <Skeleton height={36} width={80} />
-                  <div className="flex gap-2">
-                     <Skeleton height={36} width={36} className="rounded-lg" />
-                     <Skeleton height={36} width={36} className="rounded-lg" />
-                     <Skeleton height={36} width={36} className="rounded-lg" />
-                  </div>
-               </div>
-            </div>
-         </motion.div>
-      ))}
-   </motion.div>
-);
-
-const ErrorState = ({ error, onRetry }) => (
-   <div className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-xl">
-      <ExclamationTriangleIcon className="w-16 h-16 text-red-500" />
-      <h3 className="mt-4 text-lg font-medium text-gray-900">Failed to load surveys</h3>
-      <p className="mt-1 text-sm text-gray-500">{error}</p>
-      <button
-         onClick={onRetry}
-         className="flex items-center gap-2 px-4 py-2 mt-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-      >
-         <ArrowPathIcon className="w-5 h-5" />
-         Try Again
-      </button>
-   </div>
-);
-ErrorState.propTypes = {
-   error: PropTypes.string,
-   onRetry: PropTypes.func,
-};
-
+const statusOf = survey => isSurveyExpired(survey.expire_date) ? 'expired' : survey.status ? 'active' : 'closed';
 
 export default function Surveys() {
    const { currentUser } = useStateContext();
-   const {
-      filteredSurveys,
-      meta,
-      loading,
-      error,
-      searchTerm,
-      refreshing,
-      getSurveys,
-      handleSearch,
-      deleteSurvey,
-      refresh
-   } = useSurveys();
-
+   const { surveys, meta, loading, error, searchTerm, refreshing, getSurveys, handleSearch, deleteSurvey, refresh } = useSurveys();
    const { isOpen, surveyToDelete, openModal, closeModal } = useDeleteModal();
-
-   const handlePageClick = useCallback((link) => {
-      getSurveys(link.url);
-   }, [getSurveys]);
-
-   const handleDeleteConfirm = useCallback(async () => {
+   const [status, setStatus] = useState('all');
+   const counts = surveys.reduce((result, survey) => { result[statusOf(survey)]++; return result; }, { active: 0, closed: 0, expired: 0 });
+   const visibleSurveys = status === 'all' ? surveys : surveys.filter(survey => statusOf(survey) === status);
+   const clearFilters = () => { handleSearch(''); setStatus('all'); };
+   const confirmDelete = async () => {
       if (!surveyToDelete) return;
-
       closeModal();
-      try {
-         await deleteSurvey(surveyToDelete);
-      } catch (error) {
-         // Error handling is done in the hook
-      }
-   }, [surveyToDelete, deleteSurvey, closeModal]);
+      try { await deleteSurvey(surveyToDelete); } catch { /* The hook shows the failure toast. */ }
+   };
 
+   return <section className="survey-library">
+      <header className="ace-page-heading library-heading">
+         <div><span className="ace-eyebrow">YOUR FEEDBACK WORKSPACE</span><h1>{currentUser.is_admin ? 'All surveys' : 'Your surveys'}</h1><p>{currentUser.is_admin ? 'Every survey, every team, every perspective. Together in one place.' : 'Good questions start here. Create, share, and see what people think.'}</p></div>
+         <Link to="/surveys/create" className="ace-button library-create"><PlusIcon />Create survey</Link>
+      </header>
 
-   // Render error state
-   if (error && !loading && filteredSurveys.length === 0) {
-      return <ErrorState error={error} onRetry={refresh} />;
-   }
+      <div className="library-intro">
+         <div className="library-intro-copy"><span className="library-kicker">MAKE ROOM FOR A LITTLE CURIOSITY</span><h2>Your next insight{' '}<br />starts with a question.</h2><p>Build a survey, invite your audience, and turn their answers into a clearer picture.</p><Link to="/surveys/create">Start something new<ArrowUpRightIcon /></Link></div>
+         <div className="library-intro-art" aria-hidden="true"><div className="library-orbit" /><div className="library-paper"><span>LET’S HEAR YOUR PERSPECTIVE</span><strong>How was your<br />experience?</strong><div className="library-rating"><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i></div><div className="library-paper-line" /><div className="library-paper-line short" /><small>Every response makes a difference.</small></div><div className="library-art-tag"><span />A space for every voice</div></div>
+         <div className="library-at-a-glance"><span>IN THIS COLLECTION</span><strong>{loading ? '—' : Number(meta.total ?? surveys.length).toLocaleString()}</strong><p>{searchTerm ? 'matching surveys' : 'surveys to explore'}</p><Link to="/survey-selection">Visit the public survey hub<ArrowUpRightIcon /></Link></div>
+      </div>
 
-   return (
-      <motion.div
-         initial={{ opacity: 0 }}
-         animate={{ opacity: 1 }}
-         className="ace-surveys-page"
-      >
-         {/* Header Section */}
-         <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="ace-page-heading"
-         >
-            <div className="flex flex-col justify-center">
-               <span className="ace-eyebrow">ASK. LISTEN. UNDERSTAND.</span><h1>{currentUser.is_admin ? 'All surveys' : 'Your surveys'}</h1><p>{currentUser.is_admin ? 'Browse surveys created across all accounts.' : 'A home for every question and every perspective.'}</p>
-
-            </div>
-
-            <div className="flex flex-col gap-4 md:flex-row md:items-center">
-               <div className="w-full md:w-64">
-                  <SearchBar
-                     searchTerm={searchTerm}
-                     onSearch={handleSearch}
-                     placeholder="Search surveys..."
-                  />
-               </div>
-
-               <div className="flex gap-2">
-                  <button
-                     onClick={refresh}
-                     disabled={loading || refreshing}
-                     aria-label="Refresh surveys"
-                     className="p-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                  >
-                     <ArrowPathIcon className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-                  </button>
-
-                  <Link
-                     to="/surveys/create"
-                     className="ace-button"
-                  >
-                     <PlusCircleIcon className="w-5 h-5" />
-                     <span className="inline-block">Create survey</span>
-                  </Link>
-               </div>
-            </div>
-         </motion.div>
-
-         {/* Content */}
-         {loading && !refreshing ? (
-            <LoadingSkeleton />
-         ) : (
-            <SurveyGrid
-               surveys={filteredSurveys}
-               meta={meta}
-               searchTerm={searchTerm}
-               onDeleteClick={openModal}
-               onPageClick={handlePageClick}
-               refreshing={refreshing}
-            />
-         )}
-
-         {/* Delete Confirmation Modal */}
-         <DeleteModal
-            isOpen={isOpen}
-            onConfirm={handleDeleteConfirm}
-            onCancel={closeModal}
-            title="Delete Survey"
-            message="Are you sure you want to delete this survey? This action cannot be undone."
-         />
-      </motion.div>
-   );
+      <div className="library-collection-heading"><div><h2>Survey collection</h2><span>Manage your questions. Follow the answers.</span></div><button type="button" className="library-refresh" disabled={loading || refreshing} onClick={refresh}><ArrowPathIcon className={refreshing ? 'library-spinning' : ''} />{refreshing ? 'Refreshing…' : 'Refresh surveys'}</button></div>
+      <div className="library-toolbar">
+         <div className="library-search"><MagnifyingGlassIcon aria-hidden="true" /><input type="search" aria-label="Search surveys" maxLength={255} placeholder="Search by survey title or description…" value={searchTerm} onChange={event => handleSearch(event.target.value)} />{searchTerm && <button type="button" aria-label="Clear search" onClick={() => handleSearch('')}><XMarkIcon /></button>}</div>
+         <div className="library-status-filter"><span>Status on this page</span><div role="group" aria-label="Filter surveys on this page">{[['all', 'All'], ['active', 'Active'], ['closed', 'Closed'], ['expired', 'Expired']].map(([value, label]) => <button key={value} type="button" aria-pressed={status === value} onClick={() => setStatus(value)}>{label}<span>{loading ? '—' : value === 'all' ? surveys.length : counts[value]}</span></button>)}</div></div>
+      </div>
+      <div className="library-results-note" role="status"><span>{loading ? 'Finding your surveys…' : `${visibleSurveys.length} ${visibleSurveys.length === 1 ? 'survey' : 'surveys'} on this page${searchTerm ? ` matching “${searchTerm}”` : ''}`}</span><span><ClipboardDocumentListIcon />{currentUser.is_admin ? 'Across all accounts' : 'Your collection'}</span></div>
+      {error && <div className="library-error" role="alert"><ExclamationTriangleIcon /><span>{error}</span><button type="button" onClick={refresh} disabled={loading || refreshing}>Try again</button></div>}
+      {loading ? <div className="library-grid" aria-label="Loading surveys" aria-busy="true">{[1,2,3,4,5,6].map(value => <div key={value} className="library-skeleton" aria-hidden="true"><div /><span /><span /><div /></div>)}</div> : error && !surveys.length ? null : <SurveyGrid surveys={visibleSurveys} meta={meta} filtered={Boolean(searchTerm || status !== 'all')} onClearFilters={clearFilters} onDeleteClick={openModal} onPageClick={link => getSurveys(link.url)} refreshing={refreshing} />}
+      <DeleteModal isOpen={isOpen} onConfirm={confirmDelete} onCancel={closeModal} title="Delete survey?" message="This permanently deletes the survey and its responses. You cannot undo this action." />
+   </section>;
 }
